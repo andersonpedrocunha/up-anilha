@@ -108,8 +108,8 @@ h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.1;mar
 .rest.done .rest-in{background:var(--good);color:#fff}
 /* nav */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:26;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
-nav.tabs button{border:0;background:none;height:64px;font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav.tabs button{border:0;background:none;height:64px;font-family:var(--display);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 nav.tabs button svg{width:22px;height:22px}
 nav.tabs button[aria-current="page"]{color:var(--accent)}
 /* stats */
@@ -165,6 +165,44 @@ fieldset.restr .tog{padding:6px 0;font-size:15px}
 .pf fieldset.restr label.tog input{flex:none;width:20px;height:20px;margin:0}
 .adapted{font-size:13px;color:var(--good);font-weight:600}
 .flag.ok{background:var(--good-soft);color:var(--good)}
+.brandrow{display:flex;align-items:center;gap:9px}
+.logo{width:34px;height:34px;flex:none}
+.avatar{margin-left:auto;width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--sunk);color:var(--muted);display:grid;place-items:center;padding:0;overflow:hidden;font-family:var(--display);font-weight:800;font-size:18px}
+.avatar.on{border-color:var(--accent)}
+.avatar img,.av img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar svg,.av svg{width:60%;height:60%}
+.av{border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;overflow:hidden;flex:none;font-family:var(--display);font-weight:800}
+.av.sm{width:44px;height:44px;font-size:20px}.av.md{width:52px;height:52px;font-size:22px}.av.xl{width:120px;height:120px;font-size:48px}
+.hello{display:flex;align-items:center;gap:12px}
+.hello-n{font-family:var(--display);font-weight:800;font-size:26px;line-height:1;text-transform:uppercase}
+.welcome{border-color:var(--accent)}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.field input{text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)}
+.howbtn{display:inline-block;margin:6px 0 2px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;color:var(--accent)}
+.howic{color:var(--accent);font-weight:800}
+.linkbtn{border:0;background:none;padding:0;font:inherit;font-weight:600;color:inherit;text-align:left;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.search{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;font-size:16px}
+.chip.sm{font-size:15px;padding:6px 12px;min-width:0}
+.glist{display:flex;flex-direction:column;gap:8px}
+.gitem{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;color:var(--ink)}
+.gitem img,.gnoimg{width:84px;height:58px;border-radius:8px;object-fit:cover;flex:none;background:var(--sunk)}
+.gnoimg{display:grid;place-items:center;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.gtxt{display:flex;flex-direction:column;min-width:0;flex:1}.gtxt b{font-size:15px}.gtxt span{font-size:13px;color:var(--muted)}
+.sheet{position:fixed;inset:0;z-index:50;background:rgb(0 0 0 / .5);display:flex;align-items:flex-end;justify-content:center}
+.sheet-in{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.gfig{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;max-width:100%;background:var(--sunk)}
+.gfig img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .35s}
+#gimg1{opacity:0}
+.gfig-l{position:absolute;left:8px;bottom:8px;background:rgb(0 0 0 / .6);color:#fff;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px}
+.gsec p{margin:4px 0 0}.gsec ol,.gsec ul{margin:6px 0 0;padding-left:20px}.gsec li{margin:4px 0}
+.errs li::marker{color:var(--danger)}
+.gtip{background:var(--good-soft);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:14px}
+body.noscroll{overflow:hidden}
+@media (prefers-reduced-motion:reduce){#gimg1{display:none}}
+.btn.sm{white-space:nowrap}
+a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;justify-content:center}
+.welcome .row{flex-wrap:wrap}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -175,8 +213,9 @@ fieldset.restr .tog{padding:6px 0;font-size:15px}
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><span class="up">Up</span> Anilha</div>
-    <div class="sync" id="sync"><i></i><span>Neste aparelho</span></div>
+    <div class="brandrow"><svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="23" fill="var(--accent)"/><circle cx="24" cy="24" r="19.3" fill="none" stroke="var(--accent-ink)" stroke-opacity=".25" stroke-width=".8"/><path d="M15.7 24 24 14.8l8.3 9.2" fill="none" stroke="var(--accent-ink)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 31.4h26.8" stroke="var(--accent-ink)" stroke-width="1.9" stroke-linecap="round"/><path d="M14.2 27.3v8.2M33.8 27.3v8.2" stroke="var(--accent-ink)" stroke-width="2.6" stroke-linecap="round"/></svg><div class="brand"><span class="up">Up</span> Anilha</div></div>
+    <span id="sync" hidden><i></i><span></span></span>
+    <button class="avatar" id="avatarBtn" aria-label="Seu perfil"></button>
   </header>
   <main id="main"></main>
 </div>
@@ -193,11 +232,14 @@ fieldset.restr .tog{padding:6px 0;font-size:15px}
   <div class="in">
     <button data-view="hoje" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Treino</button>
     <button data-view="rotina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Rotina</button>
+    <button data-view="guia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Guia</button>
     <button data-view="personal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>Personal</button>
     <button data-view="hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>Histórico</button>
   </div>
 </nav>
 
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Como fazer o exercício"><div class="sheet-in" id="sheetIn"></div></div>
+<script src="guide.js"></script>
 <script>
 (function(){
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -214,7 +256,7 @@ const DEFAULT_PLAN={v:2,next:'A',goals:{week:5,month:20},workouts:[
 ]};
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 
-const S={chat:LS.get('ct.chat',[]),draft:'',busy:null,plan:LS.get('ct.plan',null)||JSON.parse(JSON.stringify(DEFAULT_PLAN)),sessions:LS.get('ct.sessions',[]),active:LS.get('ct.active',null),view:'hoje',sel:null,edit:null,histEx:null,armed:null,rest:null};
+const S={user:LS.get('ct.user',{name:'',photo:'',skip:false}),chat:LS.get('ct.chat',[]),draft:'',busy:null,plan:LS.get('ct.plan',null)||JSON.parse(JSON.stringify(DEFAULT_PLAN)),sessions:LS.get('ct.sessions',[]),active:LS.get('ct.active',null),view:'hoje',sel:null,edit:null,histEx:null,armed:null,rest:null};
 if(S.plan.v!==2&&!S.sessions.length){S.plan={...JSON.parse(JSON.stringify(DEFAULT_PLAN)),profile:S.plan.profile}}
 let chatRef=null,sampleApi=null,planRef=null,sessCol=null,armTimer=null,saveTimer=null,audio=null,wake=null;
 const main=document.getElementById('main');
@@ -287,6 +329,7 @@ function viewHoje(){
   if(S.active)return viewSession();
   const todayW=S.plan.workouts.find(x=>x.day===new Date().getDay());const sel=S.sel||(todayW&&todayW.id)||S.plan.next||S.plan.workouts[0].id;const w=W(sel);const wk=weekStrip();
   return `<div class="stack">
+    ${welcomeCard()}
     ${freqCard(wk)}
     <div class="stack" style="gap:10px">
       <div class="eyebrow">Escolha o treino</div>
@@ -295,7 +338,7 @@ function viewHoje(){
     <div class="card stack">
       <div class="row"><div class="plate">${esc(w.id)}</div><div style="min-width:0"><div class="eyebrow">${w.day!=null?DAYN[w.day]+(w===todayW?' · hoje':''):(w.id===S.plan.next?'Próximo da rotina':'Treino '+esc(w.id))} · ~${estMin(w)} min</div><h2>${esc(w.name)}</h2></div></div>
       <ul class="exlist">${w.ex.map(e=>{const l=lastFor(e.id,e.name);const top=l?Math.max(...l.sets.map(t=>+t.kg||0)):0;
-        return `<li><div class="n">${esc(e.name)}${issues(e.name).length?' <span class="flag">⚠ adaptar</span>':''}${e.orig?' <span class="flag ok">adaptado</span>':''}${top?`<div class="muted num" style="font-size:13px;font-weight:400">Última: ${fmtKg(top)} kg</div>`:''}</div><div class="t">${e.sets} × ${esc(e.reps)}<br>${mmss(e.rest)}</div></li>`}).join('')||'<li class="muted">Sem exercícios. Adicione na aba Rotina.</li>'}</ul>
+        return `<li><div class="n"><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button>${issues(e.name).length?' <span class="flag">⚠ adaptar</span>':''}${e.orig?' <span class="flag ok">adaptado</span>':''}${top?`<div class="muted num" style="font-size:13px;font-weight:400">Última: ${fmtKg(top)} kg</div>`:''}</div><div class="t">${e.sets} × ${esc(e.reps)}<br>${mmss(e.rest)}</div></li>`}).join('')||'<li class="muted">Sem exercícios. Adicione na aba Rotina.</li>'}</ul>
       <button class="btn primary big" data-act="start" data-id="${w.id}" ${w.ex.length?'':'disabled'}>Começar treino ${esc(w.id)}</button>
     </div>
   </div>`}
@@ -386,6 +429,7 @@ function ctx(){const p=profile(),g=goals();
 Você pode mudar a rotina com a ferramenta atualizar_rotina (sempre mande a rotina completa, todos os treinos) e as metas de frequência com atualizar_metas. Só use quando o aluno pedir ou concordar, e depois diga o que mudou. Mantenha cada treino dentro do tempo do aluno.
 Se ele relatar dor forte, lesão ou sintoma estranho, oriente procurar médico ou fisioterapeuta. Não prescreva dieta detalhada nem doses de suplemento.
 
+Aluno: ${S.user.name||'sem nome'}.
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} min por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações: ${p.notes||'nenhuma'}.
 Restrições de saúde: ${restrText()}. Nunca sugira exercícios contraindicados para essas condições; prefira variações com apoio e explique o motivo da troca.
@@ -481,7 +525,7 @@ function viewSession(){
     <div class="row"><div class="progress" style="flex:1"><i style="width:${total?done/total*100:0}%"></i></div><span class="muted num" style="font-size:13px">${done}/${total} séries</span></div>
     ${a.ex.map((e,ei)=>{const l=lastFor(e.exId,e.name);
       return `<div class="card ex">
-        <div class="ex-head"><div><h3>${esc(e.name)}</h3><div class="ex-meta">${e.target.sets} × ${esc(e.target.reps)} · ${e.target.rest?'descanso '+mmss(e.target.rest):'sem descanso, emende o próximo'}</div>
+        <div class="ex-head"><div><h3>${esc(e.name)}</h3><button class="howbtn" data-act="how" data-name="${esc(e.name)}">${guideFor(e.name)?'Como fazer':'Buscar execução'}</button><div class="ex-meta">${e.target.sets} × ${esc(e.target.reps)} · ${e.target.rest?'descanso '+mmss(e.target.rest):'sem descanso, emende o próximo'}</div>
         ${warnHtml(e.name,'swapA',`data-e="${ei}"`)}
         ${l?`<div class="last num">Última vez: ${l.sets.map(t=>`${fmtKg(+t.kg||0)}×${t.reps}`).join(' · ')}</div>`:'<div class="last">Primeira vez neste exercício</div>'}</div></div>
         <div class="sets"><span class="h"></span><span class="h">kg</span><span class="h">Reps</span><span class="h"></span>
@@ -519,6 +563,7 @@ function viewRotina(){
           <label class="tog"><input type="checkbox" id="eb-${e.id}" data-w="${wi}" data-x="${ei}" data-f="bar" ${e.bar?'checked':''}>Barra</label>
         </div>
         <div class="ed-tools">
+          <button class="ic howic" data-act="how" data-name="${esc(e.name)}" aria-label="Como fazer">?</button>
           <button class="ic" data-act="up" data-w="${wi}" data-x="${ei}" aria-label="Subir" ${ei===0?'disabled':''}>↑</button>
           <button class="ic" data-act="down" data-w="${wi}" data-x="${ei}" aria-label="Descer" ${ei===w.ex.length-1?'disabled':''}>↓</button>
           <button class="ic ${S.armed==='rm'+e.id?'armed btn':''}" style="${S.armed==='rm'+e.id?'width:auto;min-height:0;padding:0 10px':''}" data-act="rmex" data-w="${wi}" data-x="${ei}" data-k="rm${e.id}" aria-label="Remover">${S.armed==='rm'+e.id?'Remover?':'✕'}</button>
@@ -547,6 +592,68 @@ function chart(name){
     <text x="${W_-R}" y="${H-6}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Barlow,sans-serif">${new Date(last.d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</text>
   </svg><p class="num" style="margin:6px 0 0;font-size:14px"><b>${fmtKg(last.v)} kg</b> <span class="muted">· ${diff>=0?'+':''}${fmtKg(diff)} kg desde ${new Date(first.d).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</span></p>`}
 
+/* ---------- perfil ---------- */
+function firstName(){return (S.user.name||'').trim().split(/\s+/)[0]||''}
+function avatarInner(){return S.user.photo?`<img src="${S.user.photo}" alt="">`:(S.user.name?`<span>${esc(firstName().charAt(0).toUpperCase())}</span>`:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>`)}
+function renderAvatar(){const b=document.getElementById('avatarBtn');if(b){b.innerHTML=avatarInner();b.classList.toggle('on',S.view==='perfil')}}
+function saveUser(){LS.set('ct.user',S.user);renderAvatar()}
+function greet(){const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
+function welcomeCard(){if(S.user.name)return `<div class="hello"><span class="av sm">${avatarInner()}</span><div><div class="eyebrow">${greet()}</div><div class="hello-n">${esc(firstName())}</div></div></div>`;
+  if(S.user.skip)return '';
+  return `<div class="card stack welcome"><div class="row"><span class="av md">${avatarInner()}</span><div style="min-width:0"><h3>Bem-vindo ao Up Anilha</h3><div class="muted" style="font-size:14px">Como você quer ser chamado? A foto é opcional.</div></div></div>
+    <input id="welName" class="wname" placeholder="Seu nome" autocomplete="given-name" aria-label="Seu nome" value="${esc(S.draftName||'')}">
+    <div class="row"><label class="btn ghost sm" for="photoIn" style="display:inline-flex;align-items:center">${S.user.photo?'Trocar foto':'Adicionar foto'}</label><input type="file" id="photoIn" accept="image/*" hidden>
+      <span style="flex:1"></span><button class="btn ghost sm" data-act="skipwel">Agora não</button><button class="btn primary sm" data-act="welcome">Começar</button></div></div>`}
+function viewPerfil(){const u=S.user;
+  return `<div class="stack"><div><div class="eyebrow">Seu perfil</div><h2>${esc(u.name||'Quem é você?')}</h2></div>
+  <div class="card stack" style="align-items:center">
+    <span class="av xl">${avatarInner()}</span>
+    <div class="row" style="justify-content:center;flex-wrap:wrap"><label class="btn ghost sm" for="photoIn" style="display:inline-flex;align-items:center">${u.photo?'Trocar foto':'Adicionar foto'}</label><input type="file" id="photoIn" accept="image/*" hidden>
+      ${u.photo?`<button class="btn ghost sm danger" data-act="rmphoto">Remover foto</button>`:''}</div>
+    <label class="field" style="width:100%">Nome<input id="userName" class="wname" data-f="uname" value="${esc(u.name)}" placeholder="Seu nome" autocomplete="given-name"></label>
+  </div>
+  <p class="muted" style="margin:0;font-size:14px">Seu perfil, sua foto e seus treinos ficam salvos só neste celular. Não tem senha nem conta: ninguém mais vê esses dados.</p>
+  ${backupCard()}
+  <button class="btn primary" data-act="go" data-v="hoje">Voltar ao treino</button></div>`}
+function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Escolha uma imagem');return}const r=new FileReader();
+  r.onload=()=>{const img=new Image();img.onload=()=>{const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');const m=Math.min(img.width,img.height);
+    x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva');render()};img.onerror=()=>toast('Não consegui abrir essa imagem');img.src=r.result};r.readAsDataURL(f)}
+
+/* ---------- guia ---------- */
+const GIDX=(window.GUIDE||[]).map(g=>({...g,rx:new RegExp(g.re)}));
+function guideFor(name){const n=norm(name);return GIDX.find(g=>g.rx.test(n))||null}
+const GROUPS=['Todos','Peito','Costas','Ombros','Braços','Pernas','Core','Cardio'];
+function guideList(){const q=norm(S.gq||''),grp=S.gg||'Todos';
+  const list=GIDX.filter(g=>(grp==='Todos'||g.g===grp)&&(!q||norm(g.n+' '+g.m+' '+g.ap).includes(q)||g.rx.test(q)));
+  if(!list.length)return `<div class="empty"><h3>Nada encontrado</h3><p style="margin:0">Tente outro nome, como "puxada", "leg" ou "rosca".</p>${q?`<a class="btn ghost" style="margin-top:12px;display:inline-flex" href="${ytUrl(S.gq)}" target="_blank" rel="noopener">Ver vídeos de "${esc(S.gq)}"</a>`:''}</div>`;
+  return list.map(g=>`<button class="gitem" data-act="howk" data-k="${g.k}">${g.img?`<img src="img/ex/${g.img}-0.jpg" alt="" loading="lazy">`:`<span class="gnoimg">${esc(g.g)}</span>`}<span class="gtxt"><b>${esc(g.n)}</b><span>${esc(g.m)}</span></span>${issues(g.n).length?'<span class="flag">⚠</span>':''}</button>`).join('')}
+function viewGuia(){return `<div class="stack"><div><div class="eyebrow">Guia de exercícios</div><h2>Como fazer certo</h2><p class="muted" style="margin:4px 0 0">Foto do aparelho, passo a passo e os erros mais comuns.</p></div>
+  <input id="guideQ" class="search" type="search" placeholder="Buscar exercício ou aparelho" value="${esc(S.gq||'')}" aria-label="Buscar exercício">
+  <div class="chips gchips">${GROUPS.map(x=>`<button class="chip sm" data-act="gg" data-g="${x}" aria-pressed="${(S.gg||'Todos')===x}">${x}</button>`).join('')}</div>
+  <div class="glist" id="guideList">${guideList()}</div>
+  <p class="muted" style="font-size:12px;margin:0">Fotos: free-exercise-db (domínio público).</p></div>`}
+function ytUrl(n){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(n+' execução correta')}
+let sheetTimer=null;
+function openGuide(name,key){const g=key?GIDX.find(x=>x.k===key):guideFor(name);const el=document.getElementById('sheet'),inn=document.getElementById('sheetIn');
+  const title=g?g.n:name;const iss=issues(name||title);
+  inn.innerHTML=`<div class="sheet-head"><div style="min-width:0"><div class="eyebrow">${g?esc(g.g)+' · '+esc(g.m):'Exercício'}</div><h3>${esc(title)}</h3>${g&&name&&norm(name)!==norm(g.n)?`<div class="muted" style="font-size:13px">Na sua ficha: ${esc(name)}</div>`:''}</div><button class="ic" data-close aria-label="Fechar">✕</button></div>
+   ${g&&g.img?`<div class="gfig"><img id="gimg0" src="img/ex/${g.img}-0.jpg" alt="Posição inicial de ${esc(g.n)}"><img id="gimg1" src="img/ex/${g.img}-1.jpg" alt="Posição final de ${esc(g.n)}"><span class="gfig-l" id="gfigL">Início</span></div>`:''}
+   ${iss.map(i=>`<div class="warn"><b>⚠ ${esc(i.short)}:</b> ${esc(i.why)} Sugestão: ${esc(i.to)}.</div>`).join('')}
+   ${g?`<div class="gsec"><div class="eyebrow">O aparelho</div><p>${esc(g.ap)}</p></div>
+   <div class="gsec"><div class="eyebrow">Passo a passo</div><ol>${g.p.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>
+   <div class="gsec"><div class="eyebrow">Erros comuns</div><ul class="errs">${g.e.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+   ${g.c?`<div class="gtip">${esc(g.c)}</div>`:''}`:`<p class="muted">Ainda não temos esse exercício no guia. Veja vídeos de execução ou pergunte ao personal.</p>`}
+   <div class="row" style="flex-wrap:wrap"><a class="btn ghost" href="${ytUrl(title)}" target="_blank" rel="noopener">Ver vídeos</a>${sampleApi?`<button class="btn ghost" data-ask="${esc(title)}">Perguntar ao personal</button>`:''}</div>`;
+  el.hidden=false;document.body.classList.add('noscroll');clearInterval(sheetTimer);
+  const i1=document.getElementById('gimg1'),lab=document.getElementById('gfigL');
+  if(i1&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){let on=false;sheetTimer=setInterval(()=>{on=!on;i1.style.opacity=on?1:0;lab.textContent=on?'Fim':'Início'},1400)}
+  const cb=inn.querySelector('[data-close]');cb&&cb.focus()}
+function closeGuide(){document.getElementById('sheet').hidden=true;document.body.classList.remove('noscroll');clearInterval(sheetTimer)}
+document.getElementById('sheet').addEventListener('click',e=>{if(e.target.id==='sheet'||e.target.closest('[data-close]')){closeGuide();return}
+  const a=e.target.closest('[data-ask]');if(a){closeGuide();S.view='personal';render();sendChat(`Como faço ${a.dataset.ask} corretamente? Quais cuidados para o meu caso?`)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('sheet').hidden)closeGuide()});
+document.getElementById('avatarBtn').addEventListener('click',()=>{S.view='perfil';S.armed=null;window.scrollTo(0,0);render()});
+
 function backupCard(){return `<div class="card stack"><div class="eyebrow">Backup</div><p class="muted" style="margin:0;font-size:14px">Seus dados ficam só neste celular. Baixe um backup de vez em quando para não perder nada se trocar de aparelho.</p>
   <div class="row"><button class="btn ghost" data-act="backup">Baixar backup</button><label class="btn ghost" for="restoreIn" style="display:inline-flex;align-items:center">Restaurar backup</label><input type="file" id="restoreIn" accept="application/json,.json" hidden></div></div>`}
 function viewHist(){
@@ -571,7 +678,8 @@ function viewHist(){
   </div>`}
 
 function render(){
-  main.innerHTML=S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():viewHist();
+  main.innerHTML=S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():viewHist();
+  renderAvatar();
   const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
@@ -623,6 +731,12 @@ main.addEventListener('click',e=>{
   const twoStep=key=>{if(S.armed===key){S.armed=null;return true}arm(key);render();return false};
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
+    case 'how':openGuide(b.dataset.name);return;
+    case 'howk':openGuide('',b.dataset.k);return;
+    case 'gg':S.gg=b.dataset.g;document.querySelectorAll('.gchips .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.g===S.gg));document.getElementById('guideList').innerHTML=guideList();return;
+    case 'welcome':{const v=(document.getElementById('welName').value||'').trim();if(!v){toast('Digite seu nome');return}S.user.name=v;saveUser();toast('Bem-vindo, '+firstName()+'!');break}
+    case 'skipwel':S.user.skip=true;saveUser();break;
+    case 'rmphoto':S.user.photo='';saveUser();break;
     case 'swap':{const ex=S.plan.workouts[wi].ex[xi];if(!ex.orig)ex.orig={name:ex.name,bar:!!ex.bar,reps:ex.reps};ex.name=b.dataset.to;ex.bar=false;adaptEx(ex);savePlan();toast('Exercício trocado');break}
     case 'adaptall':{const n=adaptPlan();savePlan();toast(n+(n===1?' exercício adaptado':' exercícios adaptados'));break}
     case 'swapA':{const ae=a.ex[ei];ae.name=b.dataset.to;ae.target.bar=false;adaptEx({name:ae.name,set bar(v){}});const fx=issues(ae.name);if(fx.length)ae.name=fx[0].to;
@@ -631,7 +745,7 @@ main.addEventListener('click',e=>{
     case 'sug':sendChat(b.dataset.t);return;
     case 'savekey':{const v=(document.getElementById('keyIn').value||'').trim();if(!/^sk-/.test(v)){toast('A chave começa com sk-ant-');return}LS.set('ct.key',v);sampleApi=makeSample();toast('Personal ativado');break}
     case 'rmkey':if(!twoStep('rmkey'))return;try{localStorage.removeItem('ct.key')}catch(_){}sampleApi=null;break;
-    case 'backup':{const blob=new Blob([JSON.stringify({app:'anilha',v:1,plan:S.plan,sessions:S.sessions,chat:S.chat},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='up-anilha-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return}
+    case 'backup':{const blob=new Blob([JSON.stringify({app:'up-anilha',v:2,user:S.user,plan:S.plan,sessions:S.sessions,chat:S.chat},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='up-anilha-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return}
     case 'clearchat':if(!twoStep('clearchat'))return;S.chat=[];saveChat();break;
     case 'checkin':addSession({id:uid(),date:new Date().toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[]});toast('Check-in feito. Bom treino!');break;
     case 'uncheck':delSession(b.dataset.id);break;
@@ -658,7 +772,10 @@ main.addEventListener('click',e=>{
   }
   S.armed=null;render();
 });
-main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chatIn'){S.draft=t.value;return}if(!f)return;
+main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chatIn'){S.draft=t.value;return}
+  if(t.id==='guideQ'){S.gq=t.value;document.getElementById('guideList').innerHTML=guideList();return}
+  if(t.id==='welName'){S.draftName=t.value;return}
+  if(f==='uname'){S.user.name=t.value;saveUser();return}if(!f)return;
   if(f==='restr'){const r=restr(),k=t.dataset.k;if(t.checked&&!r.includes(k))r.push(k);if(!t.checked)r.splice(r.indexOf(k),1);const n=adaptPlan();savePlan();render();
     toast(n?(t.checked?`Rotina adaptada: ${n} ${n===1?'exercício trocado':'exercícios ajustados'} para ${RESTR[k].short.toLowerCase()}`:`Rotina atualizada: ${n} ${n===1?'exercício voltou':'exercícios voltaram'} ao original`):(t.checked?'Sua rotina já é segura para '+RESTR[k].short.toLowerCase():'Restrição removida'));return}
   if(f==='pf'){const k=t.dataset.k;profile()[k]=['minutes','days'].includes(k)?+t.value:t.value;savePlan();return}
@@ -671,8 +788,9 @@ main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chat
     ex[f]=f==='bar'?t.checked:f==='sets'?Math.max(1,Math.min(10,+t.value||1)):f==='rest'?+t.value:t.value;savePlan()}
 });
 main.addEventListener('submit',e=>{if(e.target.id==='chatForm'){e.preventDefault();sendChat(S.draft)}});
-main.addEventListener('change',e=>{if(e.target.id==='restoreIn'){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.plan||!Array.isArray(d.plan.workouts)||!Array.isArray(d.sessions))throw 0;
-    S.plan=d.plan;S.sessions=d.sessions;S.chat=Array.isArray(d.chat)?d.chat:[];LS.set('ct.plan',S.plan);LS.set('ct.sessions',S.sessions);LS.set('ct.chat',S.chat);toast('Backup restaurado');render()}catch(_){toast('Esse arquivo não é um backup do Up Anilha')}};r.readAsText(f);return}if(e.target.dataset.f==='histEx'){S.histEx=e.target.value;render()}});
+main.addEventListener('change',e=>{if(e.target.id==='photoIn'){if(S.view==='hoje'){const w=document.getElementById('welName');if(w)S.draftName=w.value}processPhoto(e.target.files&&e.target.files[0]);return}
+  if(e.target.id==='restoreIn'){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.plan||!Array.isArray(d.plan.workouts)||!Array.isArray(d.sessions))throw 0;
+    S.plan=d.plan;S.sessions=d.sessions;S.chat=Array.isArray(d.chat)?d.chat:[];if(d.user&&typeof d.user==='object'){S.user=d.user;LS.set('ct.user',S.user)}LS.set('ct.plan',S.plan);LS.set('ct.sessions',S.sessions);LS.set('ct.chat',S.chat);toast('Backup restaurado');render()}catch(_){toast('Esse arquivo não é um backup do Up Anilha')}};r.readAsText(f);return}if(e.target.dataset.f==='histEx'){S.histEx=e.target.value;render()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active){try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>wake=l).catch(()=>{})}catch(e){}}});
 
 if(apiKey())sampleApi=makeSample();
