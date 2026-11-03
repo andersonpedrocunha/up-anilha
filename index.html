@@ -866,6 +866,9 @@ function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${
       ${sampleApi?`<button class="btn ghost sm" data-act="keylink" style="align-self:flex-start">Ativar em outro celular</button>`:''}
       ${sampleApi?`<button class="btn ghost sm ${S.armed==='rmkey'?'armed':''}" data-act="rmkey" style="align-self:flex-start">${S.armed==='rmkey'?'Toque de novo para remover a chave':'Remover chave da API'}</button>`:''}
       ${sampleApi?`<div class="eyebrow" style="margin-top:4px">Modo da IA</div>${modelPicker()}${creditCard()}`:''}
+    </div>
+    ${voiceCard()}
+    <div style="display:none">
       ${S.chat.length?`<button class="btn ghost sm ${S.armed==='clearchat'?'armed':''}" data-act="clearchat" style="align-self:flex-start">${S.armed==='clearchat'?'Toque de novo para limpar':'Limpar conversa'}</button>`:''}
     </div>
   </div>`}
@@ -1237,9 +1240,21 @@ function beginWorkout(id,extra){bodyCheck().then(r=>{if(r===false)return;startSe
 
 /* ---------- voz ---------- */
 function voiceOn(){return !!LS.get('ct.voice',false)}
-let ptVoice=null;function pickVoice(){try{const V=speechSynthesis.getVoices().filter(v=>/^pt/i.test(v.lang));ptVoice=V.find(v=>/BR/i.test(v.lang)&&/female|mulher|luciana|francisca|vit[oó]ria|google/i.test(v.name))||V.find(v=>/BR/i.test(v.lang))||V[0]||null}catch(e){}}
+let ptVoice=null;
+function vScore(v){let n=0;const nm=v.name;if(/premium|enhanced|aprimorad|natural|neural|online/i.test(nm))n+=4;if(/google/i.test(nm))n+=2;if(/BR/i.test(v.lang))n+=2;if(/female|feminin|mulher|luciana|francisca|fernanda|vit[oó]ria|raquel|maria|helena|joana|yara|thalita|leila|camila|brenda|elza|giovanna|manuela|leticia/i.test(nm))n+=2;if(/male\b|masculin|daniel|felipe|ant[oô]nio|fabio|humberto|julio|nicolau|valerio|donato/i.test(nm))n-=3;if(v.localService===false)n+=1;return n}
+function ptVoices(){try{return speechSynthesis.getVoices().filter(v=>/^pt/i.test(v.lang)).sort((a,b)=>vScore(b)-vScore(a))}catch(e){return []}}
+function pickVoice(){const V=ptVoices();const want=LS.get('ct.voiceName','');ptVoice=V.find(v=>v.name===want)||V[0]||null;if(S.view==='personal'&&V.length&&!document.getElementById('voiceSel')&&document.activeElement?.tagName!=='TEXTAREA')render()}
+function voiceCard(){const V=ptVoices();const cur=ptVoice&&ptVoice.name;const rate=LS.get('ct.voiceRate',1);
+  return `<div class="card stack"><div class="row">${coachAv(36)}<div style="min-width:0"><h3>Voz da ${COACH}</h3><div class="muted" style="font-size:13px">Ela fala no treino quando você liga o 🔊. Usa as vozes do seu celular, sem custo.</div></div></div>
+    ${V.length?`<select id="voiceSel" class="sel" data-f="voice" aria-label="Voz">${V.map(v=>`<option value="${esc(v.name)}" ${v.name===cur?'selected':''}>${esc(v.name.replace(/Microsoft |Google |\\(.*?\\)/g,'').trim()||v.name)}${/premium|enhanced|aprimorad|natural|neural/i.test(v.name)?' ★':''}</option>`).join('')}</select>
+    <div class="row"><span class="muted" style="font-size:13px">Velocidade</span><div class="chips" style="flex:1">${[[.9,'Calma'],[1,'Normal'],[1.1,'Rápida']].map(([v,l])=>`<button class="chip sm" data-act="vrate" data-v="${v}" aria-pressed="${rate===v}">${l}</button>`).join('')}</div></div>
+    <button class="btn ghost" data-act="vtest">▶ Ouvir a ${COACH}</button>`:'<p class="muted" style="margin:0;font-size:14px">Seu navegador não mostrou nenhuma voz em português ainda. Instale uma pelas dicas abaixo.</p>'}
+    <details class="goals"><summary>Vozes mais bonitas, de graça</summary><div class="muted" style="font-size:13px;display:flex;flex-direction:column;gap:6px;margin-top:6px">
+      <span><b>iPhone:</b> Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Português (Brasil) → baixe a <b>Luciana (Aprimorada)</b> ou outra marcada como Aprimorada/Premium. Depois feche e abra o app e escolha aqui.</span>
+      <span><b>Android:</b> Configurações → busque "Saída de texto para fala" → mecanismo <b>Google</b> → engrenagem → Instalar dados de voz → Português (Brasil) → escolha uma voz feminina e baixe. Volte aqui e teste.</span>
+      <span>As marcadas com ★ são as de melhor qualidade.</span></div></details></div>`}
 try{speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}catch(e){}
-function speak(t){if(!voiceOn())return;try{const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';if(ptVoice)u.voice=ptVoice;u.rate=1.02;u.pitch=0.95;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+function speak(t,force){if(!voiceOn()&&!force)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';if(ptVoice)u.voice=ptVoice;u.rate=LS.get('ct.voiceRate',1);u.pitch=1;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 
 /* ---------- foto da execução ---------- */
 function shrinkImage(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const M=1024,k=Math.min(1,M/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82).split(',')[1])};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(file)})}
@@ -1768,6 +1783,8 @@ main.addEventListener('click',e=>{
     case 'voice':LS.set('ct.voice',!voiceOn());if(voiceOn()){try{speechSynthesis.getVoices()}catch(_){}speak('Voz ligada. Eu aviso quando o descanso acabar.')}else toast('Fico quieta. Mas continuo de olho.');break;
     case 'busy':busyPick(ei);return;
     case 'saga':openSaga();return;
+    case 'vrate':LS.set('ct.voiceRate',+b.dataset.v);speak(pick(['Assim está bom?','Bora, mais uma série.']),true);break;
+    case 'vtest':speak(pick([`Oi, ${firstName()||'guerreiro'}. Eu sou a ${COACH}. Série feita. Descanso de noventa segundos.`,`Descanso acabou. Próxima série. Mostra pra barra quem manda.`]),true);return;
     case 'gpxhelp':S.gpxHelp=!S.gpxHelp;break;
     case 'mealman':S.mealMan=!S.mealMan;break;
     case 'mealadd':{const n=document.getElementById('mlName').value.trim()||'Refeição',k=parseInt(document.getElementById('mlKcal').value),pr=parseInt(document.getElementById('mlProt').value);if(!(k>0)){toast('Quantas calorias, mais ou menos?');return}const f=food();f.meals.push({id:uid(),t:Date.now(),name:n.slice(0,60),kcal:k,prot:pr>0?pr:null});saveFood(f);S.mealMan=false;toast(`${k} kcal anotadas.`);break}
@@ -1903,7 +1920,7 @@ main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chat
     ex[f]=f==='bar'?t.checked:f==='sets'?Math.max(1,Math.min(10,+t.value||1)):f==='rest'?+t.value:t.value;savePlan()}
 });
 main.addEventListener('submit',e=>{if(e.target.id==='chatForm'){e.preventDefault();sendChat(S.draft)}});
-main.addEventListener('change',e=>{if(e.target.id==='gpxIn'){const f=e.target.files&&e.target.files[0];if(f)importGpx(f);e.target.value='';return}
+main.addEventListener('change',e=>{if(e.target.id==='voiceSel'){LS.set('ct.voiceName',e.target.value);pickVoice();speak(`Oi. Eu sou a ${COACH}. Gostou dessa voz?`,true);return}if(e.target.id==='gpxIn'){const f=e.target.files&&e.target.files[0];if(f)importGpx(f);e.target.value='';return}
   if(e.target.id==='mealPhoto'){const f=e.target.files&&e.target.files[0];if(f)mealPhoto(f);e.target.value='';return}
   if(e.target.dataset&&e.target.dataset.photo!==undefined){const f=e.target.files&&e.target.files[0];if(f&&S.active){const ae=S.active.ex[+e.target.dataset.photo];analyzePhoto(ae.name,f)}return}
   if(e.target.id==='photoIn'){if(S.view==='hoje'){const w=document.getElementById('welName');if(w)S.draftName=w.value}processPhoto(e.target.files&&e.target.files[0]);return}
