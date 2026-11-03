@@ -1001,7 +1001,7 @@ function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Isso não é um
     x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva. Agora eu sei com quem estou falando.');render()};img.onerror=()=>toast('Não consegui abrir essa foto. Tenta outra.');img.src=r.result};r.readAsDataURL(f)}
 
 /* ---------- Driffa ---------- */
-const COACH='Driffa';const AV='?v=15';
+const COACH='Driffa';const AV='?v=16';
 function coachLook(){const v=LS.get('ct.look',1);return [1,2,3].includes(v)?v:1}
 function coachAv(size){return `<img class="coachav" src="driffa-face-${coachLook()}.jpg${AV}" width="${size}" height="${size}" alt="${COACH}">`}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
