@@ -1099,9 +1099,12 @@ function hasBody(){return +body().weight>0}
 function bmrDay(){const b=body();const w=+b.weight||70,h=+b.height||170,a=+b.age||30;const base=10*w+6.25*h-5*a;return b.sex==='m'?base+5:b.sex==='f'?base-161:base-78}
 function kcalFor(met,min){return Math.max(0,Math.round(met*bmrDay()/1440*min))}
 const MET_GYM=5;
-const MET={bike:['Bicicleta',4,6.8,10],caminhada:['Caminhada',3,3.8,5],corrida:['Corrida',7,9.8,11.5],natacao:['Natação',5.8,7,9.8],futebol:['Futebol',5,7,10],
- funcional:['Treino em casa (funcional)',3.8,5,8],musc_casa:['Musculação em casa',3.5,5,6],esteira:['Esteira ou elíptico em casa',4.5,5,7],yoga:['Yoga ou pilates',2.5,3,4],
- danca:['Dança',4.5,5.5,7.8],lutas:['Lutas',5.5,7.8,10.3],raquete:['Tênis, beach tennis ou vôlei',4.5,6,8],trilha:['Trilha',5.3,6,7.8],outro:['Outra atividade',3.5,5,7]};
+const MET={
+ bike_erg:['Bicicleta ergométrica',3.5,6.8,8.8,'casa'],esteira:['Esteira (caminhada)',3.5,4.3,5.5,'casa'],esteira_corrida:['Esteira (corrida)',7,9,11,'casa'],eliptico:['Elíptico',4.6,5,7,'casa'],
+ musc_casa:['Musculação em casa',3.5,5,6,'casa'],funcional:['Funcional em casa',3.8,5,8,'casa'],yoga:['Yoga ou pilates',2.5,3,4,'casa'],
+ bike:['Bicicleta na rua',4,6.8,10,'rua'],caminhada:['Caminhada',3,3.8,5,'rua'],corrida:['Corrida',7,9.8,11.5,'rua'],trilha:['Trilha',5.3,6,7.8,'rua'],
+ natacao:['Natação',5.8,7,9.8,'esporte'],futebol:['Futebol',5,7,10,'esporte'],raquete:['Tênis, beach tennis ou vôlei',4.5,6,8,'esporte'],lutas:['Lutas',5.5,7.8,10.3,'esporte'],danca:['Dança',4.5,5.5,7.8,'esporte'],outro:['Outra atividade',3.5,5,7,'esporte']};
+const MET_GROUPS=[['casa','Em casa'],['rua','Ao ar livre'],['esporte','Esportes e outros']];
 const INTN=['leve','moderada','intensa'];
 function sessionKcal(s){if(s.checkin)return 0;if(s.activity){const m=MET[s.activity]||MET.outro;return kcalFor(m[1+(s.intensity??1)],s.minutes||0)}
   let min=Math.min(180,(s.durationSec||0)/60);if(min<5)min=s.ex.reduce((n,e)=>n+e.sets.length,0)*2.5;return kcalFor(MET_GYM,min)}
@@ -1110,10 +1113,10 @@ function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 /* ---------- atividades ---------- */
 function actK(){const a=S.act,m=MET[a.type];return kcalFor(m[1+a.int],a.min)}
 function actRefresh(){const k=document.getElementById('actK');if(k)k.textContent=actK();const x=document.getElementById('actX');if(x)x.textContent='+'+(40+Math.min(S.act.min,90))+' XP'}
-function viewAtiv(){if(!S.act)S.act={type:'bike',min:30,int:1,date:todayISO(),note:''};const a=S.act;
+function viewAtiv(){if(!S.act)S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:todayISO(),note:''};const a=S.act;
   return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Atividade fora da academia</div></div>
   <h2>O que você fez?</h2>
-  <div class="chips">${Object.entries(MET).map(([k,v])=>`<button class="chip sm" data-act="atype" data-v="${k}" aria-pressed="${a.type===k}">${v[0]}</button>`).join('')}</div>
+  ${MET_GROUPS.map(([gk,gl])=>`<div class="eyebrow" style="margin-top:4px">${gl}</div><div class="chips">${Object.entries(MET).filter(([k,v])=>v[4]===gk).map(([k,v])=>`<button class="chip sm" data-act="atype" data-v="${k}" aria-pressed="${a.type===k}">${v[0]}</button>`).join('')}</div>`).join('')}
   <h3>Quanto tempo?</h3>
   <div class="row"><input type="number" id="actMin" class="wname" min="1" max="600" value="${a.min}" style="width:100px;font-size:18px;font-weight:700" aria-label="Minutos"><span class="muted">minutos</span></div>
   <div class="chips">${[15,30,45,60,90].map(v=>`<button class="chip sm" data-act="amin" data-v="${v}" aria-pressed="${a.min===v}">${v} min</button>`).join('')}</div>
@@ -1217,14 +1220,14 @@ function viewHist(){
     <div class="card empty"><h3>Nenhum treino ainda</h3><p style="margin:0">Cada check-in ou treino concluído aparece aqui com a carga de cada série, o volume total e a evolução de cada exercício.</p>
     <button class="btn primary" style="margin-top:14px" data-act="go" data-v="hoje">Ir para o treino de hoje</button></div>${backupCard()}</div>`;
   const now=Date.now(),d30=new Set(S.sessions.filter(s=>now-new Date(s.date)<30*864e5).map(s=>dayKey(s.date))).size,allV=visitSet().size;
-  const names=[...new Set(S.sessions.filter(s=>!s.checkin).flatMap(s=>s.ex.map(e=>e.name)))];if(!S.histEx||!names.includes(S.histEx))S.histEx=names[0];
+  const names=[...new Set(S.sessions.filter(s=>!s.checkin&&!s.activity).flatMap(s=>s.ex.map(e=>e.name)))];if(!S.histEx||!names.includes(S.histEx))S.histEx=names[0];
   const totalVol=S.sessions.filter(s=>now-new Date(s.date)<30*864e5).reduce((a,s)=>a+vol(s),0);
   return `<div class="stack">
     <div><div class="eyebrow">Histórico</div><h2>Seus treinos</h2></div>
     <div class="stats"><div class="stat"><b>${allV}</b><span>dias ativos</span></div><div class="stat"><b>${d30}</b><span>dias em 30 dias</span></div><div class="stat"><b>${(()=>{const k=S.sessions.filter(s=>now-new Date(s.date)<30*864e5).reduce((a,s)=>a+sessionKcal(s),0);return k>=10000?fmtKg(Math.round(k/100)/10)+'k':k.toLocaleString('pt-BR')})()}</b><span>kcal em 30 dias</span></div></div>
-    <div class="card"><div class="eyebrow" style="margin-bottom:6px">Evolução da carga máxima</div>
+    ${names.length?`<div class="card"><div class="eyebrow" style="margin-bottom:6px">Evolução da carga máxima</div>
       <select class="sel" id="histEx" data-f="histEx" aria-label="Exercício">${names.map(n=>`<option ${n===S.histEx?'selected':''}>${esc(n)}</option>`).join('')}</select>
-      <div style="margin-top:10px">${chart(S.histEx)}</div></div>
+      <div style="margin-top:10px">${chart(S.histEx)}</div></div>`:''}
     <div class="card"><ul class="exlist hist">${S.sessions.slice(0,60).map(s=>`<li>
       <div class="top"><div class="row" style="gap:8px;min-width:0"><span class="plate sm" style="width:30px;height:30px;font-size:16px;box-shadow:none">${esc(s.workoutId)}</span><b style="min-width:0">${esc(s.name)}</b></div><span class="muted" style="font-size:13px;flex:none">${fmtDate(s.date)}</span></div>
       <div class="muted num" style="font-size:13px;margin-top:4px">${s.checkin?'Presença registrada':s.activity?`${s.minutes} min · intensidade ${INTN[s.intensity]||''} · ≈ ${sessionKcal(s)} kcal`:`${mmss(s.durationSec/60).replace(':','h')}min · ${s.ex.reduce((n,e)=>n+e.sets.length,0)} séries · ${fmtKg(vol(s))} kg · ≈ ${sessionKcal(s)} kcal`}</div>
@@ -1334,12 +1337,12 @@ main.addEventListener('click',e=>{
       const isToday=iso===todayISO();addSession({id:uid(),date:(isToday?new Date():d).toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[],late:!isToday});
       render();celebrate((isToday?'Check-in feito.':'Anotei '+label+'. Esquecer de registrar, tudo bem. Esquecer de treinar, não.')+' +30 XP');return}
     case 'look':LS.set('ct.look',+b.dataset.v);break;
-    case 'ativ':S.act={type:'bike',min:30,int:1,date:todayISO(),note:''};S.view='ativ';window.scrollTo(0,0);break;
+    case 'ativ':S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:todayISO(),note:''};S.view='ativ';window.scrollTo(0,0);break;
     case 'atype':S.act.type=b.dataset.v;break;
     case 'amin':S.act.min=+b.dataset.v;break;
     case 'aint':S.act.int=+b.dataset.v;break;
     case 'asave':{const a=S.act;if(!a.min){toast('Quanto tempo? Sem isso eu não calculo nada.');return}const today=a.date===todayISO();const d=today?new Date():new Date(a.date+'T12:00:00');
-      const m=MET[a.type];const sess={id:uid(),date:d.toISOString(),activity:a.type,workoutId:'+',name:m[0],minutes:a.min,intensity:a.int,durationSec:a.min*60,note:a.note,ex:[]};sess.kcal=sessionKcal(sess);
+      const m=MET[a.type];LS.set('ct.lastAct',a.type);const sess={id:uid(),date:d.toISOString(),activity:a.type,workoutId:'+',name:m[0],minutes:a.min,intensity:a.int,durationSec:a.min*60,note:a.note,ex:[]};sess.kcal=sessionKcal(sess);
       addSession(sess);S.act=null;S.view='hoje';window.scrollTo(0,0);render();celebrate(`${m[0]} anotada. Guerreiro se move até fora da arena. ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);return}
     case 'conq':S.view='conq';window.scrollTo(0,0);break;
     case 'train':S.picking=true;window.scrollTo(0,0);break;
