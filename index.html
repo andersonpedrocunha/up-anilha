@@ -296,8 +296,13 @@ a.btn .coachav{margin-right:8px}
 .svc.big{border-radius:12px;padding:8px 12px;flex:1 1 140px;min-width:0}.svc.big span{display:flex;flex-direction:column;min-width:0}.svc.big b{color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.svc.big small{font-size:11px;color:var(--muted);font-weight:500}
 .aurow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.aurow:first-of-type{border-top:0}
 .stretch summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.stretch summary::-webkit-details-marker{display:none}
-.strow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.strow{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
 .stfor{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.stimg{position:relative;width:96px;height:68px;flex:none;border-radius:10px;overflow:hidden;background:var(--sunk)}
+.stimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stimg .st2{animation:stswap 2.8s infinite}
+@keyframes stswap{0%,45%{opacity:0}55%,95%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.stimg .st2{animation:none;opacity:1}}
 .strow b{display:block}.strow span{font-size:13px}.strow p{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .strow.done b{color:var(--good)}
 .cbox{position:fixed;inset:0;z-index:60;background:rgb(0 0 0 / .55);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -946,33 +951,33 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[data-aid]');if
 
 /* ---------- alongamento ---------- */
 const STRETCH=[
- {k:'peito-medio',n:'Peitoral no batente',t:30,side:1,how:'Antebraço no batente com o cotovelo na altura do ombro, em 90°. Dê um passo à frente e gire o tronco para o lado oposto.',avoid:[]},
- {k:'peito-alto',n:'Peitoral superior no batente',t:30,side:1,how:'Mão no batente abaixo da linha do ombro, braço esticado e inclinado para baixo. Avance o corpo até sentir a parte de cima do peito.',avoid:[]},
+ {k:'peito-medio',img:'Dynamic_Chest_Stretch',n:'Peitoral no batente',t:30,side:1,how:'Antebraço no batente com o cotovelo na altura do ombro, em 90°. Dê um passo à frente e gire o tronco para o lado oposto.',avoid:[]},
+ {k:'peito-alto',img:'Elbows_Back',n:'Peitoral superior no batente',t:30,side:1,how:'Mão no batente abaixo da linha do ombro, braço esticado e inclinado para baixo. Avance o corpo até sentir a parte de cima do peito.',avoid:[]},
  {k:'peito-baixo',n:'Peitoral inferior no batente',t:30,side:1,how:'Mão no batente acima da cabeça, braço em diagonal para cima. Avance o corpo e sinta a parte de baixo do peito.',avoid:['ombro']},
- {k:'delt-ant',n:'Ombro frontal no banco',t:30,how:'De costas para um banco, mãos apoiadas atrás nele, dedos para frente. Dobre um pouco os joelhos e desça o corpo devagar, peito aberto.',avoid:['ombro']},
- {k:'delt-post',n:'Ombro posterior cruzado',t:30,side:1,how:'Braço esticado cruzando na frente do peito, a outra mão puxa pelo cotovelo. Ombro baixo, longe da orelha.',avoid:[]},
- {k:'delt-lat',n:'Ombro lateral por trás',t:30,side:1,how:'Leve um braço por trás das costas e, com a outra mão, puxe o punho para o lado oposto. Incline a cabeça para longe.',avoid:['cervical']},
- {k:'triceps',n:'Tríceps acima da cabeça',t:30,side:1,how:'Mão nas costas entre as escápulas, cotovelo apontando para o teto. A outra mão empurra o cotovelo de leve para trás.',avoid:['ombro']},
- {k:'triceps-cruzado',n:'Tríceps cruzado',t:30,side:1,how:'Braço dobrado na frente do peito, cotovelo apontado para o lado. A outra mão puxa o cotovelo em direção ao ombro oposto.',avoid:[]},
- {k:'biceps',n:'Bíceps na parede',t:30,side:1,how:'Palma para frente na parede atrás de você, braço esticado na altura do ombro. Gire o corpo para longe da parede.',avoid:[]},
- {k:'antebraco',n:'Antebraço e braquiorradial',t:30,side:1,how:'Braço esticado à frente, palma para baixo. Com a outra mão, puxe os dedos para baixo e para você.',avoid:[]},
- {k:'lat-banco',n:'Dorsal ajoelhado no banco',t:40,how:'Ajoelhado na frente de um banco, cotovelos apoiados nele e mãos juntas. Leve o quadril para trás e afunde o peito.',avoid:['joelho','ombro']},
- {k:'lat-pilar',n:'Dorsal no pilar',t:30,side:1,how:'Segure um pilar com uma mão na altura do peito, quadril para trás e para fora. Sinta a lateral das costas abrir.',avoid:[]},
- {k:'abraco',n:'Meio das costas (abraço)',t:30,how:'Abrace a si mesmo, mãos nas escápulas. Arredonde a parte de cima das costas e empurre os cotovelos à frente.',avoid:[]},
- {k:'trapezio',n:'Trapézio superior',t:20,side:1,how:'Incline a cabeça levando a orelha ao ombro, sem puxar. Desça o ombro oposto como se segurasse uma sacola.',avoid:['cervical']},
- {k:'quad-pe',n:'Quadríceps em pé',t:30,side:1,how:'Segure o pé atrás, calcanhar perto do glúteo, joelhos alinhados e quadril encaixado. Apoie a mão na parede.',avoid:['joelho']},
- {k:'quad-deitado',n:'Quadríceps deitado de lado',t:30,side:1,how:'Deitado de lado, segure o pé de cima e traga o calcanhar em direção ao glúteo sem forçar o joelho.',avoid:[]},
- {k:'flexor',n:'Flexor do quadril em afundo',t:30,side:1,how:'Joelho de trás no chão, pé da frente à frente. Contraia o glúteo de trás e empurre o quadril à frente, tronco reto.',avoid:['joelho']},
- {k:'posterior',n:'Posterior de coxa com toalha',t:30,side:1,how:'Deitado de costas, toalha na sola do pé. Suba a perna esticada até sentir atrás da coxa, com a lombar no chão.',avoid:[]},
- {k:'gluteo',n:'Glúteo em figura 4',t:30,side:1,how:'Deitado, cruze o tornozelo sobre o joelho oposto e puxe a coxa de baixo em direção ao peito.',avoid:[]},
- {k:'adutor',n:'Adutores em borboleta',t:40,how:'Sentado, junte as solas dos pés e segure os tornozelos. Coluna alta, deixe os joelhos caírem para os lados.',avoid:[]},
- {k:'gastro',n:'Panturrilha com joelho esticado',t:30,side:1,how:'Mãos na parede, perna de trás esticada e calcanhar no chão. Incline o corpo à frente.',avoid:[]},
- {k:'soleo',n:'Panturrilha com joelho dobrado',t:30,side:1,how:'Mesma posição na parede, mas dobre o joelho de trás mantendo o calcanhar no chão. Sente mais embaixo, perto do tornozelo.',avoid:[]},
- {k:'abd-deitado',n:'Abdômen alongado deitado',t:30,how:'Deitado de costas, estique braços acima da cabeça e pernas para baixo, como se crescesse para os dois lados.',avoid:[]},
- {k:'cobra',n:'Cobra suave',t:30,how:'De bruços, apoie os antebraços e eleve o peito devagar, quadril no chão. Sem dor nas costas.',avoid:['lombar']},
- {k:'joelhos-peito',n:'Joelhos ao peito',t:40,how:'Deitado de costas, abrace os joelhos e traga ao peito. Balance de leve para os lados para soltar a lombar.',avoid:[]},
- {k:'crianca',n:'Postura da criança',t:40,how:'Ajoelhado, sente nos calcanhares e leve os braços à frente no chão. Solte as costas e respire fundo.',avoid:['joelho']},
- {k:'punho',n:'Punho e antebraço (palma para cima)',t:30,side:1,how:'Braço esticado à frente, palma para cima. Puxe os dedos para baixo com a outra mão.',avoid:[]}];
+ {k:'delt-ant',img:'Chest_And_Front_Of_Shoulder_Stretch',n:'Ombro frontal com bastão',t:30,how:'Segure um bastão ou toalha com as mãos bem afastadas. Leve os braços esticados para cima e um pouco para trás, devagar, até sentir a frente dos ombros e o peito.',avoid:['ombro']},
+ {k:'delt-post',img:'Shoulder_Stretch',n:'Ombro posterior cruzado',t:30,side:1,how:'Braço esticado cruzando na frente do peito, a outra mão puxa pelo cotovelo. Ombro baixo, longe da orelha.',avoid:[]},
+ {k:'delt-lat',img:'Side_Wrist_Pull',n:'Ombro lateral cruzado',t:30,side:1,how:'Cruze um braço na frente do peito na altura do ombro e puxe pelo punho com a outra mão. Ombro baixo, longe da orelha.',avoid:[]},
+ {k:'triceps',img:'Triceps_Stretch',n:'Tríceps acima da cabeça',t:30,side:1,how:'Mão nas costas entre as escápulas, cotovelo apontando para o teto. A outra mão empurra o cotovelo de leve para trás.',avoid:['ombro']},
+ {k:'triceps-cruzado',img:'Tricep_Side_Stretch',n:'Tríceps cruzado',t:30,side:1,how:'Braço dobrado na frente do peito, cotovelo apontado para o lado. A outra mão puxa o cotovelo em direção ao ombro oposto.',avoid:[]},
+ {k:'biceps',img:'Standing_Biceps_Stretch',n:'Bíceps na parede',t:30,side:1,how:'Palma para frente na parede atrás de você, braço esticado na altura do ombro. Gire o corpo para longe da parede.',avoid:[]},
+ {k:'antebraco',img:'Kneeling_Forearm_Stretch',n:'Antebraço e braquiorradial',t:30,side:1,how:'Braço esticado à frente, palma para baixo. Com a outra mão, puxe os dedos para baixo e para você.',avoid:[]},
+ {k:'lat-banco',img:'Childs_Pose',n:'Dorsal ajoelhado no banco',t:40,how:'Ajoelhado na frente de um banco, cotovelos apoiados nele e mãos juntas. Leve o quadril para trás e afunde o peito.',avoid:['joelho','ombro']},
+ {k:'lat-pilar',img:'One_Arm_Against_Wall',n:'Dorsal no pilar',t:30,side:1,how:'Segure um pilar com uma mão na altura do peito, quadril para trás e para fora. Sinta a lateral das costas abrir.',avoid:[]},
+ {k:'abraco',img:'Upper_Back_Stretch',n:'Meio das costas (abraço)',t:30,how:'Abrace a si mesmo, mãos nas escápulas. Arredonde a parte de cima das costas e empurre os cotovelos à frente.',avoid:[]},
+ {k:'trapezio',img:'Side_Neck_Stretch',n:'Trapézio superior',t:20,side:1,how:'Incline a cabeça levando a orelha ao ombro, sem puxar. Desça o ombro oposto como se segurasse uma sacola.',avoid:['cervical']},
+ {k:'quad-pe',img:'Standing_Elevated_Quad_Stretch',n:'Quadríceps com o pé no banco',t:30,side:1,how:'De costas para um banco baixo, apoie o peito do pé de trás nele e dobre a perna da frente. Empurre o quadril à frente até sentir a frente da coxa de trás.',avoid:['joelho']},
+ {k:'quad-deitado',img:'On_Your_Side_Quad_Stretch',n:'Quadríceps deitado de lado',t:30,side:1,how:'Deitado de lado, segure o pé de cima e traga o calcanhar em direção ao glúteo sem forçar o joelho.',avoid:[]},
+ {k:'flexor',img:'Kneeling_Hip_Flexor',n:'Flexor do quadril em afundo',t:30,side:1,how:'Joelho de trás no chão, pé da frente à frente. Contraia o glúteo de trás e empurre o quadril à frente, tronco reto.',avoid:['joelho']},
+ {k:'posterior',img:'Lying_Hamstring',n:'Posterior de coxa com toalha',t:30,side:1,how:'Deitado de costas, toalha na sola do pé. Suba a perna esticada até sentir atrás da coxa, com a lombar no chão.',avoid:[]},
+ {k:'gluteo',img:'Ankle_On_The_Knee',n:'Glúteo em figura 4',t:30,side:1,how:'Deitado, cruze o tornozelo sobre o joelho oposto e puxe a coxa de baixo em direção ao peito.',avoid:[]},
+ {k:'adutor',img:'Groin_and_Back_Stretch',n:'Adutores em borboleta',t:40,how:'Sentado, junte as solas dos pés e segure os tornozelos. Coluna alta, deixe os joelhos caírem para os lados.',avoid:[]},
+ {k:'gastro',img:'Calf_Stretch_Hands_Against_Wall',n:'Panturrilha com joelho esticado',t:30,side:1,how:'Mãos na parede, perna de trás esticada e calcanhar no chão. Incline o corpo à frente.',avoid:[]},
+ {k:'soleo',img:'Standing_Soleus_And_Achilles_Stretch',n:'Panturrilha com joelho dobrado',t:30,side:1,how:'Mesma posição na parede, mas dobre o joelho de trás mantendo o calcanhar no chão. Sente mais embaixo, perto do tornozelo.',avoid:[]},
+ {k:'abd-deitado',img:'Overhead_Stretch',n:'Abdômen alongado deitado',t:30,how:'Em pé ou deitado, estique os braços acima da cabeça e cresça para cima, sentindo a barriga alongar. Respire fundo.',avoid:[]},
+ {k:'cobra',img:'Lower_Back_Curl',n:'Cobra suave',t:30,how:'De bruços, apoie os antebraços e eleve o peito devagar, quadril no chão. Sem dor nas costas.',avoid:['lombar']},
+ {k:'joelhos-peito',img:'Hug_Knees_To_Chest',n:'Joelhos ao peito',t:40,how:'Deitado de costas, abrace os joelhos e traga ao peito. Balance de leve para os lados para soltar a lombar.',avoid:[]},
+ {k:'crianca',img:'Childs_Pose',n:'Postura da criança',t:40,how:'Ajoelhado, sente nos calcanhares e leve os braços à frente no chão. Solte as costas e respire fundo.',avoid:['joelho']},
+ {k:'punho',img:'Kneeling_Forearm_Stretch',n:'Punho e antebraço (palma para cima)',t:30,side:1,how:'Braço esticado à frente, palma para cima. Puxe os dedos para baixo com a outra mão.',avoid:[]}];
 const EXSTRETCH=[
  [/supino inclinado/,['peito-alto','delt-ant']],[/supino (declinado)/,['peito-baixo']],[/supino|chest press/,['peito-medio','delt-ant','triceps-cruzado']],
  [/crossover/,['peito-baixo','peito-medio']],[/crucifixo inverso|voador inverso|reverse fly/,['delt-post','abraco']],[/crucifixo|voador|peck/,['peito-medio','peito-alto']],
@@ -993,7 +998,7 @@ function stretchesFor(exs){const R=restr();const ok=k=>{const x=STRETCH.find(y=>
 function stretchCard(exs,live){const L=stretchesFor(exs);if(!L.length)return '';const mins=Math.max(1,Math.round(L.reduce((a,o)=>a+o.x.t*(o.x.side?2:1),0)/60));const done=new Set((S.active&&S.active.stretched)||[]);
   return `<details class="card stretch" ${S.stretchOpen?'open':''}><summary><div style="flex:1;min-width:0"><div class="eyebrow">Opcional · ~${mins} min · ${L.length} ${L.length===1?'alongamento':'alongamentos'}</div><h3>Alongamento deste treino</h3></div><span class="muted">${S.stretchOpen?'Fechar':'Ver'}</span></summary>
     <div class="dtip" style="margin:10px 0 4px">${coachAv(28)}<span class="muted" style="font-size:14px">${live?'Cada um solta o músculo que você acabou de castigar. Cinco minutos e amanhã você agradece.':'Um para cada músculo que você vai trabalhar hoje.'}${restr().length?' Já tirei o que não combina com suas restrições.':''}</span></div>
-    ${L.map(o=>{const x=o.x;return `<div class="strow ${done.has(x.k)?'done':''}"><div style="flex:1;min-width:0"><div class="stfor">Depois de: ${o.for.map(esc).join(', ')}</div><b>${esc(x.n)}</b><span class="muted">${x.t} s${x.side?' cada lado':''}</span><p>${esc(x.how)}</p></div>
+    ${L.map(o=>{const x=o.x;return `<div class="strow ${done.has(x.k)?'done':''}">${x.img?`<div class="stimg"><img src="img/st/${x.img}-0.jpg" alt="" loading="lazy"><img class="st2" src="img/st/${x.img}-1.jpg" alt="" loading="lazy"></div>`:''}<div style="flex:1;min-width:0"><div class="stfor">Depois de: ${o.for.map(esc).join(', ')}</div><b>${esc(x.n)}</b><span class="muted">${x.t} s${x.side?' cada lado':''}</span><p>${esc(x.how)}</p></div>
       ${live?`<button class="btn ghost sm" data-act="stretchgo" data-k="${x.k}">${done.has(x.k)?'✓':x.t*(x.side?2:1)+'s'}</button>`:''}</div>`}).join('')}
     <p class="muted" style="font-size:12px;margin:8px 0 0">Alongue até sentir tensão leve, nunca dor. Respire devagar e não balance.</p></details>`}
 function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Isso não é uma imagem. Escolhe uma foto.');return}const r=new FileReader();
