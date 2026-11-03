@@ -1619,9 +1619,10 @@ function voiceCard(){const V=ptVoices();const cur=ptVoice&&ptVoice.name;const ra
   return `<div class="card stack"><div class="row">${coachAv(36)}<div style="min-width:0"><h3>Voz da ${COACH}</h3><div class="muted" style="font-size:13px">Ela fala no treino quando você liga o 🔊. Usa as vozes do seu celular, sem custo.</div></div></div>
     ${V.length?`<select id="voiceSel" class="sel" data-f="voice" aria-label="Voz">${V.map(v=>`<option value="${esc(v.name)}" ${v.name===cur?'selected':''}>${esc(v.name.replace(/Microsoft |Google |\\(.*?\\)/g,'').trim()||v.name)}${/premium|enhanced|aprimorad|natural|neural/i.test(v.name)?' ★':''}</option>`).join('')}</select>
     <div class="row"><span class="muted" style="font-size:13px">Velocidade</span><div class="chips" style="flex:1">${[[.9,'Calma'],[1,'Normal'],[1.1,'Rápida']].map(([v,l])=>`<button class="chip sm" data-act="vrate" data-v="${v}" aria-pressed="${rate===v}">${l}</button>`).join('')}</div></div>
-    <button class="btn ghost" data-act="vtest">▶ Ouvir a ${COACH}</button>`:'<p class="muted" style="margin:0;font-size:14px">Seu navegador não mostrou nenhuma voz em português ainda. Instale uma pelas dicas abaixo.</p>'}
+    <div class="row" style="gap:8px"><button class="btn ghost" data-act="vtest" style="flex:1">▶ Ouvir a ${COACH}</button><button class="btn ghost" data-act="vrefresh">↻</button></div>
+    <div class="muted" style="font-size:12px">${V.length} ${V.length===1?'voz':'vozes'} em português disponíveis para apps neste aparelho.</div>`:'<p class="muted" style="margin:0;font-size:14px">Seu navegador não mostrou nenhuma voz em português ainda. Instale uma pelas dicas abaixo.</p>'}
     <details class="goals"><summary>Vozes mais bonitas, de graça</summary><div class="muted" style="font-size:13px;display:flex;flex-direction:column;gap:6px;margin-top:6px">
-      <span><b>iPhone:</b> Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Português (Brasil) → baixe a <b>Luciana (Aprimorada)</b> ou outra marcada como Aprimorada/Premium. Depois feche e abra o app e escolha aqui.</span>
+      <span><b>iPhone:</b> Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Português (Brasil) → baixe a <b>Luciana (Aprimorada)</b>. Depois feche o app de verdade (deslize para cima na lista de apps abertos), abra de novo e toque em ↻. Atenção: o iPhone não libera para apps da web as vozes da Siri e às vezes também esconde as Premium; nesse caso, só as vozes padrão e Aprimoradas aparecem.</span>
       <span><b>Android:</b> Configurações → busque "Saída de texto para fala" → mecanismo <b>Google</b> → engrenagem → Instalar dados de voz → Português (Brasil) → escolha uma voz feminina e baixe. Volte aqui e teste.</span>
       <span>As marcadas com ★ são as de melhor qualidade.</span></div></details></div>`}
 try{speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}catch(e){}
@@ -2353,6 +2354,7 @@ main.addEventListener('click',e=>{
       (async()=>{try{const t=await sbToken();const r=await fetch(SB_URL+'/auth/v1/user',{method:'PUT',headers:{'content-type':'application/json',apikey:SB_KEY,authorization:'Bearer '+t},body:JSON.stringify({password:pw})});if(!r.ok)throw Object.assign(new Error('falhou'),{code:r.status});
         S.accBusy=false;S.view='hoje';await cloudPull(true);render();toast('Senha nova salva. Bem-vinda de volta à saga.')}catch(e){S.accBusy=false;S.accMsg=authMsg(e);render()}})();return}
     case 'vrate':LS.set('ct.voiceRate',+b.dataset.v);speak(pick(['Assim está bom?','Bora, mais uma série.']),true);break;
+    case 'vrefresh':{try{speechSynthesis.cancel();speechSynthesis.getVoices()}catch(_){}setTimeout(()=>{pickVoice();render();toast(`Encontrei ${ptVoices().length} vozes em português.`)},400);return}
     case 'vtest':speak(pick([`Oi, ${firstName()||'guerreiro'}. Eu sou a ${COACH}. Série feita. Descanso de noventa segundos.`,`Descanso acabou. Próxima série. Mostra pra barra quem manda.`]),true);return;
     case 'gpxhelp':S.gpxHelp=!S.gpxHelp;break;
     case 'mealman':S.mealMan=!S.mealMan;break;
