@@ -553,7 +553,7 @@ async function cloudPull(first){if(!cloudOn()||!sbSess())return false;let rows;t
     if(val!==null&&sv!==sc)push.add(k)})}finally{cloudApplying=false}
   if(changed){S.active=LS.get('ct.active',null);S.user=LS.get('ct.user',S.user);S.plan=LS.get('ct.plan',null)||S.plan;S.sessions=LS.get('ct.sessions',[]);S.chat=LS.get('ct.chat',[]);S.absLvl=LS.get('ct.absLvl','medium');S.absMin=LS.get('ct.absMin',0);S.absWith=LS.get('ct.absWith',false);if(!sampleApi)sampleApi=makeSample();try{pickVoice()}catch(_){}}
   push.forEach(k=>cloudDirtySet.add(k));cloudLast=Date.now();LS.set('ct.cloudLast',cloudLast);cloudErr='';if(cloudDirtySet.size)cloudPush();
-  if(changed&&!first)render();return changed}
+  if(changed&&!first){const ae=document.activeElement;if(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)){S.pendingRender=true}else render()}return changed}
 const photoCache=new Map();
 async function sbUpload(path,blob){const t=await sbToken();if(!t)throw new Error('nosess');const r=await fetch(SB_URL+'/storage/v1/object/fotos/'+path,{method:'POST',headers:{apikey:SB_KEY,authorization:'Bearer '+t,'content-type':blob.type||'image/jpeg','x-upsert':'true'},body:blob});if(!r.ok)throw new Error('up '+r.status);return path}
 async function sbPhoto(path){if(photoCache.has(path))return photoCache.get(path);const t=await sbToken();if(!t)return '';const r=await fetch(SB_URL+'/storage/v1/object/authenticated/fotos/'+path,{headers:{apikey:SB_KEY,authorization:'Bearer '+t}});if(!r.ok)return '';const u=URL.createObjectURL(await r.blob());photoCache.set(path,u);return u}
@@ -2538,6 +2538,9 @@ if(cloudOn()){try{const h=location.hash||'';if(/access_token=/.test(h)){const q=
     sbSetSess(sbFromToken(j));if(q.get('type')==='recovery'){S.view='conta';S.acc='newpass'}}}catch(_){}
   if(sbSess()){cloudPull(true).then(c=>{if(c)render()})}else if(S.view!=='conta'){S.view='conta';S.acc=S.sessions.length?'login':'signup'}
   document.addEventListener('visibilitychange',()=>{if(!sbSess())return;if(document.hidden){if(cloudDirtySet.size)cloudPush()}else cloudPull()});
+  window.addEventListener('focus',()=>{if(sbSess())cloudPull()});
+  setInterval(()=>{if(sbSess()&&!document.hidden&&!cloudBusy)cloudPull()},30000);
+  document.addEventListener('focusout',()=>{if(S.pendingRender){S.pendingRender=false;setTimeout(()=>{const ae=document.activeElement;if(!ae||!/INPUT|TEXTAREA|SELECT/.test(ae.tagName))render();else S.pendingRender=true},300)}});
   window.addEventListener('online',()=>{if(sbSess()){cloudPull();cloudPush()}})}
 if(apiKey()||(cloudOn()&&sbSess()))sampleApi=makeSample();
 document.getElementById('fab').addEventListener('click',e=>{const t=e.target;
