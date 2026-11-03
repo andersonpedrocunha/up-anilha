@@ -277,6 +277,13 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .fabpanel .chatform,.fabpanel>.btn,.fabsugs{margin:0 12px 12px}.fabsugs{display:flex;flex-wrap:wrap;gap:6px;margin-top:0}
 @media (prefers-reduced-motion:reduce){.fabbtn{transition:none}}
 .cnote{align-self:center;background:var(--good-soft);color:var(--good);font-size:13px;font-weight:600;border-radius:10px;padding:8px 12px;max-width:90%}
+.btn:has(.coachav){display:inline-flex;align-items:center;justify-content:center}
+.btn .coachav,.chip .coachav{width:22px;height:22px;margin-right:8px;vertical-align:middle}
+a.btn .coachav{margin-right:8px}
+.dtip{display:flex;gap:10px;align-items:flex-start}.dtip b{display:block;font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;font-size:14px}.dtip span{display:block}
+.navav{width:24px;height:24px;border-radius:50%;object-fit:cover;border:1.5px solid currentColor}
+.toast.dt{display:flex;align-items:center;gap:8px;text-align:left}.toast .coachav{width:26px;height:26px}
+.cnote{display:flex;align-items:center;gap:8px}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -307,7 +314,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
     <button data-view="hoje" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Treino</button>
     <button data-view="rotina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Rotina</button>
     <button data-view="guia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Guia</button>
-    <button data-view="personal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V3M5.5 9.5 12 3l6.5 6.5"/></svg><span class="coachname">Driffa</span></button>
+    <button data-view="personal"><img class="navav" src="driffa-face-1.jpg" alt=""><span class="coachname">Driffa</span></button>
     <button data-view="hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>Histórico</button>
   </div>
 </nav>
@@ -338,7 +345,7 @@ const main=document.getElementById('main');
 function goals(){if(!S.plan.goals)S.plan.goals={week:4,month:16};return S.plan.goals}
 
 function W(id){return S.plan.workouts.find(w=>w.id===id)||S.plan.workouts[0]}
-function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),msg.length>50?4200:2400)}
+function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';if(String(msg).includes(COACH)){t.classList.add('dt');t.innerHTML=coachAv(26)+'<span>'+esc(msg)+'</span>'}else t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),msg.length>50?4200:2400)}
 
 /* ---------- persistence ---------- */
 function savePlan(){LS.set('ct.plan',S.plan);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(planRef)planRef.set(JSON.parse(JSON.stringify(S.plan))).catch(()=>toast('Não consegui salvar a rotina na nuvem'))},500)}
@@ -618,7 +625,7 @@ function errMsg(e){const c=e&&e.code;if(c==='no_credit'){const a=aiState();if(a.
 function saveChat(){S.chat=S.chat.slice(-40);LS.set('ct.chat',S.chat);if(chatRef)chatRef.set({msgs:S.chat}).catch(()=>{})}
 function fmtMsg(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n/g,'<br>')}
 function chatHtml(){const intro=aiRow(`Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.`);
-  return intro+S.chat.map(m=>m.note?`<div class="cnote">${fmtMsg(m.content)}</div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
+  return intro+S.chat.map(m=>m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
 function aiRow(h){return `<div class="crow ai">${coachAv(30)}<div class="msg ai">${h}</div></div>`}
 function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><span class="uav">${avatarInner()}</span></div>`}
 function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
@@ -632,7 +639,7 @@ function renderFab(){const f=document.getElementById('fab');if(!f)return;const h
     <div class="chatlog" id="fabLog">${sampleApi?chatHtml():aiRow(esc(coachLine()))+aiRow('Ative minha IA e eu converso com você de verdade: troco exercícios, ajusto o treino ao seu tempo e respondo dúvidas de execução.')}</div>
     ${sampleApi?`${!S.chat.length?`<div class="sugs fabsugs">${SUGS.slice(0,3).map(t=>`<button class="chip sug" data-fab="sug" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
       <form id="fabForm" class="chatform"><textarea id="fabIn" rows="1" placeholder="Fale com a ${COACH}…" aria-label="Mensagem para a ${COACH}">${esc(S.fabDraft||'')}</textarea><button class="btn primary" ${S.busy?'disabled':''}>Enviar</button></form>`
-     :`<button class="btn primary" data-fab="activate">Ativar a IA da ${COACH}</button>`}`;
+     :`<button class="btn primary" data-fab="activate">${coachAv(22)}Ativar a IA da ${COACH}</button>`}`;
   const lg=document.getElementById('fabLog');lg.scrollTop=lg.scrollHeight}
 function fabTeaser(){if(S.teased||S.fabOpen||S.view!=='hoje')return;S.teased=true;const t=document.getElementById('fabTip');if(!t)return;t.textContent=coachLine().replace(/^./,c=>c.toUpperCase());t.hidden=false;setTimeout(()=>{t.hidden=true},7000)}
 async function sendChat(text){text=text.trim();if(!text||S.busy||!sampleApi)return;
@@ -675,12 +682,12 @@ function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${
         <label class="full">Outras lesões, preferências ou detalhes<textarea id="pf-notes" data-f="pf" data-k="notes" rows="2" placeholder="Ex.: dor no joelho direito, prefiro máquinas, quero focar em glúteos">${esc(p.notes)}</textarea></label></div>
       ${careCard()}
       ${sampleApi?`<button class="btn primary big ${S.armed==='gen'?'armed':''}" data-act="gen" ${S.busy?'disabled':''}>${S.busy==='gen'?'Montando seu treino…':S.armed==='gen'?'Toque de novo: substitui sua rotina':'Gerar meu treino'}</button>`
-        :`<div class="stack keycard"><h3>Ativar a ${COACH} com IA</h3>
+        :`<div class="stack keycard"><div class="row">${coachAv(40)}<h3>Ativar a ${COACH} com IA</h3></div>
           <ol class="steps"><li>Entre em <b>console.anthropic.com</b> e crie sua conta.</li><li>Em <b>Billing</b>, coloque crédito (US$ 5 rendem centenas de conversas).</li><li>Em <b>Limits</b>, defina um limite de gasto mensal, por segurança.</li><li>Em <b>API Keys</b>, crie uma chave e copie.</li><li>Cole abaixo, junto com o valor de crédito que você colocou.</li></ol>
           <input id="keyIn" type="password" class="wname" placeholder="sk-ant-..." autocomplete="off" aria-label="Chave da API">
           <input id="credIn" class="wname" inputmode="decimal" placeholder="Crédito colocado em US$ (ex.: 5)" aria-label="Crédito em dólares">
           <p class="muted" style="margin:0;font-size:12px">A chave fica salva só neste celular e é enviada apenas para a Anthropic.</p>
-          <button class="btn primary" data-act="savekey">Ativar a ${COACH}</button></div>`}
+          <button class="btn primary" data-act="savekey">${coachAv(22)}Ativar a ${COACH}</button></div>`}
     </div>
     <div class="card stack">
       <div class="row">${coachAv(40)}<div style="min-width:0"><h3>Fale com a ${COACH}</h3><div class="muted" style="font-size:13px">Ela vê sua rotina, metas e histórico, e pode alterar o treino.</div></div></div>
@@ -853,8 +860,8 @@ function openGuide(name,key){const g=key?GIDX.find(x=>x.k===key):guideFor(name);
    ${g?`<div class="gsec"><div class="eyebrow">O aparelho</div><p>${esc(g.ap)}</p></div>
    <div class="gsec"><div class="eyebrow">Passo a passo</div><ol>${g.p.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>
    <div class="gsec"><div class="eyebrow">Erros comuns</div><ul class="errs">${g.e.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
-   ${g.c?`<div class="gtip">${esc(g.c)}</div>`:''}`:`<p class="muted">Ainda não temos esse exercício no guia. Veja vídeos de execução ou pergunte ao personal.</p>`}
-   <div class="row" style="flex-wrap:wrap"><a class="btn ghost" href="${ytUrl(title)}" target="_blank" rel="noopener">Ver vídeos</a>${sampleApi?`<button class="btn ghost" data-ask="${esc(title)}">Perguntar à ${COACH}</button>`:''}</div>`;
+   ${g.c?`<div class="gtip dtip">${coachAv(32)}<div><b>Dica da ${COACH}</b><span>${esc(g.c)}</span></div></div>`:''}`:`<p class="muted">Ainda não temos esse exercício no guia. Veja vídeos de execução ou pergunte ao personal.</p>`}
+   <div class="row" style="flex-wrap:wrap"><a class="btn ghost" href="${ytUrl(title)}" target="_blank" rel="noopener">Ver vídeos</a>${sampleApi?`<button class="btn ghost" data-ask="${esc(title)}">${coachAv(22)}Perguntar à ${COACH}</button>`:''}</div>`;
   el.hidden=false;document.body.classList.add('noscroll');clearInterval(sheetTimer);
   const i1=document.getElementById('gimg1'),lab=document.getElementById('gfigL');
   if(i1&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){let on=false;sheetTimer=setInterval(()=>{on=!on;i1.style.opacity=on?1:0;lab.textContent=on?'Fim':'Início'},1400)}
@@ -931,10 +938,10 @@ function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=
       ${w.ex.map((e,ei)=>`<div class="wzex"><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button><span class="muted num">${e.sets} × ${esc(e.reps)}${e.rest?' · '+mmss(e.rest):''}</span>
         <span class="wzex-t">${e.g!=='cardio'?`<button class="btn ghost sm" data-act="wzswap" data-w="${wi}" data-x="${ei}">Trocar</button>`:''}<button class="ic" data-act="wzrm" data-w="${wi}" data-x="${ei}" aria-label="Remover">✕</button></span></div>`).join('')}
       </div>`}).join('')}
-    ${z.notes?`<div class="gtip">Suas observações: ${esc(z.notes)}. Se algum exercício incomodar, toque em Trocar.</div>`:''}
+    ${z.notes?`<div class="gtip dtip">${coachAv(32)}<div><b>${COACH}</b><span>Suas observações: ${esc(z.notes)}. Se algum exercício incomodar, toque em Trocar.</span></div></div>`:''}
     <button class="btn primary big ${S.armed==='wzuse'?'armed':''}" data-act="wzuse">${S.armed==='wzuse'?'Toque de novo: substitui sua rotina':'Usar este treino'}</button>
     <div class="row" style="flex-wrap:wrap"><button class="btn ghost" data-act="wzregen" style="flex:1">Gerar outra opção</button><button class="btn ghost" data-act="wzgo" data-v="0" style="flex:1">Mudar respostas</button></div>
-    ${sampleApi?`<button class="btn ghost" data-act="wzask">Pedir opinião da ${COACH}</button>`:''}`}
+    ${sampleApi?`<button class="btn ghost" data-act="wzask">${coachAv(22)}Pedir opinião da ${COACH}</button>`:''}`}
   const nav=st<5?`<div class="wznav">${st>0?`<button class="btn ghost" data-act="wzgo" data-v="${st-1}">Voltar</button>`:'<span></span>'}<button class="btn primary" data-act="wzgo" data-v="${st+1}">${st===4?'Ver meu treino':'Continuar'}</button></div>`:'';
   return `<div class="stack">${head}${body}${nav}</div>`}
 function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
@@ -1094,7 +1101,7 @@ function viewHist(){
 
 function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():viewHist());
-  renderAvatar();renderFab();
+  renderAvatar();renderFab();{const n=document.querySelector('.navav');if(n)n.src=`driffa-face-${coachLook()}.jpg${AV}`}
   const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
