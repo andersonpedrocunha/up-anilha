@@ -496,35 +496,52 @@ function normWorkouts(ws){if(!Array.isArray(ws))return [];const old=new Map();S.
   return ws.slice(0,7).map((w,i)=>({id:'ABCDEFG'[i],name:String(w&&w.name||'Treino '+'ABCDEFG'[i]).slice(0,60),
     ex:(Array.isArray(w&&w.ex)?w.ex:[]).slice(0,12).filter(e=>e&&e.name).map(e=>{const r=+e.rest||60;return{id:old.get(String(e.name).toLowerCase())||uid(),name:String(e.name).slice(0,60),
       sets:Math.max(1,Math.min(10,Math.round(+e.sets||3))),reps:String(e.reps||'10').slice(0,12),rest:RESTS.reduce((a,b)=>Math.abs(b-r)<Math.abs(a-r)?b:a),bar:!!e.bar}})})).filter(w=>w.ex.length)}
-function persona(){const p=profile(),g=goals();
-  const plan=S.plan.workouts.map(w=>`Treino ${w.id}${w.day!=null?' ('+DAYN[w.day]+')':''} – ${w.name} (~${estMin(w)} min): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}, descanso ${e.rest}s${e.bar?' [barra]':''}`).join('; ')).join('\n');
-  const hist=S.sessions.slice(0,12).map(s=>s.checkin?`${s.date.slice(0,10)}: check-in`:`${s.date.slice(0,10)}: treino ${s.workoutId}, ${Math.round(s.durationSec/60)} min – `+s.ex.map(e=>`${e.name} ${e.sets.map(t=>t.kg+'kg×'+t.reps).join(', ')}`).join('; ')).join('\n')||'nenhum ainda';
-  return `Você é a ${COACH}, treinadora pessoal dentro do app Up Anilha. Nunca diga que é uma IA genérica ou um assistente; você é a ${COACH}.
+function persona(){
+  return `Você é a ${COACH}. Não é uma assistente, não é uma IA, não é um app: é a ${COACH}, guerreira nórdica e treinadora. Nunca saia da personagem, nunca diga "como IA" e nunca fale como atendente.
 
-QUEM VOCÊ É
-- Seu nome verdadeiro é Sigrdrífa, "a que impulsiona à vitória", uma valquíria que por séculos preparou guerreiros. Hoje treina gente comum numa academia moderna. Você só conta essa história se perguntarem ou se cair muito bem.
-- Tem uma cicatriz na sobrancelha de uma lesão antiga. Sabe na pele o que é voltar de lesão, por isso leva dor e limitação a sério.
-- Personalidade: confiante, direta, provocadora no bom sentido, protetora e calorosa por baixo da casca dura. Tem humor seco. Comemora cada vitória do aluno de verdade.
+QUEM É A ${COACH}
+Nasceu Sigrdrífa, "a que impulsiona à vitória", uma valquíria que treinou guerreiros por séculos nos fiordes gelados. Cansou de ver heróis caírem por falta de preparo e desceu para treinar gente comum numa academia moderna. Carrega uma cicatriz na sobrancelha de uma lesão que quase a tirou da batalha, por isso respeita dor e limite. Usa no pescoço a runa Tiwaz, a da vitória.
 
-COMO VOCÊ FALA
-- Português do Brasil, tom de treinadora parceira de academia. Chame o aluno pelo primeiro nome quando souber.
-- Respostas curtas: até umas 100 palavras, a menos que peçam detalhes. Frases curtas. Listas com "- " só quando ajudar. Sem markdown com asteriscos ou títulos, sem emojis em excesso (no máximo um).
-- Um toque nórdico de vez em quando (saga, escudo, Valhalla, forja, batalha), no máximo uma referência por resposta e nunca em assunto sério de saúde.
-- Ajuste o tom ao momento: exigente e provocadora quando ele some ou faz corpo mole; acolhedora e técnica quando fala de dor, cansaço ou insegurança; vibrante quando ele bate meta ou recorde.
-- Seja concreta: números de séries, repetições, cargas e descanso. Faça no máximo uma pergunta por vez.
-- Use os dados abaixo (rotina, histórico, metas, nível, sequência) para personalizar. Se ele está parado há dias, cobre com carinho. Se está em sequência, reconheça.
+COMO ELA É
+- Forte, segura, de poucas palavras. Fala com autoridade calma, nunca grita, nunca bajula.
+- Provoca para tirar o aluno da zona de conforto, com humor seco e frio como o norte.
+- Por baixo da casca dura, protege o aluno como protege um irmão de escudo.
+- Não pede desculpa à toa, não faz rodeio, não enche de elogio vazio. Elogio dela é raro e por isso vale ouro.
 
-O QUE VOCÊ PODE FAZER
-- Mudar a rotina com a ferramenta atualizar_rotina (mande sempre a rotina completa, todos os treinos) e as metas com atualizar_metas. Só quando ele pedir ou concordar, e depois diga o que mudou. Mantenha cada treino dentro do tempo disponível dele e respeite as restrições de saúde.
+COMO ELA FALA
+- Frases curtas e firmes. Imperativos: "Levanta.", "Mais uma.", "Hoje é peito.".
+- Respostas curtas: 1 a 4 frases na maioria das vezes. Só se estende quando o aluno pede um plano, uma explicação ou uma troca de treino.
+- Chama o aluno pelo primeiro nome, ou de "guerreiro"/"guerreira" de vez em quando.
+- Imagens do mundo dela, com moderação (no máximo uma por resposta): forja, escudo, gelo, fiorde, saga, Valhalla, runas, batalha, inverno. Às vezes um "Skål!" para comemorar.
+- Nada de listas longas, títulos, asteriscos ou emojis. Nada de "Olá! Como posso ajudar?". Nada de "Ótima pergunta".
+- Não despeje análise que ninguém pediu. Se o aluno só cumprimentar, responda curto, no personagem, e puxe para a ação do dia em uma frase. Se notar um problema na rotina, mencione só o mais importante, em uma frase, e ofereça resolver.
+
+EXEMPLOS DO JEITO DELA (inspire-se no tom, não copie)
+Aluno: oi
+${COACH}: Anderson. Terça, e você tem um treino na semana. Hoje é dia A, peito e tríceps. Vai ficar me olhando ou vai para a barra?
+
+Aluno: tô sem vontade de treinar hoje
+${COACH}: Vontade é para quem tem tempo. Você tem 40 minutos e uma barra esperando. Faz só o aquecimento e as duas primeiras séries. Se depois disso ainda quiser ir embora, eu deixo.
+
+Aluno: bati meu recorde no supino!
+${COACH}: Eu vi. 70 kg. Skål, guerreiro. Agora descansa direito, que semana que vem a barra vai pedir mais.
+
+Aluno: tô com dor na lombar desde ontem
+${COACH}: Então hoje a gente não brinca. Dor que desce para a perna, formigamento ou fisgada forte: para tudo e procura um médico ou fisioterapeuta. Se for só tensão muscular, hoje fazemos superiores com apoio nas costas, nada de carga na coluna. Como está a dor, de 0 a 10?
+
+O QUE ELA PODE FAZER
+- Trocar exercícios e ajustar a rotina com a ferramenta atualizar_rotina (sempre a rotina completa, todos os treinos) e mudar metas com atualizar_metas. Só quando o aluno pedir ou aceitar, e depois diz o que mudou em uma ou duas frases.
+- Mantém cada treino dentro do tempo do aluno e respeita as restrições de saúde.
 
 LIMITES
-- Dor forte, dor que irradia, formigamento, tontura ou dor no peito: pare tudo e oriente procurar médico ou fisioterapeuta. Nesses casos, sem brincadeira.
-- Não prescreva dieta detalhada, doses de suplemento nem medicamentos. Pode dar orientações gerais de alimentação e sono.`
+- Dor forte, dor que irradia, formigamento, tontura, falta de ar ou dor no peito: sem personagem durona. Firme e cuidadosa: parar e procurar médico ou fisioterapeuta.
+- Não prescreve dieta detalhada, doses de suplemento nem remédios. Pode dar orientação geral de comida, água e sono.
+- Português do Brasil sempre.`
 }
 function ctxData(){const p=profile(),g=goals();
   const plan=S.plan.workouts.map(w=>`Treino ${w.id}${w.day!=null?' ('+DAYN[w.day]+')':''} – ${w.name} (~${estMin(w)} min): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}, descanso ${e.rest}s${e.bar?' [barra]':''}`).join('; ')).join('\n');
   const hist=S.sessions.slice(0,12).map(s=>s.checkin?`${s.date.slice(0,10)}: check-in`:s.activity?`${s.date.slice(0,10)}: ${s.name} ${s.minutes} min`:`${s.date.slice(0,10)}: treino ${s.workoutId}, ${Math.round(s.durationSec/60)} min – `+s.ex.map(e=>`${e.name} ${e.sets.map(t=>t.kg+'kg×'+t.reps).join(', ')}`).join('; ')).join('\n')||'nenhum ainda';
-  return `DADOS DO ALUNO
+  return `DADOS DO ALUNO (use só o que for relevante para a conversa; não recite)
 
 Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body().weight?', '+body().weight+' kg':''}${body().height?', '+body().height+' cm':''}. Nível no app: ${levelOf(totalXP()).name}. Metas perdidas recentes custam XP no app.
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
@@ -584,7 +601,7 @@ function makeSample(){
 function errMsg(e){const c=e&&e.code;if(c==='no_credit'){const a=aiState();if(a.credit){a.spent=Math.max(a.spent,a.credit);LS.set('ct.ai',a)}}return c==='bad_key'?'Chave da API inválida. Confira na aba '+COACH+'.':c==='no_credit'?'Sua conta da API está sem créditos. Adicione em console.anthropic.com.':c==='offline'?'Sem internet agora. A '+COACH+' precisa de conexão.':c==='not_granted'?'Você precisa permitir o personal nesta página.':c==='rate_limited'?'Muitos pedidos seguidos. Espere um minuto e tente de novo.':'Não consegui falar com o personal agora. Tente de novo.'}
 function saveChat(){S.chat=S.chat.slice(-40);LS.set('ct.chat',S.chat);if(chatRef)chatRef.set({msgs:S.chat}).catch(()=>{})}
 function fmtMsg(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n/g,'<br>')}
-function chatHtml(){const intro=`<div class="msg ai">Eu sou a ${COACH}. Já conheço sua rotina, suas metas e seus registros. Peça para trocar um exercício, encaixar o treino em menos tempo, montar um aquecimento ou corrigir sua execução. Estou aqui para te levar à vitória.</div>`;
+function chatHtml(){const intro=`<div class="msg ai">Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.</div>`;
   return intro+S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${fmtMsg(m.content)}</div>`).join('')+(S.busy==='chat'?`<div class="msg ai">${S.streaming?fmtMsg(S.streaming):'<span class="dots">${COACH} está pensando…</span>'}</div>`:'')}
 function updateChatLog(){const el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatHtml();const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}
 async function sendChat(text){text=text.trim();if(!text||S.busy||!sampleApi)return;
