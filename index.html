@@ -262,6 +262,21 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .credit.warn{border-color:var(--hot)}.credit.warn .progress>i{background:var(--hot)}.credit.bad{border-color:var(--danger)}.credit.bad .progress>i{background:var(--danger)}
 .modelpick{gap:8px}.opt.sm2{padding:10px 12px;flex:1}.opt.sm2 b{font-size:15px}.opt.sm2 span{font-size:12px}
 .steps{margin:0;padding-left:20px;font-size:14px}.steps li{margin:3px 0}
+.crow{display:flex;gap:8px;align-items:flex-end}.crow.me{justify-content:flex-end}.crow .msg{max-width:80%}
+.uav{width:30px;height:30px;border-radius:50%;flex:none;overflow:hidden;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:14px}
+.uav img{width:100%;height:100%;object-fit:cover}.uav svg{width:60%;height:60%}
+.fab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
+.fab>*{pointer-events:auto}.fab.up{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.fabbtn{position:relative;width:60px;height:60px;border-radius:50%;padding:2px;border:2px solid #f2c230;background:#141a2e;box-shadow:0 8px 24px rgb(0 0 0 / .35);transition:transform .2s}
+.fabbtn:active{transform:scale(.94)}.fabbtn .coachav{width:100%;height:100%}
+.fabdot{position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:50%;background:var(--danger);border:2px solid var(--bg)}
+.fabtip{max-width:min(260px,calc(100vw - 100px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px 14px 4px 14px;padding:10px 12px;font-size:14px;box-shadow:0 8px 24px rgb(0 0 0 / .25);cursor:pointer}
+.fabpanel{width:min(380px,calc(100vw - 28px));height:min(560px,calc(100vh - 190px));background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 40px rgb(0 0 0 / .4);display:flex;flex-direction:column;overflow:hidden}
+.fabhead{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}.fabhead b{display:block;font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.03em}.fabhead span{font-size:12px;color:var(--muted)}
+#fabLog{flex:1;overflow-y:auto;padding:12px;gap:10px}
+.fabpanel .chatform,.fabpanel>.btn,.fabsugs{margin:0 12px 12px}.fabsugs{display:flex;flex-wrap:wrap;gap:6px;margin-top:0}
+@media (prefers-reduced-motion:reduce){.fabbtn{transition:none}}
+.cnote{align-self:center;background:var(--good-soft);color:var(--good);font-size:13px;font-weight:600;border-radius:10px;padding:8px 12px;max-width:90%}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -297,6 +312,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
   </div>
 </nav>
 
+<div class="fab" id="fab"><div class="fabtip" id="fabTip" hidden></div><div class="fabpanel" id="fabPanel" hidden role="dialog" aria-label="Conversa com a Driffa"></div><button class="fabbtn" id="fabBtn" aria-label="Falar com a Driffa" aria-expanded="false"></button></div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Como fazer o exercício"><div class="sheet-in" id="sheetIn"></div></div>
 <script src="guide.js"></script>
 <script>
@@ -557,9 +573,9 @@ function ctx(){return persona()+'\n\n'+ctxData()}
 const TOOLS=[
  {name:'atualizar_rotina',description:'Substitui a rotina inteira do aluno (todos os treinos A, B, C...). Mande todos os treinos, inclusive os que não mudaram.',
   inputSchema:{type:'object',properties:{workouts:{type:'array',items:{type:'object',properties:{name:{type:'string',description:'Ex.: Peito e tríceps'},ex:{type:'array',items:{type:'object',properties:{name:{type:'string'},sets:{type:'integer'},reps:{type:'string',description:'Ex.: 8-10'},rest:{type:'integer',description:'Descanso em segundos'},bar:{type:'boolean',description:'true só para exercício com barra olímpica livre'}},required:['name','sets','reps','rest']}}},required:['name','ex']}}},required:['workouts']},
-  execute(inp){const ws=normWorkouts(inp.workouts);if(!ws.length)throw new Error('Rotina vazia');ws.forEach(w=>w.ex.forEach(adaptEx));archivePlan('Ajustada pela '+COACH);S.plan.workouts=ws;S.plan.since=new Date().toISOString();S.plan.label=planLabel()+' · ajustada pela '+COACH;if(!ws.some(w=>w.id===S.plan.next))S.plan.next=ws[0].id;S.edit=null;savePlan();toast('Rotina atualizada pela '+COACH);return 'Rotina salva: '+ws.map(w=>w.id+' '+w.name+' (~'+estMin(w)+' min)').join('; ')}},
+  execute(inp){const ws=normWorkouts(inp.workouts);if(!ws.length)throw new Error('Rotina vazia');ws.forEach(w=>w.ex.forEach(adaptEx));archivePlan('Ajustada pela '+COACH);S.plan.workouts=ws;S.plan.since=new Date().toISOString();S.plan.label=planLabel()+' · ajustada pela '+COACH;if(!ws.some(w=>w.id===S.plan.next))S.plan.next=ws[0].id;S.edit=null;savePlan();toast('Rotina atualizada pela '+COACH);return 'Rotina atualizada: '+ws.map(w=>w.id+' · '+w.name+' (~'+estMin(w)+' min)').join(', ')+'. Confira na aba Rotina.'}},
  {name:'atualizar_metas',description:'Muda as metas de frequência do aluno.',inputSchema:{type:'object',properties:{semana:{type:'integer',description:'Idas por semana, 1 a 7'},mes:{type:'integer',description:'Idas por mês, 1 a 31'}}},
-  execute(inp){const g=goals();if(inp.semana)g.week=Math.max(1,Math.min(7,+inp.semana));if(inp.mes)g.month=Math.max(1,Math.min(31,+inp.mes));savePlan();return `Metas: ${g.week}/semana, ${g.month}/mês`}}];
+  execute(inp){const g=goals();if(inp.semana)g.week=Math.max(1,Math.min(7,+inp.semana));if(inp.mes)g.month=Math.max(1,Math.min(31,+inp.mes));savePlan();return `Metas atualizadas: ${g.week} dias por semana e ${g.month} por mês.`}}];
 const MODELS={'claude-sonnet-5-5':{name:'Inteligente',desc:'Respostas mais completas',in:2,out:10},'claude-haiku-5-5':{name:'Econômica',desc:'Cerca de 20 vezes mais barata',in:0.1,out:0.5}};
 function apiModel(){const m=LS.get('ct.model','claude-sonnet-5-5');return MODELS[m]?m:'claude-sonnet-5-5'}
 function aiState(){return Object.assign({credit:0,spent:0,msgs:0,avg:0,warned:0},LS.get('ct.ai',{}))}
@@ -588,32 +604,47 @@ async function callApi(body){let r;try{r=await fetch('https://api.anthropic.com/
   const j=await r.json().catch(()=>({}));const m=(j.error&&j.error.message)||'';
   if(!r.ok)throw {code:r.status===401?'bad_key':r.status===429?'rate_limited':/credit|billing/i.test(m)?'no_credit':'api',message:m};return j}
 function makeSample(){
-  const f=async(messages,opts={})=>{let turnCost=0;const msgs=messages.map(m=>({role:m.role,content:m.content}));const tools=(opts.tools||[]).map(t=>({name:t.name,description:t.description,input_schema:t.inputSchema||{type:'object'}}));
-    for(let i=0;i<5;i++){const model=apiModel();const j=await callApi({model,max_tokens:1500,messages:msgs,...(opts.system?{system:opts.system}:{}),...(tools.length?{tools}:{})});turnCost+=trackUsage(model,j.usage)||0;
+  const f=async(messages,opts={})=>{let turnCost=0;const done=[];const msgs=messages.map(m=>({role:m.role,content:m.content}));const tools=(opts.tools||[]).map(t=>({name:t.name,description:t.description,input_schema:t.inputSchema||{type:'object'}}));
+    for(let i=0;i<5;i++){let mt=4096;let j;const model=apiModel();for(let tries=0;tries<2;tries++){j=await callApi({model,max_tokens:mt,messages:msgs,...(opts.system?{system:opts.system}:{}),...(tools.length?{tools}:{})});turnCost+=trackUsage(model,j.usage)||0;if(j.stop_reason==='max_tokens'&&(j.content||[]).some(c=>c.type==='tool_use')){mt=12000;continue}break}
       const text=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n').trim();
-      if(j.stop_reason!=='tool_use'){opts.onText&&opts.onText({text,delta:text});const a=aiState();a.msgs++;a.avg=a.avg?a.avg*0.7+turnCost*0.3:turnCost;LS.set('ct.ai',a);creditWarn();return {text}}
+      if(j.stop_reason!=='tool_use'){const finalText=text||(done.length?'Feito. A mudança já está no seu treino. Agora é com você.':'');opts.onText&&opts.onText({text:finalText,delta:finalText});const a=aiState();a.msgs++;a.avg=a.avg?a.avg*0.7+turnCost*0.3:turnCost;LS.set('ct.ai',a);creditWarn();return {text:finalText,done}}
       msgs.push({role:'assistant',content:j.content});const results=[];
-      for(const c of j.content.filter(c=>c.type==='tool_use')){const tool=opts.tools.find(t=>t.name===c.name);let out,err=false;try{out=String(await tool.execute(c.input||{},{}))}catch(e){out=String((e&&e.message)||e);err=true}results.push({type:'tool_result',tool_use_id:c.id,content:out,is_error:err})}
+      for(const c of j.content.filter(c=>c.type==='tool_use')){const tool=opts.tools.find(t=>t.name===c.name);let out,err=false;try{out=String(await tool.execute(c.input||{},{}));done.push(out)}catch(e){out=String((e&&e.message)||e);err=true}results.push({type:'tool_result',tool_use_id:c.id,content:out,is_error:err})}
       msgs.push({role:'user',content:results})}
-    return {text:'Pronto, fiz as alterações.'}};
+    return {text:done.length?done.join('\n'):'Pronto.',done}};
   f.json=async prompt=>{const model=apiModel();const j=await callApi({model,max_tokens:4000,system:persona(),messages:[{role:'user',content:prompt}]});trackUsage(model,j.usage);creditWarn();const t=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');const m=t.match(/\{[\s\S]*\}/);if(!m)throw {code:'empty'};return JSON.parse(m[0])};
   return f}
 function errMsg(e){const c=e&&e.code;if(c==='no_credit'){const a=aiState();if(a.credit){a.spent=Math.max(a.spent,a.credit);LS.set('ct.ai',a)}}return c==='bad_key'?'Chave da API inválida. Confira na aba '+COACH+'.':c==='no_credit'?'Sua conta da API está sem créditos. Adicione em console.anthropic.com.':c==='offline'?'Sem internet agora. A '+COACH+' precisa de conexão.':c==='not_granted'?'Você precisa permitir o personal nesta página.':c==='rate_limited'?'Muitos pedidos seguidos. Espere um minuto e tente de novo.':'Não consegui falar com o personal agora. Tente de novo.'}
 function saveChat(){S.chat=S.chat.slice(-40);LS.set('ct.chat',S.chat);if(chatRef)chatRef.set({msgs:S.chat}).catch(()=>{})}
 function fmtMsg(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n/g,'<br>')}
-function chatHtml(){const intro=`<div class="msg ai">Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.</div>`;
-  return intro+S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${fmtMsg(m.content)}</div>`).join('')+(S.busy==='chat'?`<div class="msg ai">${S.streaming?fmtMsg(S.streaming):'<span class="dots">${COACH} está pensando…</span>'}</div>`:'')}
-function updateChatLog(){const el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatHtml();const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}
+function chatHtml(){const intro=aiRow(`Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.`);
+  return intro+S.chat.map(m=>m.note?`<div class="cnote">${fmtMsg(m.content)}</div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
+function aiRow(h){return `<div class="crow ai">${coachAv(30)}<div class="msg ai">${h}</div></div>`}
+function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><span class="uav">${avatarInner()}</span></div>`}
+function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
+/* ---------- Driffa flutuante ---------- */
+function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);
+  const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=coachAv(56)+(S.chatUnread?'<span class="fabdot"></span>':'');
+  panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
+  if(panel.hidden)return;
+  panel.innerHTML=`<div class="fabhead">${coachAv(36)}<div style="flex:1;min-width:0"><b>${COACH}</b><span>${sampleApi?(S.busy==='chat'?'digitando…':'Sua treinadora'):'IA desativada'}</span></div>
+    <button class="ic" data-fab="full" aria-label="Abrir conversa completa">⤢</button><button class="ic" data-fab="min" aria-label="Minimizar">—</button></div>
+    <div class="chatlog" id="fabLog">${sampleApi?chatHtml():aiRow(esc(coachLine()))+aiRow('Ative minha IA e eu converso com você de verdade: troco exercícios, ajusto o treino ao seu tempo e respondo dúvidas de execução.')}</div>
+    ${sampleApi?`${!S.chat.length?`<div class="sugs fabsugs">${SUGS.slice(0,3).map(t=>`<button class="chip sug" data-fab="sug" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
+      <form id="fabForm" class="chatform"><textarea id="fabIn" rows="1" placeholder="Fale com a ${COACH}…" aria-label="Mensagem para a ${COACH}">${esc(S.fabDraft||'')}</textarea><button class="btn primary" ${S.busy?'disabled':''}>Enviar</button></form>`
+     :`<button class="btn primary" data-fab="activate">Ativar a IA da ${COACH}</button>`}`;
+  const lg=document.getElementById('fabLog');lg.scrollTop=lg.scrollHeight}
+function fabTeaser(){if(S.teased||S.fabOpen||S.view!=='hoje')return;S.teased=true;const t=document.getElementById('fabTip');if(!t)return;t.textContent=coachLine().replace(/^./,c=>c.toUpperCase());t.hidden=false;setTimeout(()=>{t.hidden=true},7000)}
 async function sendChat(text){text=text.trim();if(!text||S.busy||!sampleApi)return;
   S.chat.push({role:'user',content:text});S.draft='';S.busy='chat';S.streaming='';saveChat();render();
-  let msgs=S.chat.slice(-16).map(m=>({role:m.role,content:m.content}));while(msgs.length&&msgs[0].role!=='user')msgs.shift();
+  let msgs=S.chat.filter(m=>!m.note).slice(-16).map(m=>({role:m.role,content:m.content}));while(msgs.length&&msgs[0].role!=='user')msgs.shift();
   const merged=[];msgs.forEach(m=>{const l=merged[merged.length-1];if(l&&l.role===m.role)l.content+='\n\n'+m.content;else merged.push({...m})});
   
   const opts={cache:false,system:ctx(),onText:u=>{S.streaming=u.text;updateChatLog()}};
   try{let r;try{r=await sampleApi(merged,{...opts,tools:TOOLS})}catch(e){if(e&&e.code==='tools_unavailable')r=await sampleApi(merged,opts);else throw e}
-    S.chat.push({role:'assistant',content:r.text||'…'})}
+    S.chat.push({role:'assistant',content:r.text||'Não consegui responder agora. Tente de novo.'});if(r.done&&r.done.length){S.chat.push({role:'assistant',note:true,content:'✓ '+r.done.join('\n✓ ')})}}
   catch(e){S.chat.push({role:'assistant',content:(e&&e.text)||errMsg(e)})}
-  S.busy=null;S.streaming='';saveChat();render();}
+  S.busy=null;S.streaming='';saveChat();if(!S.fabOpen&&S.view!=='personal')S.chatUnread=true;render();}
 async function generate(){if(!sampleApi||S.busy)return;const p=profile();S.busy='gen';render();
   const prompt=`Monte uma rotina de musculação para este aluno e responda só com JSON.
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} minutos por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações do aluno: ${p.notes||'nenhuma'}.
@@ -1063,7 +1094,7 @@ function viewHist(){
 
 function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():viewHist());
-  renderAvatar();
+  renderAvatar();renderFab();
   const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
@@ -1212,8 +1243,17 @@ main.addEventListener('change',e=>{if(e.target.id==='photoIn'){if(S.view==='hoje
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active){try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>wake=l).catch(()=>{})}catch(e){}}});
 
 if(apiKey())sampleApi=makeSample();
+document.getElementById('fab').addEventListener('click',e=>{const t=e.target;
+  if(t.closest('#fabBtn')||t.closest('#fabTip')){S.fabOpen=!S.fabOpen;S.chatUnread=false;document.getElementById('fabTip').hidden=true;renderFab();if(S.fabOpen){const i=document.getElementById('fabIn');i&&i.focus()}return}
+  const a=t.closest('[data-fab]');if(!a)return;const k=a.dataset.fab;
+  if(k==='min'){S.fabOpen=false;renderFab()}else if(k==='full'){S.fabOpen=false;S.view='personal';window.scrollTo(0,0);render()}
+  else if(k==='activate'){S.fabOpen=false;S.view='personal';render()}else if(k==='sug'){sendChat(a.dataset.t);renderFab()}});
+document.getElementById('fab').addEventListener('input',e=>{if(e.target.id==='fabIn')S.fabDraft=e.target.value});
+document.getElementById('fab').addEventListener('submit',e=>{if(e.target.id==='fabForm'){e.preventDefault();const t=S.fabDraft||'';S.fabDraft='';sendChat(t);renderFab()}});
+document.getElementById('fab').addEventListener('keydown',e=>{if(e.target.id==='fabIn'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.target.form.requestSubmit()}});
 render();
 checkDecline();
+setTimeout(fabTeaser,2500);
 if(apiKey())sampleApi=makeSample();
 if('serviceWorker' in navigator&&location.protocol==='https:'){const had=!!navigator.serviceWorker.controller;let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded&&!S.active){reloaded=true;location.reload()}});navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})})}).catch(()=>{})}
 })();
