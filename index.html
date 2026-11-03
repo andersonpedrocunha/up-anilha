@@ -295,6 +295,7 @@ a.btn .coachav{margin-right:8px}
 .daychips .chip{min-width:0;padding:6px 10px}
 .presets{flex-wrap:wrap;gap:6px;margin-top:6px}
 .week .wd.plan{border-style:dashed;border-color:var(--accent)}
+.actdot{width:8px;height:8px;border-radius:50%;background:#4aa3ff}
 .week .wd.comp{border-style:dashed;border-color:var(--hot)}
 .week .wd.miss{border-style:solid;border-color:var(--danger);opacity:1;position:relative}.week .wd.miss::after{content:"";position:absolute;width:60%;height:2px;background:var(--danger);transform:rotate(-45deg)}
 .compbox{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--sunk)}.compbox.warn{border-color:color-mix(in srgb,var(--hot) 60%,var(--line))}.compbox.good{border-color:color-mix(in srgb,var(--good) 60%,var(--line))}
@@ -543,7 +544,11 @@ function repsLow(r){const m=String(r).match(/\d+/);return m?m[0]:''}
 function dayKey(d){const x=new Date(d);return x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate()}
 function vol(s){return s.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+(+t.kg||0)*(+t.reps||0),0),0)}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace('.','')}
-function visitSet(){return new Set(S.sessions.map(s=>dayKey(s.date)))}
+function isGym(s){return !s.activity}
+function visitSet(){return new Set(S.sessions.filter(isGym).map(s=>dayKey(s.date)))}
+function visitsWeekAll(){const ws=weekStart(new Date()),we=new Date(ws.getTime()+7*864e5);return new Set(S.sessions.filter(x=>{const t=new Date(x.date);return t>=ws&&t<we}).map(x=>dayKey(x.date))).size}
+function exSet(){return new Set(S.sessions.map(s=>dayKey(s.date)))}
+function actSet(){return new Set(S.sessions.filter(s=>s.activity).map(s=>dayKey(s.date)))}
 function weekStart(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
 const WD=[1,2,3,4,5,6,0],WDS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 function avail(){const p=profile();return Array.isArray(p.avail)&&p.avail.length?p.avail:[0,1,2,3,4,5,6]}
@@ -591,7 +596,7 @@ function dayChips(act,sel){return `<div class="chips daychips">${WD.map(d=>`<but
   <div class="row presets"><button class="btn ghost sm" data-act="${act}" data-v="all">Todos</button><button class="btn ghost sm" data-act="${act}" data-v="week">Seg a sex</button><button class="btn ghost sm" data-act="${act}" data-v="wknd">Só fim de semana</button><button class="btn ghost sm" data-act="${act}" data-v="mix">Noites + fim de semana</button></div>`}
 function toggleDays(arr,v){if(v==='all')return [0,1,2,3,4,5,6];if(v==='week')return [1,2,3,4,5];if(v==='wknd')return [6,0];if(v==='mix')return [2,4,6,0];
   const d=+v,a=arr.slice();const i=a.indexOf(d);if(i>=0){if(a.length>1)a.splice(i,1)}else a.push(d);return a}
-function visitsBetween(a,b){const days=new Set();S.sessions.forEach(s=>{const t=new Date(s.date);if(t>=a&&t<b)days.add(dayKey(t))});return days.size}
+function visitsBetween(a,b){const days=new Set();S.sessions.filter(isGym).forEach(s=>{const t=new Date(s.date);if(t>=a&&t<b)days.add(dayKey(t))});return days.size}
 function streak(){let ws=weekStart(new Date()),n=0;const cg=effGoal(ws);const cur=visitsBetween(ws,new Date(ws.getTime()+7*864e5));if(cg>0&&cur>=cg)n++;
   for(let i=0;i<104;i++){const b=ws;ws=new Date(ws);ws.setDate(ws.getDate()-7);const eg=effGoal(ws);if(eg===0)continue;if(visitsBetween(ws,b)>=eg)n++;else break}return n}
 /* ---------- pausa ---------- */
@@ -638,10 +643,10 @@ function arm(key){S.armed=key;clearTimeout(armTimer);armTimer=setTimeout(()=>{S.
 function nextId(){const ws=S.plan.workouts.filter(w=>w.ex.length);if(!ws.length)return (S.plan.workouts[0]||{}).id;const ids=ws.map(w=>w.id);const since=S.plan.since||'';
   const last=S.sessions.find(x=>!x.custom&&ids.includes(x.workoutId)&&(!since||x.date>=since));return last?ids[(ids.indexOf(last.workoutId)+1)%ids.length]:ids[0]}
 function weekStrip(){const now=new Date();const start=weekStart(now);
-  const days=new Set(S.sessions.map(s=>dayKey(s.date)));const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
+  const days=visitSet(),acts=actSet();const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const done=days.has(dayKey(d));if(done)n++;
     const fut=d>now&&dayKey(d)!==dayKey(now);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${fut?'fut':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="${fut?'planday':'pastday'}" data-d="${iso}" data-v="${d.getDay()}" aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':fut?(sc.includes(d.getDay())?', planejado. Toque para tirar':'. Toque para planejar'):''}">${done?'✓':''}</button></div>`}
+    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${fut?'fut':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="${fut?'planday':'pastday'}" data-d="${iso}" data-v="${d.getDay()}" aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':fut?(sc.includes(d.getDay())?', planejado. Toque para tirar':'. Toque para planejar'):''}">${done?'✓':acts.has(dayKey(d))?'<span class="actdot" title="Atividade fora (não conta na meta)"></span>':''}</button></div>`}
   return {html:`<div class="week">${h}</div>`,n}}
 
 function viewHoje(){
@@ -680,14 +685,14 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
   const month=now.toLocaleDateString('pt-BR',{month:'long'});
   return `<div class="card stack">
     <div class="row" style="justify-content:space-between;align-items:flex-end">
-      <div><div class="eyebrow">Meta da semana${adj?' · ajustada pela pausa':''}</div><div class="big num"><b>${wk.n}</b><span>/ ${g.week}</span></div></div>
+      <div><div class="eyebrow">Academia na semana${adj?' · ajustada pela pausa':''}</div><div class="big num"><b>${wk.n}</b><span>/ ${g.week}</span></div></div>
       <div style="text-align:right"><div class="eyebrow">Sequência</div><div class="num" style="font-family:var(--display);font-weight:700;font-size:22px">${st} ${st===1?'semana':'semanas'}</div></div>
     </div>
     ${wk.html}
-    <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">Toque num dia que passou para registrar, ou num dia que vem para planejar.</div>
+    <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">Toque num dia que passou para registrar, ou num dia que vem para planejar.${weekInfo().n<visitsWeekAll()?'<br><span class="actdot" style="display:inline-block;vertical-align:middle"></span> atividade fora: dá XP e calorias, mas não conta como ida à academia.':''}</div>
     ${compCard()}
     <div class="progress"><i style="width:${pctW}%;background:${wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
-    <div class="muted" style="font-size:14px">${wk.n>=g.week?'Meta da semana batida.':`Faltam ${g.week-wk.n} ${g.week-wk.n===1?'dia':'dias'} de exercício para a meta.`}</div>
+    <div class="muted" style="font-size:14px">${wk.n>=g.week?'Meta da semana batida.':`Faltam ${g.week-wk.n} ${g.week-wk.n===1?'ida':'idas'} à academia para a meta.`}</div>
     ${went?`<div class="row"><div class="btn checked" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">✓ Você foi hoje</div>${ck?`<button class="btn ghost sm" data-act="uncheck" data-id="${ck.id}">Desfazer</button>`:''}</div>`
       :`<button class="btn primary big" data-act="regtoday">Registrar treino de hoje</button>`}
     <div class="mrow"><div class="row" style="justify-content:space-between"><span class="eyebrow">Em ${month}</span><span class="num" style="font-weight:700">${mv} / ${g.month}</span></div>
@@ -815,7 +820,7 @@ Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body(
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} min por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações: ${p.notes||'nenhuma'}.
 Restrições de saúde: ${restrText()}. Nunca sugira exercícios contraindicados para essas condições; prefira variações com apoio e explique o motivo da troca.
-Metas: ${g.week} dias por semana, ${g.month} por mês. Dias com exercício nesta semana (segunda a domingo): ${weekStrip().n}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino da sequência (o aluno faz A, B, C… em ordem; se faltou um dia, o pendente continua sendo o próximo): ${nextId()}.
+Metas: ${g.week} dias por semana, ${g.month} por mês. Idas à academia nesta semana (segunda a domingo; atividades fora como corrida e bike NÃO contam para a meta, só para XP e calorias): ${weekStrip().n}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino da sequência (o aluno faz A, B, C… em ordem; se faltou um dia, o pendente continua sendo o próximo): ${nextId()}.
 Rotina atual:
 ${plan}
 Últimos registros:
@@ -1742,7 +1747,7 @@ function levelOf(xp){let L=1;while(xpForLevel(L+1)<=xp)L++;const ri=Math.min(RAN
   const name=ri<RANKS.length-1?`${R[0]} ${ROMAN[(L-1)%3]}`:`${R[0]}${L-1-(RANKS.length-1)*3>0?' ★'+(L-1-(RANKS.length-1)*3):''}`;
   return {L,ri,name,rank:R[0],color:R[1],min:xpForLevel(L),next:xpForLevel(L+1)}}
 function rankStart(ri){return xpForLevel(ri*3+1)}
-function dayStreak(){const ds=visitSet();const d=new Date();if(!ds.has(dayKey(d)))d.setDate(d.getDate()-1);let n=0;for(let i=0;i<730;i++){if(ds.has(dayKey(d)))n++;else if(!pauseOn(d))break;d.setDate(d.getDate()-1)}return n}
+function dayStreak(){const ds=exSet();const d=new Date();if(!ds.has(dayKey(d)))d.setDate(d.getDate()-1);let n=0;for(let i=0;i<730;i++){if(ds.has(dayKey(d)))n++;else if(!pauseOn(d))break;d.setDate(d.getDate()-1)}return n}
 function maxStreak(){const days=[...new Set(S.sessions.map(s=>{const d=new Date(s.date);d.setHours(0,0,0,0);return d.getTime()}))].sort((a,b)=>a-b);let best=0,cur=0,prev=null;
   days.forEach(t=>{cur=prev!==null&&Math.round((t-prev)/864e5)===1?cur+1:1;best=Math.max(best,cur);prev=t});return best}
 function metStreakWeeks(){const h=weekHistory();let n=0;for(let i=h.length-1;i>=0;i--){if(h[i].excused)continue;if(!h[i].met)break;n++}return n}
@@ -1770,7 +1775,7 @@ function weekRisk(){const ap=activePause();if(ap)return {ok:true,pause:true,msg:
   const left=daysLeftWeek(),need=g-wk;const wknd=left.filter(d=>d===6||d===0);
   if(need>left.length)return {ok:false,lost:true,msg:`Não dá mais para bater a meta desta semana. Você vai perder ${WEEK_PENALTY} XP no domingo.`};
   const tight=need===left.length;
-  return {ok:false,lost:false,msg:`Faltam ${need} ${need===1?'dia':'dias'} de exercício. Ainda dá: ${dayList(left)}.${tight?' Sem folga: precisa ir em todos.':wknd.length&&need>=left.length-wknd.length?' O fim de semana vai salvar sua semana.':''} Se não bater, perde ${WEEK_PENALTY} XP.`}}
+  return {ok:false,lost:false,msg:`Faltam ${need} ${need===1?'ida':'idas'} à academia. Ainda dá: ${dayList(left)}.${tight?' Sem folga: precisa ir em todos.':wknd.length&&need>=left.length-wknd.length?' O fim de semana vai salvar sua semana.':''} Se não bater, perde ${WEEK_PENALTY} XP.`}}
 function snapshot(){return {L:levelOf(totalXP()).L,tiers:allTiers(),status:statusList().filter(x=>x.on&&!x.bad).map(x=>x.id)}}
 (function(){if(LS.get('ct.g2',null)===null)LS.set('ct.g2',snapshot())})();
 function celebrate(msg){const old=LS.get('ct.g2',snapshot()),now=snapshot();LS.set('ct.g2',now);let extra='';
