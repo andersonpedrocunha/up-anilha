@@ -1417,20 +1417,32 @@ function mealsCard(f){const i=kcalIn(f),o=kcalOut(),b=i-o.total,t=balTarget();
     ${S.mealMan?`<div class="suppform"><input id="mlName" class="wname" placeholder="O que comeu (ex.: almoço, PF de frango)"><input id="mlKcal" class="wname" inputmode="numeric" placeholder="kcal"><input id="mlProt" class="wname" inputmode="numeric" placeholder="proteína (g), opcional"><button class="btn primary sm" data-act="mealadd">Salvar refeição</button></div>`:''}
     ${sampleApi?'':'<div class="muted" style="font-size:12px">Para calcular pela foto, ative minha IA na aba '+COACH+'.</div>'}
     <p class="muted" style="font-size:12px;margin:0">Valores estimados. Foto não pesa comida: use como referência, não como balança.</p></div>`}
-async function mealPhoto(file){if(!sampleApi){toast('Ative minha IA para eu ler a foto.');return}toast('Deixa eu ver esse prato…');
-  try{const b64=await shrinkImage(file);const th=await thumbOf(file);const model=apiModel();
+function mealAsk(file){if(!sampleApi){toast('Ative minha IA para eu ler a foto.');return}
+  thumbOf(file).then(th=>{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
+    o.innerHTML=`<div class="cbox-in"><div class="row">${th?`<img src="${th}" alt="" style="width:56px;height:56px;border-radius:12px;object-fit:cover">`:coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>Sabe quanto pesa?</h3></div><button class="ic cboxx" data-c="x" aria-label="Fechar">✕</button></div>
+      <p style="margin:0;font-size:14px">Com o peso eu calculo bem mais certo. Se não pesou, eu estimo pela foto.</p>
+      <label class="field">Peso da comida (g)<input id="mlW" class="wname" inputmode="numeric" placeholder="ex.: 450"></label>
+      <label class="tog" style="font-size:13px"><input type="checkbox" id="mlPlate"> Pesei com o prato junto</label>
+      <label class="field">Tem algo que não aparece na foto? (opcional)<input id="mlNote" class="wname" placeholder="ex.: arroz integral, frito no azeite, sem açúcar"></label>
+      <div class="row cbtns"><button class="btn ghost" data-c="est">Não sei, estima</button><button class="btn primary" data-c="go">Calcular</button></div></div>`;
+    o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('[data-c]');if(!t)return;const c=t.dataset.c;if(c==='x'){o.remove();return}
+      const w=parseInt((o.querySelector('#mlW').value||'').replace(/\D/g,''))||0,plate=o.querySelector('#mlPlate').checked,note=(o.querySelector('#mlNote').value||'').trim().slice(0,160);
+      if(c==='go'&&!w){toast('Coloca o peso, ou toque em "Não sei, estima".');return}o.remove();mealPhoto(file,c==='go'?w:0,plate,note,th)});
+    document.body.appendChild(o);setTimeout(()=>{const i=o.querySelector('#mlW');i&&i.focus()},50)})}
+async function mealPhoto(file,grams,plate,note,th0){toast(grams?`${grams} g anotados. Deixa eu ver esse prato…`:'Deixa eu estimar esse prato…');
+  try{const b64=await shrinkImage(file);const th=th0||await thumbOf(file);const model=MODELS['claude-sonnet-5-5']?'claude-sonnet-5-5':apiModel();
     const j=await callApi({model,max_tokens:900,system:'Você é a Driffa, treinadora nórdica forte e acolhedora do app Up Anilha. Estime os alimentos e calorias de fotos de refeições com realismo para porções brasileiras. Responda SOMENTE com JSON válido.',
-      messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Identifique a refeição e estime as porções. Responda só este JSON: {"nome":"nome curto da refeição","itens":[{"alimento":"","porcao":"ex.: 4 col. sopa","kcal":0}],"kcal":0,"prot":0,"carb":0,"gord":0,"comentario":"uma frase curta sua sobre o prato pensando no treino"}. Se não for comida, devolva {"erro":"motivo"}.'}]}]});
+      messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:(grams?`PESO INFORMADO: ${grams} g ${plate?'INCLUINDO o prato (estime o peso do prato pela foto, normalmente 300 a 600 g para prato de louça, e desconte)':'só de comida'}. Use esse peso como verdade e distribua entre os alimentos pela proporção visível. `:'Sem peso informado: estime as porções pelo tamanho do prato, talheres e referências da foto. ')+(note?`Informação do aluno: ${note}. `:'')+'Identifique a refeição e estime as porções em gramas. Responda só este JSON: {"nome":"nome curto da refeição","itens":[{"alimento":"","porcao":"ex.: 120 g (4 col. sopa)","kcal":0}],"kcal":0,"prot":0,"carb":0,"gord":0,"comentario":"uma frase curta sua sobre o prato pensando no treino"}. Se não for comida, devolva {"erro":"motivo"}.'}]}]});
     trackUsage(model,j.usage);creditWarn();const txt=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');const m=txt.match(/\{[\s\S]*\}/);const r=m?JSON.parse(m[0]):null;
     if(!r||r.erro){toast(r&&r.erro?r.erro:'Não consegui ler esse prato. Tenta uma foto de cima, com boa luz.');return}
-    mealConfirm({name:String(r.nome||'Refeição').slice(0,60),kcal:Math.round(+r.kcal||0),prot:Math.round(+r.prot||0),carb:Math.round(+r.carb||0),fat:Math.round(+r.gord||0),items:(r.itens||[]).slice(0,8),note:r.comentario||'',thumb:th})}
+    mealConfirm({weighed:!!grams,name:String(r.nome||'Refeição').slice(0,60),kcal:Math.round(+r.kcal||0),prot:Math.round(+r.prot||0),carb:Math.round(+r.carb||0),fat:Math.round(+r.gord||0),items:(r.itens||[]).slice(0,8),note:r.comentario||'',thumb:th})}
   catch(e){toast(errMsg(e))}}
 function thumbOf(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),z=96;c.width=z;c.height=z;const k=Math.max(z/im.width,z/im.height);const w=im.width*k,h=im.height*k;c.getContext('2d').drawImage(im,(z-w)/2,(z-h)/2,w,h);res(c.toDataURL('image/jpeg',.6))};im.onerror=()=>res('');im.src=r.result};r.onerror=()=>res('');r.readAsDataURL(file)})}
 function mealConfirm(m){let k=1;const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
   const draw=()=>{o.innerHTML=`<div class="cbox-in"><div class="row">${m.thumb?`<img src="${m.thumb}" alt="" style="width:56px;height:56px;border-radius:12px;object-fit:cover">`:coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH} estimou</div><h3>${esc(m.name)}</h3></div></div>
     ${m.items.length?`<ul class="abslist">${m.items.map(x=>`<li><span>${esc(x.alimento||'')} <span class="muted">${esc(x.porcao||'')}</span></span><span class="muted num">${Math.round((+x.kcal||0)*k)} kcal</span></li>`).join('')}</ul>`:''}
     <div class="balgrid"><div><b class="num">${Math.round(m.kcal*k)}</b><span>kcal</span></div><div><b class="num">${Math.round(m.prot*k)} g</b><span>proteína</span></div><div><b class="num">${Math.round(m.carb*k)}/${Math.round(m.fat*k)}</b><span>carbo/gord (g)</span></div></div>
-    <div class="eyebrow">Porção que você comeu</div><div class="chips">${[[.5,'Metade'],[1,'Isso aí'],[1.5,'1,5×'],[2,'Dobro']].map(([v,l])=>`<button class="chip sm" data-k="${v}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>
+    ${m.weighed?`<div class="muted" style="font-size:12px">Calculado com o peso que você informou.</div>`:`<div class="eyebrow">Porção que você comeu</div><div class="chips">${[[.5,'Metade'],[1,'Isso aí'],[1.5,'1,5×'],[2,'Dobro']].map(([v,l])=>`<button class="chip sm" data-k="${v}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>`}
     ${m.note?`<div class="coachsay sm">${coachAv(24)}<p style="margin:0;font-size:13px">${esc(m.note)}</p></div>`:''}
     <div class="row cbtns"><button class="btn ghost" data-c="no">Descartar</button><button class="btn primary" data-c="ok">Salvar refeição</button></div></div>`};
   draw();o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;if(t.dataset.k){k=+t.dataset.k;draw();return}
@@ -2023,7 +2035,7 @@ main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chat
 });
 main.addEventListener('submit',e=>{if(e.target.id==='chatForm'){e.preventDefault();sendChat(S.draft)}});
 main.addEventListener('change',e=>{if(e.target.id==='voiceSel'){LS.set('ct.voiceName',e.target.value);pickVoice();speak(`Oi. Eu sou a ${COACH}. Gostou dessa voz?`,true);return}if(e.target.id==='gpxIn'){const f=e.target.files&&e.target.files[0];if(f)importGpx(f);e.target.value='';return}
-  if(e.target.id==='mealPhoto'){const f=e.target.files&&e.target.files[0];if(f)mealPhoto(f);e.target.value='';return}
+  if(e.target.id==='mealPhoto'){const f=e.target.files&&e.target.files[0];if(f)mealAsk(f);e.target.value='';return}
   if(e.target.dataset&&e.target.dataset.photo!==undefined){const f=e.target.files&&e.target.files[0];if(f&&S.active){const ae=S.active.ex[+e.target.dataset.photo];analyzePhoto(ae.name,f)}return}
   if(e.target.id==='photoIn'){if(S.view==='hoje'){const w=document.getElementById('welName');if(w)S.draftName=w.value}processPhoto(e.target.files&&e.target.files[0]);return}
   if(e.target.id==='restoreIn'){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.plan||!Array.isArray(d.plan.workouts)||!Array.isArray(d.sessions))throw 0;
