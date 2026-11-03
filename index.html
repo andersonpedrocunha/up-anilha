@@ -237,7 +237,8 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .coachsay{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
 .coachsay b{font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
 .coachsay p{margin:2px 0 0;font-size:15px;line-height:1.4}
-.coachav{flex:none;display:block}
+.coachav{flex:none;display:block;border-radius:50%;object-fit:cover;background:#141a2e}
+.coachportrait{width:100%;max-width:340px;aspect-ratio:1;height:auto;border-radius:20px;align-self:center;display:block}
 .coachhero{display:flex;gap:14px;align-items:center}
 .coachname{font-size:13px}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
@@ -543,7 +544,8 @@ Formato: {"workouts":[{"name":"Peito e tríceps","ex":[{"name":"Supino reto","se
 const SUGS=['Monte um aquecimento para o treino de hoje','Só tenho 40 min hoje, o que eu corto?','Como aumentar as cargas sem me machucar?','Troque um exercício que incomoda meu ombro'];
 function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${full?' class="full"':''}>${title}<select id="${id}" data-f="pf" data-k="${k}">${OPTS[k].map(([v,l])=>`<option value="${v}" ${String(p[k])===String(v)?'selected':''}>${l}</option>`).join('')}</select></label>`;
   return `<div class="stack">
-    <div class="coachhero">${coachAv(72)}<div><div class="eyebrow">Sua treinadora</div><h2>${COACH}</h2><p class="muted" style="margin:4px 0 0">Inspirada na valquíria Sigrdrífa, "a que impulsiona à vitória". Ela monta seu treino, ajusta quando você pedir e respeita os seus limites.</p></div></div>
+    <img class="coachportrait" src="driffa.jpg" alt="${COACH}, sua treinadora" width="720" height="720">
+    <div class="coachhero"><div><div class="eyebrow">Sua treinadora</div><h2>${COACH}</h2><p class="muted" style="margin:4px 0 0">Inspirada na valquíria Sigrdrífa, "a que impulsiona à vitória". Ela monta seu treino, ajusta quando você pedir e respeita os seus limites.</p></div></div>
     <div class="card stack">
       <div class="pf">${sel('goal','pf-goal','Objetivo',1)}${sel('minutes','pf-min','Tempo por treino')}${sel('days','pf-days','Dias por semana')}${sel('level','pf-level','Nível')}${sel('place','pf-place','Onde treina')}
         <fieldset class="full restr"><legend>Restrições de saúde</legend>${Object.entries(RESTR).map(([k,R])=>`<label class="tog"><input type="checkbox" id="rs-${k}" data-f="restr" data-k="${k}" ${restr().includes(k)?'checked':''}>${R.label}</label>`).join('')}</fieldset>
@@ -676,7 +678,7 @@ function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Escolha uma ima
 
 /* ---------- Driffa ---------- */
 const COACH='Driffa';
-function coachAv(size){return `<svg class="coachav" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><circle cx="24" cy="24" r="23" fill="#141a2e"/><circle cx="24" cy="24" r="19" fill="none" stroke="#f2c230" stroke-opacity=".35" stroke-width="1"/><path d="M24 37V11M15.5 19.5 24 11l8.5 8.5" fill="none" stroke="#f2c230" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function coachAv(size){return `<img class="coachav" src="driffa-face.jpg" width="${size}" height="${size}" alt="${COACH}">`}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function daysSinceLast(){if(!S.sessions.length)return null;const d=new Date(S.sessions[0].date);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/864e5)}
 function coachLine(){const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinceLast(),name=firstName();const you=name?name+', ':'';
