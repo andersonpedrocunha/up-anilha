@@ -341,6 +341,8 @@ a.btn .coachav{margin-right:8px}
 .wbc{position:relative;width:100%;max-width:26px;height:72px;border-radius:6px;background:var(--sunk)}.wbc::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
 .wbc i{position:absolute;left:3px;right:3px;border-radius:3px}.wbc i.neg{background:#4aa3ff}.wbc i.pos{background:var(--hot)}.wb.today .wbc i{opacity:.55}
 .cboxx{margin-left:auto;flex:none}
+.acc{max-width:440px;margin:0 auto;padding-top:8px}.acchero{display:flex;gap:14px;align-items:center}.acchero img{width:96px;height:96px;border-radius:20px;object-fit:cover;flex:none;border:2px solid #f2c230}
+body.accmode nav.tabs,body.accmode #avatarBtn{display:none}
 .exbtns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.exbtns .howbtn{margin:0;cursor:pointer}.howbtn.alt{color:var(--muted)}
 .sugg{display:flex;gap:8px;align-items:center;font-size:13px;border-radius:10px;padding:7px 10px;margin-top:6px}.sugg.up{background:var(--good-soft)}.sugg.hold{background:color-mix(in srgb,var(--hot) 18%,var(--surface))}
 .voicebtn{font-size:18px}
@@ -401,7 +403,83 @@ const DEFAULT_PLAN={v:2,next:'A',goals:{week:5,month:20},workouts:[
  {id:'D',day:4,name:'Pernas e ombros',ex:[E('Leg press 45°',3,'12',90),E('Cadeira extensora',3,'15',60),E('Mesa flexora',3,'12',60),E('Panturrilha sentada',4,'15',45),E('Desenvolvimento com halteres',3,'10',75),E('Elevação lateral',3,'12-15',60)]},
  {id:'E',day:5,name:'Full body em circuito',ex:[E('Afundo (passada), cada perna',3,'12',60),E('Supino reto com halteres',3,'10',60),E('Puxada alta',3,'10',60),E('Elevação lateral',3,'15',45),E('Rosca direta (super-série)',3,'12',0),E('Tríceps pulley (super-série)',3,'12',75)]}
 ]};
-const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(SYNCK.has(k)&&!cloudApplying)cloudTouch(k)}};
+/* ---------- nuvem (Supabase) ---------- */
+const SB_URL='',SB_KEY='';
+const SYNCK=new Set(['ct.user','ct.plan','ct.plans','ct.sessions','ct.deleted','ct.chat','ct.food','ct.pauses','ct.weekplan','ct.ai','ct.key','ct.model','ct.look','ct.voice','ct.voiceName','ct.voiceRate','ct.absLvl','ct.absMin','ct.swaps','ct.audios','ct.lastAct']);
+var cloudApplying=false,cloudDirtySet=new Set(),cloudTimer=null,cloudBusy=false,cloudLast=0,cloudErr='';
+function cloudOn(){return !!(SB_URL&&SB_KEY)}
+function sbSess(){try{return JSON.parse(localStorage.getItem('ct.sb')||'null')}catch(e){return null}}
+function sbSetSess(x){try{x?localStorage.setItem('ct.sb',JSON.stringify(x)):localStorage.removeItem('ct.sb')}catch(e){}}
+function sbFromToken(j){return {access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),user:{id:j.user&&j.user.id,email:j.user&&j.user.email}}}
+async function sbAuth(path,body,token){const r=await fetch(SB_URL+'/auth/v1/'+path,{method:'POST',headers:{'content-type':'application/json',apikey:SB_KEY,...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify(body||{})});
+  const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.msg||j.error_description||j.message||'erro');e.code=j.error_code||j.code||r.status;throw e}return j}
+async function sbToken(){let x=sbSess();if(!x)return null;if(x.expires_at-60>Date.now()/1000)return x.access_token;
+  try{const j=await sbAuth('token?grant_type=refresh_token',{refresh_token:x.refresh_token});x=sbFromToken(j);sbSetSess(x);return x.access_token}catch(e){if(e.code===400||e.code==='refresh_token_not_found'||e.code==='invalid_grant'){sbSetSess(null)}return null}}
+async function sbRest(method,q,body){const t=await sbToken();if(!t)throw Object.assign(new Error('sem sessão'),{code:'nosess'});
+  const r=await fetch(SB_URL+'/rest/v1/user_data'+(q||''),{method,headers:{apikey:SB_KEY,authorization:'Bearer '+t,'content-type':'application/json',...(method==='POST'?{prefer:'resolution=merge-duplicates,return=minimal'}:{})},body:body?JSON.stringify(body):undefined});
+  if(!r.ok)throw Object.assign(new Error('rest '+r.status),{code:r.status});return method==='GET'?r.json():null}
+function authMsg(e){const c=String(e.code||''),m=String(e.message||'');
+  if(/invalid_credentials|Invalid login/i.test(c+m))return 'E-mail ou senha não batem. Confere e tenta de novo.';
+  if(/user_already_exists|already registered/i.test(c+m))return 'Esse e-mail já tem conta. Toque em Entrar.';
+  if(/weak_password|at least/i.test(c+m))return 'Senha fraca. Use pelo menos 6 caracteres, misturando letras e números.';
+  if(/email_not_confirmed/i.test(c+m))return 'Confirme seu e-mail primeiro: o link está na sua caixa de entrada.';
+  if(/rate_limit|429/i.test(c+m))return 'Muitas tentativas. Respira, espera um minuto e tenta de novo.';
+  if(/email_address_invalid|invalid.*email/i.test(c+m))return 'Esse e-mail não parece válido.';
+  if(e instanceof TypeError)return 'Sem internet agora. Tenta quando a conexão voltar.';return 'Não deu certo: '+m}
+function cloudTouch(k){const mt=LS.get('ct.mtime',{});mt[k]=Date.now();try{localStorage.setItem('ct.mtime',JSON.stringify(mt))}catch(e){}cloudDirtySet.add(k);if(cloudOn()&&sbSess()){clearTimeout(cloudTimer);cloudTimer=setTimeout(cloudPush,2500)}}
+async function cloudPush(){if(!cloudOn()||!sbSess()||cloudBusy||!cloudDirtySet.size)return;cloudBusy=true;const keys=[...cloudDirtySet];cloudDirtySet.clear();const uid=sbSess().user.id,now=new Date().toISOString();
+  try{await sbRest('POST','?on_conflict=user_id,key',keys.map(k=>({user_id:uid,key:k,data:LS.get(k,null),updated_at:now})));cloudLast=Date.now();cloudErr='';LS.set('ct.cloudLast',cloudLast)}
+  catch(e){keys.forEach(k=>cloudDirtySet.add(k));cloudErr=e.code==='nosess'?'sessão expirou':'sem conexão';clearTimeout(cloudTimer);cloudTimer=setTimeout(cloudPush,30000)}
+  cloudBusy=false;if(cloudDirtySet.size){clearTimeout(cloudTimer);cloudTimer=setTimeout(cloudPush,2500)}}
+function mergeById(a,b,del){const m=new Map();[...(a||[]),...(b||[])].forEach(x=>{if(x&&x.id&&!del.has(x.id)&&!m.has(x.id))m.set(x.id,x)});return [...m.values()].sort((x,y)=>x.date<y.date?1:-1)}
+function mergeFood(a,b){const o={...(b||{})};Object.entries(a||{}).forEach(([d,x])=>{const y=o[d];if(!y){o[d]=x;return}
+  const meals=new Map();[...(y.meals||[]),...(x.meals||[])].forEach(m=>meals.set(m.id,m));o[d]={...y,...x,water:Math.max(x.water||0,y.water||0),prot:Math.max(x.prot||0,y.prot||0),log:(x.log||[]).length>=(y.log||[]).length?x.log:y.log,supp:{...(y.supp||{}),...(x.supp||{})},meals:[...meals.values()].sort((p,q)=>p.t-q.t)}});return o}
+function mergeChat(a,b){const m=new Map();[...(a||[]),...(b||[])].forEach(x=>{if(x)m.set((x.t||0)+'|'+x.role+'|'+String(x.content).slice(0,40),x)});return [...m.values()].sort((p,q)=>(p.t||0)-(q.t||0)).slice(-60)}
+async function cloudPull(first){if(!cloudOn()||!sbSess())return false;let rows;try{rows=await sbRest('GET','?select=key,data,updated_at')}catch(e){cloudErr=e.code==='nosess'?'sessão expirou':'sem conexão';if(e.code==='nosess')render();return false}
+  const cloud=new Map(rows.map(r=>[r.key,r]));const mt=LS.get('ct.mtime',{});const push=new Set();let changed=false;
+  const del=new Set([...(LS.get('ct.deleted',[])||[]),...((cloud.get('ct.deleted')||{}).data||[])]);
+  cloudApplying=true;
+  try{SYNCK.forEach(k=>{const r=cloud.get(k),local=LS.get(k,null),cut=r?Date.parse(r.updated_at):0;let val=local;
+    if(k==='ct.deleted')val=[...del].slice(-2000);
+    else if(k==='ct.sessions')val=mergeById(local,r&&r.data,del);
+    else if(k==='ct.food')val=mergeFood(local,r&&r.data);
+    else if(k==='ct.chat')val=mergeChat(local,r&&r.data);
+    else if(r&&(local===null||(mt[k]||0)<=cut))val=r.data;
+    const sv=JSON.stringify(val),sl=JSON.stringify(local),sc=r?JSON.stringify(r.data):null;
+    if(sv!==sl&&val!==null){LS.set(k,val);changed=true}
+    if(val!==null&&sv!==sc)push.add(k)})}finally{cloudApplying=false}
+  if(changed){S.user=LS.get('ct.user',S.user);S.plan=LS.get('ct.plan',null)||S.plan;S.sessions=LS.get('ct.sessions',[]);S.chat=LS.get('ct.chat',[]);S.absLvl=LS.get('ct.absLvl','medium');S.absMin=LS.get('ct.absMin',0);if(apiKey()&&!sampleApi)sampleApi=makeSample();try{pickVoice()}catch(_){}}
+  push.forEach(k=>cloudDirtySet.add(k));cloudLast=Date.now();LS.set('ct.cloudLast',cloudLast);cloudErr='';if(cloudDirtySet.size)cloudPush();
+  if(changed&&!first)render();return changed}
+async function cloudLogin(mode,email,pass,name){let j;
+  if(mode==='signup'){j=await sbAuth('signup',{email,password:pass,data:{name}});if(!j.access_token){return 'confirm'}}
+  else j=await sbAuth('token?grant_type=password',{email,password:pass});
+  sbSetSess(sbFromToken(j));if(name&&!S.user.name){S.user.name=name;S.user.skip=true;saveUser()}
+  await cloudPull(true);if(name&&!S.user.name){S.user.name=name;saveUser()}return 'ok'}
+async function cloudLogout(){const x=sbSess();if(cloudDirtySet.size)await cloudPush();try{if(x)await sbAuth('logout',{},x.access_token)}catch(_){}sbSetSess(null);
+  SYNCK.forEach(k=>{try{localStorage.removeItem(k)}catch(_){}});['ct.mtime','ct.cloudLast','ct.active','ct.cloudSkip'].forEach(k=>{try{localStorage.removeItem(k)}catch(_){}});location.reload()}
+function viewConta(){const m=S.acc||'login';const busy=S.accBusy;
+  if(m==='newpass')return `<div class="acc stack"><div class="acchero"><img src="${dImg('')}" alt=""><div><div class="eyebrow">${COACH}</div><h2>Nova senha</h2></div></div>
+    <input id="accPass" class="wname" type="password" placeholder="Nova senha (mín. 6)" autocomplete="new-password"><button class="btn primary big" data-act="accnewpass" ${busy?'disabled':''}>${busy?'Salvando…':'Salvar senha'}</button></div>`;
+  return `<div class="acc stack">
+    <div class="acchero"><img src="${dImg('')}" alt="${COACH}"><div><div class="eyebrow">${COACH}</div><h2>${m==='signup'?'Comece sua saga':m==='forgot'?'Nova senha':'Entre na sua saga'}</h2><p class="muted" style="margin:6px 0 0;font-size:14px">${m==='signup'?'Crie sua conta. Seus treinos ficam salvos na nuvem e aparecem em qualquer aparelho.':m==='forgot'?'Eu te mando um link para criar uma senha nova.':'Tudo que você registra fica salvo na nuvem.'}</p></div></div>
+    <div class="seg"><button data-act="accmode" data-v="login" aria-pressed="${m!=='signup'}">Entrar</button><button data-act="accmode" data-v="signup" aria-pressed="${m==='signup'}">Criar conta</button></div>
+    <form id="accForm" class="stack" style="gap:10px" novalidate>
+      ${m==='signup'?`<input id="accName" class="wname" placeholder="Seu nome" autocomplete="given-name" value="${esc(S.user.name||'')}">`:''}
+      <input id="accEmail" class="wname" type="email" inputmode="email" placeholder="E-mail" autocomplete="email" value="${esc(S.accEmail||'')}">
+      ${m!=='forgot'?`<input id="accPass" class="wname" type="password" placeholder="Senha${m==='signup'?' (mín. 6)':''}" autocomplete="${m==='signup'?'new-password':'current-password'}">`:''}
+      <button class="btn primary big" ${busy?'disabled':''}>${busy?'Um momento…':m==='signup'?'Criar conta':m==='forgot'?'Enviar link':'Entrar'}</button>
+    </form>
+    ${m==='login'?`<button class="linkbtn" data-act="accmode" data-v="forgot" style="align-self:center">Esqueci minha senha</button>`:m==='forgot'?`<button class="linkbtn" data-act="accmode" data-v="login" style="align-self:center">Voltar para entrar</button>`:''}
+    ${S.accMsg?`<div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(S.accMsg)}</p></div>`:''}
+    <button class="btn ghost" data-act="accskip">Agora não, usar só neste celular</button></div>`}
+function accountCard(){if(!cloudOn())return '';const x=sbSess();
+  if(!x)return `<div class="card stack"><div class="row">${coachAv(36)}<div style="min-width:0"><h3>Salvar na nuvem</h3><div class="muted" style="font-size:13px">Crie uma conta para não perder nada e usar em qualquer aparelho.</div></div></div><button class="btn primary" data-act="accopen">Entrar ou criar conta</button></div>`;
+  const last=LS.get('ct.cloudLast',0);
+  return `<div class="card stack"><div class="row">${coachAv(36)}<div style="min-width:0"><h3>Conta na nuvem</h3><div class="muted" style="font-size:13px;word-break:break-all">${esc(x.user.email||'')}</div></div></div>
+    <div class="muted" style="font-size:13px">${cloudErr?'⚠ '+esc(cloudErr)+'. Tudo continua salvo aqui e sobe quando der.':last?'✓ Sincronizado '+(Date.now()-last<60000?'agora há pouco':'às '+hhmm(last)):'Sincronizando…'}</div>
+    <div class="row"><button class="btn ghost sm" data-act="accsync">Sincronizar agora</button><button class="btn ghost sm danger" data-act="acclogout" style="margin-left:auto">Sair</button></div></div>`}
 
 const S={user:LS.get('ct.user',{name:'',photo:'',skip:false}),chat:LS.get('ct.chat',[]),draft:'',busy:null,plan:LS.get('ct.plan',null)||JSON.parse(JSON.stringify(DEFAULT_PLAN)),sessions:LS.get('ct.sessions',[]),active:LS.get('ct.active',null),view:'hoje',sel:null,edit:null,histEx:null,armed:null,rest:null};
 if(S.plan.v!==2&&!S.sessions.length){S.plan={...JSON.parse(JSON.stringify(DEFAULT_PLAN)),profile:S.plan.profile}}
@@ -416,7 +494,7 @@ function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());c
 function savePlan(){LS.set('ct.plan',S.plan);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(planRef)planRef.set(JSON.parse(JSON.stringify(S.plan))).catch(()=>toast('A nuvem falhou. Sua rotina ficou guardada aqui no celular.'))},500)}
 function saveActive(){LS.set('ct.active',S.active)}
 function addSession(s){S.sessions=[s,...S.sessions.filter(x=>x.id!==s.id)].sort((a,b)=>a.date<b.date?1:-1);LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(s.id).set(s).catch(()=>toast('Treino guardado aqui no celular. A nuvem fica para depois.'))}
-function delSession(id){S.sessions=S.sessions.filter(x=>x.id!==id);LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(id).delete().catch(()=>{})}
+function delSession(id){S.sessions=S.sessions.filter(x=>x.id!==id);{const d=LS.get('ct.deleted',[]);d.push(id);LS.set('ct.deleted',d.slice(-2000))}LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(id).delete().catch(()=>{})}
 function setSync(on,txt){const el=document.getElementById('sync');el.classList.toggle('on',on);el.querySelector('span').textContent=txt}
 
 async function connect(){
@@ -798,7 +876,7 @@ function loadOlder(el){const h0=el.scrollHeight,t0=el.scrollTop;S.chatShow=(S.ch
 document.addEventListener('click',e=>{const b=e.target.closest('[data-more]');if(!b)return;const el=b.closest('.chatlog');if(el)loadOlder(el)});
 document.addEventListener('scroll',e=>{const el=e.target;if(el.classList&&el.classList.contains('chatlog')&&el.scrollTop<30&&el.querySelector('[data-more]'))loadOlder(el)},true);
 /* ---------- Driffa flutuante ---------- */
-function renderFab(){const f=document.getElementById('fab');if(!f)return;if(typeof syncNav==='function')setTimeout(syncNav,0);const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);f.classList.toggle('peek',!S.fabOpen&&(S.fabTuck||!!S.active)&&!S.chatUnread);
+function renderFab(){const f=document.getElementById('fab');if(!f)return;if(typeof syncNav==='function')setTimeout(syncNav,0);const hide=S.view==='personal'||S.view==='montar'||S.view==='conta';f.hidden=hide;document.body.classList.toggle('accmode',S.view==='conta');f.classList.toggle('up',!!S.rest);f.classList.toggle('peek',!S.fabOpen&&(S.fabTuck||!!S.active)&&!S.chatUnread);
   const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="${dImg('bust')}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
   panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
   if(panel.hidden)return;
@@ -990,7 +1068,8 @@ function viewPerfil(){const u=S.user;
     </div>
     <div class="muted" style="font-size:13px;align-self:flex-start">Gasto diário em repouso: ~${Math.round(bmrDay())} kcal${hasBody()?'':' (estimado com 70 kg; preencha para ficar preciso)'}</div>
   </div>
-  <p class="muted" style="margin:0;font-size:14px">Seu perfil, sua foto e seus treinos ficam salvos só neste celular. Não tem senha nem conta: ninguém mais vê esses dados.</p>
+  ${accountCard()}
+  ${cloudOn()&&sbSess()?'':'<p class="muted" style="margin:0;font-size:14px">Sem conta, seu perfil e seus treinos ficam salvos só neste celular.</p>'}
   <button class="btn ghost" data-act="audioedit">O que ouvir no treino (${audios().length})</button>
   ${backupCard()}
   <button class="btn primary" data-act="go" data-v="hoje">Voltar ao treino</button></div>`}
@@ -1700,7 +1779,7 @@ function viewHist(){
   </div>`}
 
 function render(){
-  main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():S.view==='nutri'?viewNutri():viewHist());
+  main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():S.view==='nutri'?viewNutri():S.view==='conta'?viewConta():viewHist());
   renderAvatar();renderFab();if(typeof syncNav==='function')setTimeout(syncNav,0);document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
   const cl=document.getElementById('chatlog');if(cl)cl.scrollTop=cl.scrollHeight;
   if(!S.openD)S.openD={};main.querySelectorAll('details[data-k]').forEach(d=>{d.open=!!S.openD[d.dataset.k];d.addEventListener('toggle',()=>{S.openD[d.dataset.k]=d.open})});
@@ -1783,6 +1862,14 @@ main.addEventListener('click',e=>{
     case 'voice':LS.set('ct.voice',!voiceOn());if(voiceOn()){try{speechSynthesis.getVoices()}catch(_){}speak('Voz ligada. Eu aviso quando o descanso acabar.')}else toast('Fico quieta. Mas continuo de olho.');break;
     case 'busy':busyPick(ei);return;
     case 'saga':openSaga();return;
+    case 'accopen':S.view='conta';S.acc='login';S.accMsg='';window.scrollTo(0,0);break;
+    case 'accmode':S.acc=b.dataset.v;S.accMsg='';{const e=document.getElementById('accEmail');if(e)S.accEmail=e.value}break;
+    case 'accskip':LS.set('ct.cloudSkip',true);S.view='hoje';window.scrollTo(0,0);break;
+    case 'accsync':cloudPull().then(()=>{cloudPush();toast('Tudo sincronizado. Sua saga está segura na nuvem.');render()});return;
+    case 'acclogout':confirmBox({t:'Sair da conta?',m:'Seus dados continuam salvos na nuvem, mas saem deste celular. Para ver de novo, é só entrar.',ok:'Sair'}).then(ok=>{if(ok)cloudLogout()});return;
+    case 'accnewpass':{const pw=(document.getElementById('accPass').value||'');if(pw.length<6){S.accMsg='Use pelo menos 6 caracteres.';break}S.accBusy=true;render();
+      (async()=>{try{const t=await sbToken();const r=await fetch(SB_URL+'/auth/v1/user',{method:'PUT',headers:{'content-type':'application/json',apikey:SB_KEY,authorization:'Bearer '+t},body:JSON.stringify({password:pw})});if(!r.ok)throw Object.assign(new Error('falhou'),{code:r.status});
+        S.accBusy=false;S.view='hoje';await cloudPull(true);render();toast('Senha nova salva. Bem-vinda de volta à saga.')}catch(e){S.accBusy=false;S.accMsg=authMsg(e);render()}})();return}
     case 'vrate':LS.set('ct.voiceRate',+b.dataset.v);speak(pick(['Assim está bom?','Bora, mais uma série.']),true);break;
     case 'vtest':speak(pick([`Oi, ${firstName()||'guerreiro'}. Eu sou a ${COACH}. Série feita. Descanso de noventa segundos.`,`Descanso acabou. Próxima série. Mostra pra barra quem manda.`]),true);return;
     case 'gpxhelp':S.gpxHelp=!S.gpxHelp;break;
@@ -1898,6 +1985,15 @@ main.addEventListener('click',e=>{
   }
   S.armed=null;render();
 });
+main.addEventListener('submit',e=>{if(e.target.id!=='accForm')return;e.preventDefault();const m=S.acc||'login';const email=(document.getElementById('accEmail').value||'').trim(),pw=(document.getElementById('accPass')||{}).value||'',nm=((document.getElementById('accName')||{}).value||'').trim();S.accEmail=email;
+  if(!/^\S+@\S+\.\S+$/.test(email)){S.accMsg='Coloca um e-mail válido.';render();return}
+  if(m==='forgot'){S.accBusy=true;render();fetch(SB_URL+'/auth/v1/recover?redirect_to='+encodeURIComponent(location.origin+location.pathname),{method:'POST',headers:{'content-type':'application/json',apikey:SB_KEY},body:JSON.stringify({email})}).then(r=>{S.accBusy=false;S.accMsg=r.ok?'Se esse e-mail tiver conta, o link chega em instantes. Olha também o spam.':'Não consegui enviar agora. Tenta em um minuto.';render()}).catch(()=>{S.accBusy=false;S.accMsg='Sem internet agora.';render()});return}
+  if(pw.length<6){S.accMsg='A senha precisa de pelo menos 6 caracteres.';render();return}
+  if(m==='signup'&&!nm){S.accMsg='Como eu te chamo? Coloca seu nome.';render();return}
+  S.accBusy=true;S.accMsg='';render();
+  cloudLogin(m,email,pw,nm).then(r=>{S.accBusy=false;if(r==='confirm'){S.acc='login';S.accMsg='Conta criada. Confirme pelo link que mandei no seu e-mail e depois entre aqui.';render();return}
+    S.view='hoje';window.scrollTo(0,0);render();toast(m==='signup'?`Conta criada, ${firstName()||'guerreiro'}. A partir de agora nada se perde.`:`De volta, ${firstName()||'guerreiro'}. Sua saga veio junto.`)})
+  .catch(err=>{S.accBusy=false;S.accMsg=authMsg(err);render()})});
 main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chatIn'){S.draft=t.value;return}
   if(t.id==='guideQ'){S.gq=t.value;document.getElementById('guideList').innerHTML=guideList();return}
   if(t.id==='welName'){S.draftName=t.value;return}
@@ -1929,6 +2025,13 @@ main.addEventListener('change',e=>{if(e.target.id==='voiceSel'){LS.set('ct.voice
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active){try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>wake=l).catch(()=>{})}catch(e){}}});
 
 try{const h=location.hash||'';const m=h.match(/^#ativar=([^&]+)(?:&c=([\d.]+))?(?:&s=([\d.]+))?/);if(m){const k=decodeURIComponent(m[1]);history.replaceState(null,'',location.pathname+location.search);if(/^sk-ant-/.test(k)){LS.set('ct.key',k);if(m[2]){const a=aiState();a.credit=+m[2];a.spent=+(m[3]||0);a.warned=0;LS.set('ct.ai',a)}setTimeout(()=>toast('Ativada neste celular também. Agora eu falo de verdade aqui.'),600)}}}catch(_){}
+if(cloudOn()){try{const h=location.hash||'';if(/access_token=/.test(h)){const q=new URLSearchParams(h.slice(1));history.replaceState(null,'',location.pathname+location.search);
+    const j={access_token:q.get('access_token'),refresh_token:q.get('refresh_token'),expires_in:+q.get('expires_in')||3600,user:{}};
+    try{const pl=JSON.parse(atob(j.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));j.user={id:pl.sub,email:pl.email}}catch(_){}
+    sbSetSess(sbFromToken(j));if(q.get('type')==='recovery'){S.view='conta';S.acc='newpass'}}}catch(_){}
+  if(sbSess()){cloudPull(true).then(c=>{if(c)render()})}else if(!LS.get('ct.cloudSkip',false)&&S.view!=='conta'){S.view='conta';S.acc=S.sessions.length?'login':'signup'}
+  document.addEventListener('visibilitychange',()=>{if(!sbSess())return;if(document.hidden){if(cloudDirtySet.size)cloudPush()}else cloudPull()});
+  window.addEventListener('online',()=>{if(sbSess()){cloudPull();cloudPush()}})}
 if(apiKey())sampleApi=makeSample();
 document.getElementById('fab').addEventListener('click',e=>{const t=e.target;
   if(t.closest('#fabBtn')&&document.getElementById('fab').classList.contains('peek')&&!S.active){S.fabTuck=false;renderFab();return}
