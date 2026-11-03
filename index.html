@@ -273,7 +273,8 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .uav img{width:100%;height:100%;object-fit:cover}.uav svg{width:60%;height:60%}
 .fab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
 .fab>*{pointer-events:auto}.fab.up{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
-.fabbtn{position:relative;width:68px;height:68px;border-radius:50%;padding:2px;border:2px solid #f2c230;background:#141a2e;box-shadow:0 8px 24px rgb(0 0 0 / .35);transition:transform .2s}
+.fabbtn{position:relative;width:52px;height:52px;border-radius:50%;padding:2px;border:2px solid #f2c230;background:#141a2e;box-shadow:0 4px 14px rgb(0 0 0 / .3);transition:transform .25s ease,opacity .25s ease}
+.fab.peek .fabbtn{transform:translateX(calc(50% + 14px));opacity:.55}.fab.peek .fabtip{display:none}
 .fabbtn:active{transform:scale(.94)}.fabbtn .coachav{width:100%;height:100%}
 .fabdot{position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:50%;background:var(--danger);border:2px solid var(--bg)}
 .fabtip{max-width:min(260px,calc(100vw - 100px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px 14px 4px 14px;padding:10px 12px;font-size:14px;box-shadow:0 8px 24px rgb(0 0 0 / .25);cursor:pointer}
@@ -796,7 +797,7 @@ function loadOlder(el){const h0=el.scrollHeight,t0=el.scrollTop;S.chatShow=(S.ch
 document.addEventListener('click',e=>{const b=e.target.closest('[data-more]');if(!b)return;const el=b.closest('.chatlog');if(el)loadOlder(el)});
 document.addEventListener('scroll',e=>{const el=e.target;if(el.classList&&el.classList.contains('chatlog')&&el.scrollTop<30&&el.querySelector('[data-more]'))loadOlder(el)},true);
 /* ---------- Driffa flutuante ---------- */
-function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);
+function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);f.classList.toggle('peek',!S.fabOpen&&(S.fabTuck||!!S.active)&&!S.chatUnread);
   const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="${dImg('bust')}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
   panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
   if(panel.hidden)return;
@@ -807,7 +808,7 @@ function renderFab(){const f=document.getElementById('fab');if(!f)return;const h
       <form id="fabForm" class="chatform"><textarea id="fabIn" rows="1" placeholder="Fale com a ${COACH}…" aria-label="Mensagem para a ${COACH}">${esc(S.fabDraft||'')}</textarea><button class="btn primary" ${S.busy?'disabled':''}>Enviar</button></form>`
      :`<button class="btn primary" data-fab="activate">${coachAv(22)}Ativar a IA da ${COACH}</button>`}`;
   const lg=document.getElementById('fabLog');lg.scrollTop=lg.scrollHeight}
-function fabTeaser(){if(S.teased||S.fabOpen||S.view!=='hoje')return;S.teased=true;const t=document.getElementById('fabTip');if(!t)return;t.textContent=coachLine().replace(/^./,c=>c.toUpperCase());t.hidden=false;setTimeout(()=>{t.hidden=true},7000)}
+function fabTeaser(){if(S.teased||S.fabOpen||S.view!=='hoje'||S.active)return;S.teased=true;if(LS.get('ct.teaseDay','')===todayISO())return;LS.set('ct.teaseDay',todayISO());const t=document.getElementById('fabTip');if(!t)return;t.textContent=coachLine().replace(/^./,c=>c.toUpperCase());t.hidden=false;setTimeout(()=>{t.hidden=true},5000)}
 async function sendChat(text){text=text.trim();if(!text||S.busy||!sampleApi)return;
   S.chat.push({role:'user',content:text,t:Date.now()});S.draft='';S.busy='chat';S.streaming='';saveChat();render();
   let msgs=S.chat.filter(m=>!m.note&&m.content!=='…').slice(-16).map(m=>({role:m.role,content:m.content}));while(msgs.length&&msgs[0].role!=='user')msgs.shift();
@@ -1912,10 +1913,14 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active)
 try{const h=location.hash||'';const m=h.match(/^#ativar=([^&]+)(?:&c=([\d.]+))?(?:&s=([\d.]+))?/);if(m){const k=decodeURIComponent(m[1]);history.replaceState(null,'',location.pathname+location.search);if(/^sk-ant-/.test(k)){LS.set('ct.key',k);if(m[2]){const a=aiState();a.credit=+m[2];a.spent=+(m[3]||0);a.warned=0;LS.set('ct.ai',a)}setTimeout(()=>toast('Ativada neste celular também. Agora eu falo de verdade aqui.'),600)}}}catch(_){}
 if(apiKey())sampleApi=makeSample();
 document.getElementById('fab').addEventListener('click',e=>{const t=e.target;
+  if(t.closest('#fabBtn')&&document.getElementById('fab').classList.contains('peek')&&!S.active){S.fabTuck=false;renderFab();return}
   if(t.closest('#fabBtn')||t.closest('#fabTip')){S.fabOpen=!S.fabOpen;S.chatUnread=false;document.getElementById('fabTip').hidden=true;renderFab();if(S.fabOpen){const i=document.getElementById('fabIn');i&&i.focus()}return}
   const a=t.closest('[data-fab]');if(!a)return;const k=a.dataset.fab;
   if(k==='min'){S.fabOpen=false;renderFab()}else if(k==='full'){S.fabOpen=false;S.view='personal';window.scrollTo(0,0);render()}
   else if(k==='activate'){S.fabOpen=false;S.view='personal';render()}else if(k==='sug'){sendChat(a.dataset.t);renderFab()}});
+{let lastY=window.scrollY,idle=null;window.addEventListener('scroll',()=>{const y=window.scrollY,dy=y-lastY;lastY=y;if(S.fabOpen)return;
+  if(dy>6&&!S.fabTuck){S.fabTuck=true;renderFab()}else if(dy<-12&&S.fabTuck){S.fabTuck=false;renderFab()}
+  clearTimeout(idle);idle=setTimeout(()=>{if(S.fabTuck){S.fabTuck=false;renderFab()}},1800)},{passive:true})}
 document.getElementById('fab').addEventListener('input',e=>{if(e.target.id==='fabIn')S.fabDraft=e.target.value});
 document.getElementById('fab').addEventListener('submit',e=>{if(e.target.id==='fabForm'){e.preventDefault();const t=S.fabDraft||'';S.fabDraft='';sendChat(t);renderFab()}});
 document.getElementById('fab').addEventListener('keydown',e=>{if(e.target.id==='fabIn'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.target.form.requestSubmit()}});
