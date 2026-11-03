@@ -326,6 +326,7 @@ a.btn .coachav{margin-right:8px}
 .abslist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.abslist li{display:flex;justify-content:space-between;gap:10px;font-size:14px}.abslist li span{white-space:nowrap}
 .busyopt{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .favtag{font-size:11px;font-weight:600;color:var(--good);white-space:nowrap}
+.regsec{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px}
 .exbtns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.exbtns .howbtn{margin:0;cursor:pointer}.howbtn.alt{color:var(--muted)}
 .sugg{display:flex;gap:8px;align-items:center;font-size:13px;border-radius:10px;padding:7px 10px;margin-top:6px}.sugg.up{background:var(--good-soft)}.sugg.hold{background:color-mix(in srgb,var(--hot) 18%,var(--surface))}
 .voicebtn{font-size:18px}
@@ -496,7 +497,7 @@ function viewPausa(){const p=activePause()||null;const d=S.pz||(S.pz=p?{reason:p
   ${P.length?`<div class="card stack"><div class="eyebrow">Pausas anteriores</div>${P.slice().reverse().map(x=>`<div class="aurow"><span class="pausebadge sm">❚❚</span><div style="flex:1;min-width:0"><b>${(PAUSE_R[x.reason]||PAUSE_R.outro)[0]}</b><div class="muted" style="font-size:12px">${fmtISO(x.start)} até ${x.end?fmtISO(x.end):'hoje'}</div></div><button class="ic" data-act="pzdel" data-id="${x.id}" aria-label="Apagar pausa">✕</button></div>`).join('')}</div>`:''}
   </div>`}
 
-function todayCheckin(){const k=dayKey(new Date());return S.sessions.find(s=>s.checkin&&dayKey(s.date)===k)}
+function todayCheckin(){const k=dayKey(new Date());return S.sessions.find(s=>(s.checkin||s.quick)&&dayKey(s.date)===k)}
 function arm(key){S.armed=key;clearTimeout(armTimer);armTimer=setTimeout(()=>{S.armed=null;render()},3500)}
 
 /* ---------- views ---------- */
@@ -551,7 +552,7 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
     <div class="progress"><i style="width:${pctW}%;background:${wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
     <div class="muted" style="font-size:14px">${wk.n>=g.week?'Meta da semana batida.':`Faltam ${g.week-wk.n} ${g.week-wk.n===1?'dia':'dias'} de exercício para a meta.`}</div>
     ${went?`<div class="row"><div class="btn checked" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">✓ Você foi hoje</div>${ck?`<button class="btn ghost sm" data-act="uncheck" data-id="${ck.id}">Desfazer</button>`:''}</div>`
-      :`<button class="btn primary big" data-act="checkin">Fazer check-in</button>`}
+      :`<button class="btn primary big" data-act="regtoday">Registrar treino de hoje</button>`}
     <div class="mrow"><div class="row" style="justify-content:space-between"><span class="eyebrow">Em ${month}</span><span class="num" style="font-weight:700">${mv} / ${g.month}</span></div>
       <div class="progress"><i style="width:${pctM}%;background:${mv>=g.month?'var(--good)':'var(--accent)'}"></i></div></div>
     <button class="btn ghost sm pausebtn" data-act="pausego">❚❚ ${activePause()?'Ver pausa':'Pausar metas (doença, viagem, férias)'}</button>
@@ -674,7 +675,7 @@ LIMITES
 }
 function ctxData(){const p=profile(),g=goals();
   const plan=S.plan.workouts.map(w=>`Treino ${w.id}${w.day!=null?' ('+DAYN[w.day]+')':''} – ${w.name} (~${estMin(w)} min): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}, descanso ${e.rest}s${e.bar?' [barra]':''}`).join('; ')).join('\n');
-  const hist=S.sessions.slice(0,12).map(s=>s.checkin?`${s.date.slice(0,10)}: check-in`:s.activity?`${s.date.slice(0,10)}: ${s.name} ${s.minutes} min`:`${s.date.slice(0,10)}: treino ${s.workoutId}, ${Math.round(s.durationSec/60)} min – `+s.ex.map(e=>`${e.name} ${e.sets.map(t=>t.kg+'kg×'+t.reps).join(', ')}`).join('; ')).join('\n')||'nenhum ainda';
+  const hist=S.sessions.slice(0,12).map(s=>s.checkin?`${s.date.slice(0,10)}: check-in`:s.quick?`${s.date.slice(0,10)}: ${s.name} (registrado depois, sem séries) ${Math.round(s.durationSec/60)} min`:s.activity?`${s.date.slice(0,10)}: ${s.name} ${s.minutes} min`:`${s.date.slice(0,10)}: treino ${s.workoutId}, ${Math.round(s.durationSec/60)} min – `+s.ex.map(e=>`${e.name} ${e.sets.map(t=>t.kg+'kg×'+t.reps).join(', ')}`).join('; ')).join('\n')||'nenhum ainda';
   return `DADOS DO ALUNO (use só o que for relevante para a conversa; não recite)
 
 Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body().weight?', '+body().weight+' kg':''}${body().height?', '+body().height+' cm':''}. Nível no app: ${levelOf(totalXP()).name}. Metas perdidas recentes custam XP no app.
@@ -1096,6 +1097,34 @@ function busyPick(ei){const a=S.active;let seen=[];
       saveActive();o.remove();render();toast(P[key][n]>1?`${n} de novo. Já virou seu plano B.`:`Fechado: ${n}. Mesmo músculo, mesma luta.`)}});
   document.body.appendChild(o)}
 
+
+/* ---------- registrar treino (sem check-in solto) ---------- */
+function regDay(iso){const today=iso===todayISO();const d=new Date(iso+'T12:00:00');const label=today?'hoje':d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'});
+  const ws=S.plan.workouts.filter(w=>w.ex.length);let wid=(W(S.plan.next)||ws[0]||{}).id||'ABS';let min=null;
+  const opts=[...ws.map(w=>({id:w.id,name:w.name,min:estMin(w)})),{id:'ABS',name:'Abdômen',min:20}];
+  const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
+  const draw=()=>{const cur=opts.find(x=>x.id===wid)||opts[0];const m=min||Math.max(15,Math.round(cur.min/15)*15);
+    o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>O que você treinou ${esc(label)}?</h3></div></div>
+      ${today?`<button class="btn primary" data-c="now">Vou treinar agora</button>`:''}
+      <div class="regsec"><div class="eyebrow">Treino da rotina${today?', já feito':''}</div>
+        <div class="chips">${opts.map(x=>`<button class="chip sm" data-w="${esc(x.id)}" aria-pressed="${x.id===cur.id}">${x.id==='ABS'?'Abdômen':esc(x.id)+' · '+esc(x.name.split(/[,·]/)[0])}</button>`).join('')}</div>
+        <div class="eyebrow" style="margin-top:4px">Duração</div>
+        <div class="chips">${[15,30,45,60,75,90].map(v=>`<button class="chip sm" data-m="${v}" aria-pressed="${v===m}">${v} min</button>`).join('')}</div>
+        <button class="btn ${today?'ghost':'primary'}" data-c="log" data-min="${m}">Registrar ${cur.id==='ABS'?'abdômen':'treino '+esc(cur.id)}</button></div>
+      <button class="btn ghost" data-c="out">Atividade fora da academia (corrida, bike, esporte…)</button>
+      <button class="linkbtn" data-c="x" style="align-self:center">Cancelar</button></div>`};
+  draw();
+  o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.w){wid=t.dataset.w;min=null;draw();return}if(t.dataset.m){min=+t.dataset.m;draw();return}
+    const c=t.dataset.c;if(!c)return;o.remove();if(c==='x')return;
+    if(c==='now'){S.view='hoje';S.picking=true;window.scrollTo(0,0);render();return}
+    if(c==='out'){S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:iso,note:''};S.view='ativ';window.scrollTo(0,0);render();return}
+    if(c==='log'){const cur=opts.find(x=>x.id===wid)||opts[0];const mm=+t.dataset.min;
+      const qs={id:uid(),date:(today?new Date():d).toISOString(),quick:true,workoutId:cur.id==='ABS'?'ABS':cur.id,name:cur.id==='ABS'?'Abdômen':cur.name,durationSec:mm*60,ex:[],late:!today};addSession(qs);
+      if(cur.id!=='ABS'&&today){const i=S.plan.workouts.findIndex(w=>w.id===cur.id);if(i>=0){S.plan.next=S.plan.workouts[(i+1)%S.plan.workouts.length].id;savePlan()}}
+      render();celebrate((today?`Treino ${cur.id==='ABS'?'de abdômen':cur.id} registrado. Da próxima vez, registra as séries comigo, que eu ajusto a carga.`:`Anotei ${label}. Esquecer de registrar, tudo bem. Esquecer de treinar, não.`)+` +${xpOf(qs)} XP`)}});
+  document.body.appendChild(o)}
+
 /* ---------- check-in de corpo ---------- */
 const PAIN=[['lombar','Lombar'],['joelho','Joelho'],['ombro','Ombro'],['cervical','Pescoço']];
 function bodyCheck(){return new Promise(res=>{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');let en='normal';const pains=new Set();
@@ -1487,7 +1516,7 @@ function prsInDays(days){const lim=Date.now()-days*864e5;const best={},out=[];S.
   if(best[e.name]!==undefined&&m>best[e.name]&&new Date(x.date)>=lim){const o=out.find(r=>r.name===e.name);if(o)o.kg=m;else out.push({name:e.name,kg:m})}best[e.name]=Math.max(best[e.name]||0,m)}));return out}
 function viewHist(){
   if(!S.sessions.length)return `<div class="stack"><div><div class="eyebrow">Histórico</div><h2>Seus treinos</h2></div>
-    <div class="card empty"><h3>Nenhum treino ainda</h3><p style="margin:0">Cada check-in ou treino concluído aparece aqui com a carga de cada série, o volume total e a evolução de cada exercício.</p>
+    <div class="card empty"><h3>Nenhum treino ainda</h3><p style="margin:0">Cada treino ou atividade registrada aparece aqui com a carga de cada série, o volume total e a evolução de cada exercício.</p>
     <button class="btn primary" style="margin-top:14px" data-act="go" data-v="hoje">Ir para o treino de hoje</button></div>${backupCard()}</div>`;
   const now=Date.now(),d30=new Set(S.sessions.filter(s=>now-new Date(s.date)<30*864e5).map(s=>dayKey(s.date))).size,allV=visitSet().size;
   const names=[...new Set(S.sessions.filter(s=>!s.checkin&&!s.activity).flatMap(s=>s.ex.map(e=>e.name)))];if(!S.histEx||!names.includes(S.histEx))S.histEx=names[0];
@@ -1507,7 +1536,7 @@ function viewHist(){
       <div style="margin-top:10px">${chart(S.histEx)}</div></div>`:''}
     <div class="card"><ul class="exlist hist">${S.sessions.slice(0,60).map(s=>`<li>
       <div class="top"><div class="row" style="gap:8px;min-width:0"><span class="plate sm" style="width:30px;height:30px;font-size:16px;box-shadow:none">${esc(s.workoutId)}</span><b style="min-width:0">${esc(s.name)}</b></div><span class="muted" style="font-size:13px;flex:none">${fmtDate(s.date)}</span></div>
-      <div class="muted num" style="font-size:13px;margin-top:4px">${s.checkin?'Presença registrada':s.activity?`${s.minutes} min · intensidade ${INTN[s.intensity]||''} · ≈ ${sessionKcal(s)} kcal`:`${mmss(s.durationSec/60).replace(':','h')}min · ${s.ex.reduce((n,e)=>n+e.sets.length,0)} séries · ${fmtKg(vol(s))} kg · ≈ ${sessionKcal(s)} kcal`}</div>
+      <div class="muted num" style="font-size:13px;margin-top:4px">${s.checkin?'Presença registrada':s.quick?`${Math.round(s.durationSec/60)} min · registrado sem séries · ≈ ${sessionKcal(s)} kcal`:s.activity?`${s.minutes} min · intensidade ${INTN[s.intensity]||''} · ≈ ${sessionKcal(s)} kcal`:`${mmss(s.durationSec/60).replace(':','h')}min · ${s.ex.reduce((n,e)=>n+e.sets.length,0)} séries · ${fmtKg(vol(s))} kg · ≈ ${sessionKcal(s)} kcal`}</div>
       <div style="text-align:right;margin-top:4px"><button class="btn ghost sm danger ${S.armed==='ds'+s.id?'armed':''}" data-act="delsess" data-id="${s.id}">${S.armed==='ds'+s.id?'Apagar?':'Apagar'}</button></div>
     </li>`).join('')}</ul></div>
     ${backupCard()}
@@ -1576,11 +1605,11 @@ const DESTR={
  rmphoto:()=>({t:'Remover sua foto?',m:'Volto a te reconhecer só pela inicial.',ok:'Remover'}),
  discard:()=>({t:'Descartar o treino?',m:'Tudo o que você marcou neste treino é perdido. Nada vai para o histórico.',ok:'Descartar'}),
  reset:()=>({t:'Voltar à rotina padrão?',m:'Sua rotina atual vai para o histórico de treinos e a padrão entra no lugar.',ok:'Trocar'}),
- uncheck:()=>({t:'Desfazer o check-in de hoje?',m:'O dia deixa de contar na meta e na sequência.',ok:'Desfazer'}),
+ uncheck:()=>({t:'Desfazer o registro de hoje?',m:'O dia deixa de contar na meta e na sequência.',ok:'Desfazer'}),
  suppdel:()=>({t:'Remover suplemento?',m:'Ele sai da sua lista diária.',ok:'Remover'}),
  pzdel:()=>({t:'Apagar essa pausa?',m:'Esses dias voltam a contar como dias sem treino. Pode custar XP e quebrar sequências.',ok:'Apagar'}),
- pastday:b=>{const iso=b.dataset.d,d=new Date(iso+'T12:00:00'),k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);if(!same.length||same.some(x=>!x.checkin))return null;
-   return {t:'Apagar esse check-in?',m:`${(t=>t.charAt(0).toUpperCase()+t.slice(1))(d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))} deixa de contar na meta e na sequência.`,ok:'Apagar'}}};
+ pastday:b=>{const iso=b.dataset.d,d=new Date(iso+'T12:00:00'),k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);if(!same.length||same.some(x=>!x.checkin&&!x.quick))return null;
+   return {t:'Apagar esse registro?',m:`${(t=>t.charAt(0).toUpperCase()+t.slice(1))(d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))} deixa de contar na meta e na sequência.`,ok:'Apagar'}}};
 function confirmBox(c){return new Promise(res=>{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','alertdialog');o.setAttribute('aria-modal','true');
   o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>${esc(c.t)}</h3></div></div><p>${esc(c.m)}</p><div class="row cbtns"><button class="btn ghost" data-c="0">Cancelar</button><button class="btn dangerfill" data-c="1">${esc(c.ok)}</button></div></div>`;
   const done=v=>{o.remove();document.removeEventListener('keydown',kd);res(v)};const kd=e=>{if(e.key==='Escape')done(false)};document.addEventListener('keydown',kd);
@@ -1636,10 +1665,9 @@ main.addEventListener('click',e=>{
     case 'pastday':case 'pastdate':{const iso=act==='pastday'?b.dataset.d:(document.getElementById('pastDate').value||'');if(!iso){toast('Escolhe a data primeiro.');return}
       if(iso>todayISO()){toast('Treino do futuro? Primeiro você treina, depois registra.');return}
       const d=new Date(iso+'T12:00:00');const k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);const label=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-      if(same.some(x=>!x.checkin)){toast(label+' já está registrado. Não conto o mesmo dia duas vezes.');return}
-      if(same.length){if(!S.bypass&&S.armed!=='pd'+iso){arm('pd'+iso);render();return}S.armed=null;same.forEach(x=>delSession(x.id));toast('Check-in de '+label+' apagado.');render();return}
-      const isToday=iso===todayISO();addSession({id:uid(),date:(isToday?new Date():d).toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[],late:!isToday});
-      render();celebrate((isToday?'Check-in feito.':'Anotei '+label+'. Esquecer de registrar, tudo bem. Esquecer de treinar, não.')+' +30 XP');return}
+      if(same.some(x=>!x.checkin&&!x.quick)){toast(label+' já está registrado. Não conto o mesmo dia duas vezes.');return}
+      if(same.length){if(!S.bypass&&S.armed!=='pd'+iso){arm('pd'+iso);render();return}S.armed=null;same.forEach(x=>delSession(x.id));toast('Registro de '+label+' apagado.');render();return}
+      regDay(iso);return}
     case 'look':LS.set('ct.look',+b.dataset.v);break;
     case 'ativ':S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:todayISO(),note:''};S.view='ativ';window.scrollTo(0,0);break;
     case 'atype':S.act.type=b.dataset.v;break;
@@ -1667,6 +1695,7 @@ main.addEventListener('click',e=>{
     case 'rmkey':if(!twoStep('rmkey'))return;try{localStorage.removeItem('ct.key')}catch(_){}sampleApi=null;break;
     case 'backup':{const blob=new Blob([JSON.stringify({app:'up-anilha',v:5,user:S.user,plan:S.plan,plans:plans(),pauses:pauses(),food:foodAll(),sessions:S.sessions,chat:S.chat},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='up-anilha-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return}
     case 'clearchat':if(!twoStep('clearchat'))return;S.chat=[];saveChat();break;
+    case 'regtoday':regDay(todayISO());return;
     case 'checkin':addSession({id:uid(),date:new Date().toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[]});celebrate(pick(['Presença registrada. Aparecer já é metade da batalha.','Check-in feito. Agora vai lá e honra ele.'])+' +30 XP');break;
     case 'uncheck':delSession(b.dataset.id);break;
     case 'goal':{const g=goals(),k=b.dataset.g,max=k==='week'?7:31;g[k]=Math.max(1,Math.min(max,g[k]+(+b.dataset.d)));if(k==='week'){g.month=Math.min(31,Math.round(g.week*4.3));const p=profile();p.sched=spreadDays(avail(),Math.min(g.week,avail().length))}savePlan();break}
