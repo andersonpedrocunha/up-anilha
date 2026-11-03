@@ -78,7 +78,7 @@ h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.1;mar
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
 .week span{font-size:11px;color:var(--muted);font-weight:600}
 .week .wd{display:grid;place-items:center;margin:4px auto 0;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:transparent;padding:0;color:var(--accent-ink);font-weight:800;font-size:14px}
-.week .wd:disabled{opacity:.35;cursor:default}
+.week .wd:disabled{opacity:.35;cursor:default}.week .wd.fut:not(.plan):not(.comp){opacity:.45}
 .week .wd.armed{background:var(--danger);border-color:var(--danger);color:#fff}
 .week .wd.done{background:var(--accent);border-color:var(--accent)}
 .week .wd.today{border-color:var(--ink)}
@@ -545,10 +545,10 @@ function wkKey(d){return isoOf(weekStart(d||new Date()))}
 function wkPlans(){return LS.get('ct.weekplan',{})}
 function wkEntry(d){return wkPlans()[wkKey(d)]||null}
 function setWkEntry(e,d){const a=wkPlans();a[wkKey(d)]=e;const ks=Object.keys(a).sort();while(ks.length>20)delete a[ks.shift()];LS.set('ct.weekplan',a)}
-function plannedDays(d){const e=wkEntry(d);const base=(planMode()==='flex'&&e&&e.days)?e.days:(baseSched()||[]);return [...new Set([...base,...((e&&e.comp)||[])])]}
+function plannedDays(d){const e=wkEntry(d);const base=(e&&e.days)?e.days:(baseSched()||[]);return [...new Set([...base,...((e&&e.comp)||[])])]}
 function sched(){const x=plannedDays();return x.length?x:null}
 function weekInfo(){const now=new Date(),ws=weekStart(now),vs=visitSet(),goal=effGoal(ws)||goals().week,e=wkEntry()||{};
-  const base=(planMode()==='flex'&&e.days)?e.days:(baseSched()||[]),comp=e.comp||[];const plan=[...new Set([...base,...comp])];
+  const base=e.days?e.days:(baseSched()||[]),comp=e.comp||[];const plan=[...new Set([...base,...comp])];
   const days=WD.map((dow,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);d.setHours(12,0,0,0);return {dow,d,done:vs.has(dayKey(d)),past:dayKey(d)!==dayKey(now)&&d<now,today:dayKey(d)===dayKey(now),paused:pauseOn(d)}});
   const n=days.filter(x=>x.done).length;
   const missed=days.filter(x=>x.past&&!x.done&&!x.paused&&base.includes(x.dow)&&!comp.includes(x.dow)).map(x=>x.dow);
@@ -558,21 +558,21 @@ function weekInfo(){const now=new Date(),ws=weekStart(now),vs=visitSet(),goal=ef
   const cand=days.filter(x=>!x.past&&!x.done&&!x.paused&&!plan.includes(x.dow)).map(x=>x.dow);
   const extra=days.filter(x=>x.done&&!plan.includes(x.dow)).length;
   return {goal,n,base,comp,plan,missed,missedAll,ahead,need,debt,cand,extra,entry:e}}
-function compCard(){const w=weekInfo();if(!w.plan.length)return '';
-  if(planMode()==='flex'&&!w.entry.days){const pre=baseSched()||spreadDays(avail(),goals().week);const sel=S.wkDraft||pre;
-    return `<div class="compbox"><div class="row">${coachAv(28)}<b style="font-size:14px">Semana nova. Quais dias você vai?</b></div>${dayChips('wkdraft',sel).split('<div class="row presets">')[0]}<div class="row"><span class="muted" style="font-size:13px;flex:1">${sel.length} de ${w.goal} da meta</span><button class="btn primary sm" data-act="wkconfirm">Confirmar semana</button></div></div>`}
+function compCard(){const w=weekInfo();
+  if(!baseSched()){const sel=S.wkDraft||spreadDays(avail(),goals().week);
+    return `<div class="compbox"><div class="row">${coachAv(28)}<b style="font-size:14px">Quais dias você costuma ir à academia?</b></div>${dayChips('wkdraft',sel).split('<div class="row presets">')[0]}<div class="row"><span class="muted" style="font-size:13px;flex:1">${sel.length} ${sel.length===1?'dia':'dias'} por semana · é só um guia, muda quando quiser</span><button class="btn primary sm" data-act="wkconfirm">Salvar</button></div></div>`}
+  if(!w.plan.length)return '';
   if(w.debt>0){const miss=w.missedAll.length?`Faltou ${dayList(w.missedAll)}. `:'';const sug=w.cand;
     return `<div class="compbox warn"><div class="row">${coachAv(28)}<b style="font-size:14px">${miss}Encaixe ${w.debt} ${w.debt===1?'dia':'dias'} para manter a meta.</b></div>
       ${sug.length?`<div class="chips">${sug.map(d=>`<button class="chip sm" data-act="compday" data-v="${d}">${WDS[d]}${d===6||d===0?' ★':''}</button>`).join('')}</div><div class="muted" style="font-size:12px">Toque para marcar o dia de compensação. ★ fim de semana.</div>`:`<div class="muted" style="font-size:13px">Não sobra dia nesta semana. Sem culpa: a próxima começa segunda.</div>`}</div>`}
   if(w.comp.length&&w.need>0)return `<div class="compbox"><div class="row">${coachAv(28)}<span style="font-size:14px">Compensação marcada: <b>${dayList(w.comp)}</b>. ${w.comp.length>1?'Combinado':'Combinado'}, eu cobro.</span><button class="linkbtn" data-act="compclear" style="margin-left:auto">desfazer</button></div></div>`;
   if(w.extra>0&&w.n>=w.goal)return `<div class="compbox good"><div class="row">${coachAv(28)}<span style="font-size:14px">Meta batida e ainda ${w.extra} ${w.extra===1?'dia extra':'dias extras'} fora do plano. Isso é fome de Valhalla.</span></div></div>`;
   return ''}
-function planSection(){const mode=planMode(),w=weekInfo();const sel=mode==='flex'?(w.entry.days||baseSched()||[]):(baseSched()||[]);
-  return `<details class="goals" data-k="plan"><summary>Planejar semana</summary>
-    <div class="seg" style="margin-top:10px"><button data-act="pmode" data-v="fixo" aria-pressed="${mode==='fixo'}">Toda semana igual</button><button data-act="pmode" data-v="flex" aria-pressed="${mode==='flex'}">Planejo a cada semana</button></div>
-    <p class="muted" style="font-size:13px;margin:8px 0">${mode==='fixo'?'Para rotina rígida: os mesmos dias toda semana.':'Toda segunda eu pergunto quais dias você vai. Abaixo, os desta semana.'}</p>
-    ${dayChips('plday',sel).split('<div class="row presets">')[0]}
-    <p class="muted" style="font-size:13px;margin:8px 0 0">${sel.length} ${sel.length===1?'dia planejado':'dias planejados'} · meta ${goals().week}${sel.length<goals().week?` · faltam ${goals().week-sel.length} no plano`:''}. Treinar em outro dia, inclusive no fim de semana, sempre conta. Se faltar um dia planejado, eu te ajudo a compensar.</p>
+function planSection(){const base=baseSched()||[],e=wkEntry()||{};
+  return `<details class="goals" data-k="plan"><summary>Meus dias de academia</summary>
+    <p class="muted" style="font-size:13px;margin:8px 0">Seus dias de sempre. É um guia: treinar em outro dia sempre conta.</p>
+    ${dayChips('plday',base).split('<div class="row presets">')[0]}
+    <p class="muted" style="font-size:13px;margin:8px 0 0">${base.length} ${base.length===1?'dia':'dias'} por semana, e a meta acompanha. Para mudar só esta semana, toque nos dias que vêm, lá em cima.${e.days||(e.comp||[]).length?` <button class="linkbtn" data-act="wkreset">Voltar esta semana ao padrão</button>`:''}</p>
   </details>`}
 function spreadDays(av,n){const order=WD.filter(d=>av.includes(d));if(n>=order.length)return order;const out=[];for(let i=0;i<n;i++)out.push(order[Math.round(i*(order.length-1)/Math.max(1,n-1))]);
   if(n===1)return [order.includes(6)?6:order[0]];return [...new Set(out)]}
@@ -631,7 +631,7 @@ function weekStrip(){const now=new Date();const start=weekStart(now);
   const days=new Set(S.sessions.map(s=>dayKey(s.date)));const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const done=days.has(dayKey(d));if(done)n++;
     const fut=d>now&&dayKey(d)!==dayKey(now);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${!avail().includes(d.getDay())?'off':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="pastday" data-d="${iso}" ${fut?'disabled':''} aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':''}">${done?'✓':''}</button></div>`}
+    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${fut?'fut':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="${fut?'planday':'pastday'}" data-d="${iso}" data-v="${d.getDay()}" aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':fut?(sc.includes(d.getDay())?', planejado. Toque para tirar':'. Toque para planejar'):''}">${done?'✓':''}</button></div>`}
   return {html:`<div class="week">${h}</div>`,n}}
 
 function viewHoje(){
@@ -674,7 +674,7 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
       <div style="text-align:right"><div class="eyebrow">Sequência</div><div class="num" style="font-family:var(--display);font-weight:700;font-size:22px">${st} ${st===1?'semana':'semanas'}</div></div>
     </div>
     ${wk.html}
-    <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">Esqueceu de registrar? Toque no dia em que você treinou.</div>
+    <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">Toque num dia que passou para registrar, ou num dia que vem para planejar.</div>
     ${compCard()}
     <div class="progress"><i style="width:${pctW}%;background:${wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
     <div class="muted" style="font-size:14px">${wk.n>=g.week?'Meta da semana batida.':`Faltam ${g.week-wk.n} ${g.week-wk.n===1?'dia':'dias'} de exercício para a meta.`}</div>
@@ -805,7 +805,7 @@ Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body(
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} min por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações: ${p.notes||'nenhuma'}.
 Restrições de saúde: ${restrText()}. Nunca sugira exercícios contraindicados para essas condições; prefira variações com apoio e explique o motivo da troca.
-Metas: ${g.week} dias por semana, ${g.month} por mês. Dias com exercício nesta semana (segunda a domingo): ${weekStrip().n}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+' (modo '+(planMode()==='flex'?'planeja a cada semana':'fixo')+')'+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino sugerido: ${S.plan.next}.
+Metas: ${g.week} dias por semana, ${g.month} por mês. Dias com exercício nesta semana (segunda a domingo): ${weekStrip().n}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino sugerido: ${S.plan.next}.
 Rotina atual:
 ${plan}
 Últimos registros:
@@ -1584,7 +1584,8 @@ function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=
   if(st===1)body=`<h2>Qual é o seu objetivo?</h2><div class="opts">${[['hipertrofia','Ganhar massa muscular','Séries de 8 a 12, descanso médio'],['emagrecimento','Emagrecer e definir','Mais repetições, menos descanso e cardio'],['forca','Ganhar força','Poucas repetições com mais carga'],['condicionamento','Condicionamento','Ritmo alto e cardio no final'],['saude','Saúde e bem-estar','Moderado, com foco em postura e core']].map(([v,t,sb])=>opt('wzgoal',v,z.goal,t,sb)).join('')}</div>`;
   if(st===2){const rec=RECO[z.days];const maxd=z.avail.length;const sd=spreadDays(z.avail,z.days);body=`<h2>Em quais dias você consegue ir?</h2><p class="muted">Muita gente só consegue no fim de semana por causa do trabalho. Sem problema, a gente compensa.</p>${dayChips('wzav',z.avail)}
     <h2 style="margin-top:8px">Quantos dias por semana?</h2><div class="chips daysel">${[1,2,3,4,5,6,7].filter(d=>d<=maxd).map(d=>`<button class="chip" data-act="wzdays" data-v="${d}" aria-pressed="${z.days===d}">${d}</button>`).join('')}</div>
-    <p class="muted" style="font-size:14px;margin:0">Sua semana: <b style="color:var(--ink)">${dayList(sd)}</b>.${sd.includes(6)||sd.includes(0)?' Fim de semana incluído.':''}</p>
+    <h2 style="margin-top:8px">Quais dias você vai?</h2><div class="chips daychips">${WD.filter(d=>z.avail.includes(d)).map(d=>`<button class="chip sm" data-act="wzsch" data-v="${d}" aria-pressed="${(z.sched||sd).includes(d)}">${WDS[d]}</button>`).join('')}</div>
+    <p class="muted" style="font-size:14px;margin:0">${(z.sched||sd).length} de ${z.days} dias. É um guia: depois você muda a semana quando precisar e compensa o que faltar.</p>
     <h2 style="margin-top:8px">Como quer dividir?</h2><div class="opts">${Object.entries(SPLITS).map(([k,v])=>opt('wzsplit',k,z.split,'Treino '+v.label,v.sub,k===rec?'Recomendado':'')).join('')}</div>
     <p class="muted" style="font-size:14px">${z.days>SPLITS[z.split].w.length?`Com ${z.days} dias, você repete a sequência ${z.split} ao longo da semana.`:z.days<SPLITS[z.split].w.length?`Com ${z.days} dias, cada treino vai cair menos de uma vez por semana. Se quiser treinar cada grupo toda semana, escolha uma divisão menor.`:'Um treino diferente por dia de academia.'}</p>`}
   if(st===3)body=`<h2>Seu nível</h2><div class="opts">${[['iniciante','Iniciante','Menos de 6 meses ou voltando agora'],['intermediario','Intermediário','Treina com regularidade'],['avancado','Avançado','Anos de treino e boa técnica']].map(([v,t,sb])=>opt('wzlevel',v,z.level,t,sb)).join('')}</div>
@@ -1608,7 +1609,7 @@ function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=
 function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
   switch(act){case 'wzstart':wzInit();return;case 'wzexit':S.view='rotina';S.wz=null;S.wzPlan=null;return;
    case 'wzmin':z.minutes=+v;S.wzPlan=null;return;case 'wzgoal':z.goal=v;S.wzPlan=null;return;
-   case 'wzdays':z.days=+v;z.split=RECO[z.days];S.wzPlan=null;return;case 'wzav':z.avail=toggleDays(z.avail,v);if(z.days>z.avail.length){z.days=z.avail.length;z.split=RECO[z.days]}S.wzPlan=null;return;case 'wzsplit':z.split=v;S.wzPlan=null;return;
+   case 'wzdays':z.days=+v;z.split=RECO[z.days];z.sched=null;S.wzPlan=null;return;case 'wzsch':{const cur=z.sched||spreadDays(z.avail,z.days);const n=+v;z.sched=cur.includes(n)?cur.filter(x=>x!==n):[...cur,n].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));return}case 'wzav':z.avail=toggleDays(z.avail,v);z.sched=null;if(z.days>z.avail.length){z.days=z.avail.length;z.split=RECO[z.days]}S.wzPlan=null;return;case 'wzsplit':z.split=v;S.wzPlan=null;return;
    case 'wzlevel':z.level=v;S.wzPlan=null;return;case 'wzplace':z.place=v;S.wzPlan=null;return;
    case 'wzgo':z.step=+v;window.scrollTo(0,0);return;
    case 'wzregen':z.seed=(z.seed||1)+7919;S.wzPlan=null;toast('Outra opção, mesma exigência.');return;
@@ -1619,7 +1620,7 @@ function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
    case 'wzuse':{if(S.armed!=='wzuse'){arm('wzuse');return}S.armed=null;
      archivePlan('Substituída pelo Montar treino');S.plan.since=new Date().toISOString();S.plan.label=z.split+' · '+lbl('goal',z.goal)+' · '+z.minutes+' min';
      S.plan.workouts=S.wzPlan.map(w=>({id:w.id,name:w.name,day:null,ex:w.ex.filter(Boolean).map(e=>({id:e.id,name:e.name,sets:e.sets,reps:e.reps,rest:e.rest,bar:e.bar}))})).filter(w=>w.ex.length);
-     S.plan.next=S.plan.workouts[0].id;S.sel=null;S.edit=null;const p=profile();p.avail=[...z.avail];p.sched=spreadDays(z.avail,z.days);Object.assign(p,{minutes:z.minutes,goal:z.goal,days:z.days,level:z.level,place:z.place,notes:z.notes});p.restr=[...z.restr];
+     S.plan.next=S.plan.workouts[0].id;S.sel=null;S.edit=null;const p=profile();p.avail=[...z.avail];p.sched=z.sched&&z.sched.length?z.sched:spreadDays(z.avail,z.days);p.schedManual=true;Object.assign(p,{minutes:z.minutes,goal:z.goal,days:z.days,level:z.level,place:z.place,notes:z.notes});p.restr=[...z.restr];
      const g=goals();g.week=z.days;g.month=Math.round(z.days*4.3);savePlan();S.wz=null;S.wzPlan=null;S.view='hoje';window.scrollTo(0,0);toast('Treino escolhido. São '+z.days+' dias por semana. Não me decepcione.');return}}}
 
 /* ---------- calorias ---------- */
@@ -1953,10 +1954,13 @@ main.addEventListener('click',e=>{
     case 'clearchat':if(!twoStep('clearchat'))return;S.chat=[];saveChat();break;
     case 'regtoday':regDay(todayISO());return;
     case 'pmode':{const p=profile();p.planMode=b.dataset.v;savePlan();toast(b.dataset.v==='flex'?'Fechado. Toda segunda a gente combina a semana.':'Rotina fixa. Mesmos dias, toda semana. Eu gosto de disciplina.');break}
-    case 'plday':{const v=+b.dataset.v;if(planMode()==='flex'){const e=wkEntry()||{};const cur=e.days||baseSched()||[];e.days=cur.includes(v)?cur.filter(x=>x!==v):[...cur,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));setWkEntry(e)}
-      else{const p=profile();const cur=baseSched()||[];p.sched=cur.includes(v)?cur.filter(x=>x!==v):[...cur,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));p.schedManual=true;if(!avail().includes(v)&&Array.isArray(p.avail)&&p.avail.length)p.avail=[...p.avail,v];savePlan()}break}
-    case 'wkdraft':{const v=+b.dataset.v;const pre=S.wkDraft||baseSched()||spreadDays(avail(),goals().week);S.wkDraft=pre.includes(v)?pre.filter(x=>x!==v):[...pre,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));break}
-    case 'wkconfirm':{const e=wkEntry()||{};e.days=S.wkDraft||baseSched()||spreadDays(avail(),goals().week);setWkEntry(e);S.wkDraft=null;toast(`Semana combinada: ${dayList(e.days)}. Agora é cumprir.`);break}
+    case 'plday':{const v=+b.dataset.v;{const p=profile();const cur=baseSched()||[];p.sched=cur.includes(v)?cur.filter(x=>x!==v):[...cur,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));p.schedManual=true;if(p.sched.length){const g=goals();g.week=p.sched.length;g.month=Math.min(31,Math.round(g.week*4.3))}if(!avail().includes(v)&&Array.isArray(p.avail)&&p.avail.length)p.avail=[...p.avail,v];savePlan()}break}
+    case 'wkdraft':{const v=+b.dataset.v;const pre=S.wkDraft||spreadDays(avail(),goals().week);S.wkDraft=pre.includes(v)?pre.filter(x=>x!==v):[...pre,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));break}
+    case 'wkconfirm':{const p=profile();p.sched=(S.wkDraft||spreadDays(avail(),goals().week)).slice().sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));p.schedManual=true;{const g=goals();g.week=p.sched.length;g.month=Math.min(31,Math.round(g.week*4.3))}savePlan();S.wkDraft=null;toast(`Seus dias: ${dayList(p.sched)}, meta de ${p.sched.length} por semana. É um guia: se a semana mudar, toque nos dias para ajustar.`);break}
+    case 'planday':{const v=+b.dataset.v;const e=wkEntry()||{};const cur=e.days||baseSched()||[];const on=cur.includes(v)||(e.comp||[]).includes(v);
+      if(on){e.days=cur.filter(x=>x!==v);e.comp=(e.comp||[]).filter(x=>x!==v)}else e.days=[...cur,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));setWkEntry(e);
+      toast(on?`${WDS[v]} saiu do plano desta semana. Sem drama, a gente encaixa em outro dia.`:`${WDS[v]} entrou no plano desta semana. Combinado.`);break}
+    case 'wkreset':{const e=wkEntry()||{};delete e.days;e.comp=[];setWkEntry(e);toast('Semana de volta aos seus dias de sempre.');break}
     case 'compday':{const v=+b.dataset.v;const e=wkEntry()||{};e.comp=[...new Set([...(e.comp||[]),v])];if(planMode()==='flex'&&!e.days)e.days=baseSched()||[];setWkEntry(e);toast(pick([`${WDS[v]} vira dia de compensação. Combinado é combinado.`,`Anotado: ${WDS[v].toLowerCase()}. A meta continua de pé.`]));break}
     case 'compclear':{const e=wkEntry()||{};e.comp=[];setWkEntry(e);break}
     case 'checkin':addSession({id:uid(),date:new Date().toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[]});celebrate(pick(['Presença registrada. Aparecer já é metade da batalha.','Check-in feito. Agora vai lá e honra ele.'])+' +30 XP');break;
