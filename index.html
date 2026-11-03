@@ -297,8 +297,14 @@ a.btn .coachav{margin-right:8px}
 .aurow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.aurow:first-of-type{border-top:0}
 .stretch summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.stretch summary::-webkit-details-marker{display:none}
 .strow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.stfor{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
 .strow b{display:block}.strow span{font-size:13px}.strow p{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .strow.done b{color:var(--good)}
+.cbox{position:fixed;inset:0;z-index:60;background:rgb(0 0 0 / .55);display:flex;align-items:center;justify-content:center;padding:16px}
+.cbox-in{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(400px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgb(0 0 0 / .45)}
+.cbox-in h3{font-size:20px}.cbox-in p{margin:0;color:var(--muted);line-height:1.45}
+.cbtns{justify-content:flex-end}.cbtns .btn{flex:1}
+.btn.dangerfill{background:var(--danger);color:#fff}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);background:#141a2e;color:#f4f1ea;border:1px solid #f2c23066;padding:10px 16px 10px 10px;border-radius:16px;font-weight:600;z-index:40;font-size:14px;line-height:1.35;width:max-content;max-width:min(440px,calc(100% - 32px));box-shadow:0 10px 30px rgb(0 0 0 / .35)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -665,7 +671,7 @@ function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><sp
 function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
 /* ---------- Driffa flutuante ---------- */
 function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);
-  const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=coachAv(56)+(S.chatUnread?'<span class="fabdot"></span>':'');
+  const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="driffa-head-${coachLook()}.jpg${AV}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
   panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
   if(panel.hidden)return;
   panel.innerHTML=`<div class="fabhead">${coachAv(36)}<div style="flex:1;min-width:0"><b>${COACH}</b><span>${sampleApi?(S.busy==='chat'?'digitando…':'Sua treinadora'):'IA desativada'}</span></div>
@@ -883,37 +889,56 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[data-aid]');if
 
 /* ---------- alongamento ---------- */
 const STRETCH=[
- {k:'peito-parede',n:'Peito na parede',g:['peito','ombro'],t:30,side:1,how:'Antebraço apoiado no batente na altura do ombro. Gire o tronco para o lado oposto até sentir o peito abrir.',avoid:[]},
- {k:'maos-costas',n:'Abertura com mãos atrás',g:['peito','ombro'],t:30,how:'Entrelace os dedos atrás das costas, braços esticados. Abra o peito e afaste as mãos do corpo, sem arquear a lombar.',avoid:['ombro']},
- {k:'ombro-cruzado',n:'Ombro cruzado',g:['ombro','costas'],t:30,side:1,how:'Leve um braço esticado na frente do peito e puxe com a outra mão pelo cotovelo. Ombro longe da orelha.',avoid:[]},
- {k:'triceps',n:'Tríceps atrás da cabeça',g:['triceps','ombro'],t:30,side:1,how:'Mão nas costas, entre as escápulas. A outra mão empurra o cotovelo de leve para trás.',avoid:['ombro']},
- {k:'biceps',n:'Bíceps na parede',g:['biceps','peito'],t:30,side:1,how:'Palma na parede atrás de você, braço esticado na altura do ombro. Gire o corpo para longe da parede.',avoid:[]},
- {k:'dorsal',n:'Dorsal no pilar',g:['costas'],t:30,side:1,how:'Segure um pilar ou batente com uma mão, quadril para trás e para o lado. Sinta a lateral das costas esticar.',avoid:[]},
- {k:'crianca',n:'Postura da criança',g:['costas','core'],t:40,how:'Ajoelhado, sente nos calcanhares e leve os braços à frente no chão. Respire fundo e solte as costas.',avoid:['joelho']},
- {k:'gato-vaca',n:'Gato e vaca',g:['costas','core'],t:40,how:'De quatro, alterne arredondar a coluna para cima e afundar devagar, no ritmo da respiração. Movimento pequeno e sem dor.',avoid:[]},
- {k:'joelhos-peito',n:'Joelhos ao peito',g:['core','glut','costas'],t:40,how:'Deitado de costas, abrace os joelhos e traga para o peito. Balance de leve de um lado para o outro.',avoid:[]},
- {k:'quadriceps',n:'Quadríceps em pé',g:['quad'],t:30,side:1,how:'Segure o pé atrás, calcanhar perto do glúteo, joelhos juntos. Apoie a outra mão na parede.',avoid:['joelho']},
- {k:'quad-deitado',n:'Quadríceps deitado de lado',g:['quad'],t:30,side:1,how:'Deitado de lado, segure o pé de cima e leve o calcanhar ao glúteo sem forçar o joelho.',avoid:[]},
- {k:'posterior-toalha',n:'Posterior com toalha',g:['post','quad'],t:30,side:1,how:'Deitado de costas, passe uma toalha na sola do pé e suba a perna esticada até sentir atrás da coxa. Lombar no chão.',avoid:[]},
- {k:'figura4',n:'Glúteo em figura 4',g:['glut','post'],t:30,side:1,how:'Deitado, cruze o tornozelo sobre o joelho oposto e puxe a coxa de baixo em direção ao peito.',avoid:[]},
- {k:'flexor',n:'Flexor do quadril',g:['quad','glut'],t:30,side:1,how:'Em posição de afundo com o joelho de trás no chão, empurre o quadril à frente. Tronco reto, abdômen firme.',avoid:['joelho']},
- {k:'panturrilha',n:'Panturrilha na parede',g:['pant','quad'],t:30,side:1,how:'Mãos na parede, uma perna atrás esticada com o calcanhar no chão. Incline o corpo à frente.',avoid:[]},
- {k:'pescoco',n:'Lateral do pescoço',g:['ombro','costas'],t:20,side:1,how:'Incline a cabeça para o lado, levando a orelha ao ombro, sem puxar com a mão. Ombro oposto relaxado.',avoid:['cervical']}];
-function exGroups(name){const n=norm(name),out=new Set();const L=LIB.find(x=>norm(x.n)===n);if(L)out.add(L.g);
-  [[/supino|crucifixo|crossover|voador|peck|chest/,'peito'],[/puxada|remada|serrote|barra fixa|pulldown|cavalinho/,'costas'],[/desenvolvimento|elevacao (lateral|frontal)|face pull|crucifixo inverso|encolhimento/,'ombro'],
-   [/triceps|mergulho/,'triceps'],[/rosca|biceps/,'biceps'],[/agachamento|leg ?press|extensora|afundo|passada|hack/,'quad'],[/flexora|stiff|terra/,'post'],[/pelvica|ponte|gluteo/,'glut'],[/panturrilha/,'pant'],[/prancha|abdominal|dead bug|perdigueiro|elevacao de pernas/,'core']].forEach(([r,g])=>{if(r.test(n))out.add(g)});return [...out]}
-function stretchesFor(exs){const gs=new Set();exs.forEach(e=>exGroups(e.name).forEach(g=>gs.add(g)));if(!gs.size)['quad','costas','ombro'].forEach(g=>gs.add(g));const R=restr();
-  const ok=STRETCH.filter(x=>!x.avoid.some(a=>R.includes(a)));const pickd=[];
-  for(const g of gs){const c=ok.find(x=>x.g[0]===g&&!pickd.includes(x))||ok.find(x=>x.g.includes(g)&&!pickd.includes(x));if(c)pickd.push(c)}
-  if(R.includes('lombar')){['joelhos-peito','gato-vaca'].forEach(k=>{const x=ok.find(y=>y.k===k);if(x&&!pickd.includes(x))pickd.push(x)})}
-  for(const x of ok){if(pickd.length>=5)break;if(!pickd.includes(x)&&x.g.some(g=>gs.has(g)))pickd.push(x)}return pickd.slice(0,6)}
-function stretchCard(exs,live){const L=stretchesFor(exs);const mins=Math.round(L.reduce((a,x)=>a+x.t*(x.side?2:1),0)/60);const done=new Set((S.active&&S.active.stretched)||[]);
-  return `<details class="card stretch" ${S.stretchOpen?'open':''}><summary><div style="flex:1;min-width:0"><div class="eyebrow">Opcional · ~${mins} min</div><h3>Alongamento</h3></div><span class="muted">${S.stretchOpen?'Fechar':'Ver'}</span></summary>
-    <div class="dtip" style="margin:10px 0 4px">${coachAv(28)}<span class="muted" style="font-size:14px">${live?'Terminou? Cinco minutos aqui e amanhã você agradece.':'Escolhidos para os músculos deste treino.'}${restr().length?' Já tirei o que não combina com suas restrições.':''}</span></div>
-    ${L.map(x=>`<div class="strow ${done.has(x.k)?'done':''}"><div style="flex:1;min-width:0"><b>${esc(x.n)}</b><span class="muted">${x.t} s${x.side?' cada lado':''}</span><p>${esc(x.how)}</p></div>
-      ${live?`<button class="btn ghost sm" data-act="stretchgo" data-k="${x.k}">${done.has(x.k)?'✓':x.t+'s'}</button>`:''}</div>`).join('')}
+ {k:'peito-medio',n:'Peitoral no batente',t:30,side:1,how:'Antebraço no batente com o cotovelo na altura do ombro, em 90°. Dê um passo à frente e gire o tronco para o lado oposto.',avoid:[]},
+ {k:'peito-alto',n:'Peitoral superior no batente',t:30,side:1,how:'Mão no batente abaixo da linha do ombro, braço esticado e inclinado para baixo. Avance o corpo até sentir a parte de cima do peito.',avoid:[]},
+ {k:'peito-baixo',n:'Peitoral inferior no batente',t:30,side:1,how:'Mão no batente acima da cabeça, braço em diagonal para cima. Avance o corpo e sinta a parte de baixo do peito.',avoid:['ombro']},
+ {k:'delt-ant',n:'Ombro frontal no banco',t:30,how:'De costas para um banco, mãos apoiadas atrás nele, dedos para frente. Dobre um pouco os joelhos e desça o corpo devagar, peito aberto.',avoid:['ombro']},
+ {k:'delt-post',n:'Ombro posterior cruzado',t:30,side:1,how:'Braço esticado cruzando na frente do peito, a outra mão puxa pelo cotovelo. Ombro baixo, longe da orelha.',avoid:[]},
+ {k:'delt-lat',n:'Ombro lateral por trás',t:30,side:1,how:'Leve um braço por trás das costas e, com a outra mão, puxe o punho para o lado oposto. Incline a cabeça para longe.',avoid:['cervical']},
+ {k:'triceps',n:'Tríceps acima da cabeça',t:30,side:1,how:'Mão nas costas entre as escápulas, cotovelo apontando para o teto. A outra mão empurra o cotovelo de leve para trás.',avoid:['ombro']},
+ {k:'triceps-cruzado',n:'Tríceps cruzado',t:30,side:1,how:'Braço dobrado na frente do peito, cotovelo apontado para o lado. A outra mão puxa o cotovelo em direção ao ombro oposto.',avoid:[]},
+ {k:'biceps',n:'Bíceps na parede',t:30,side:1,how:'Palma para frente na parede atrás de você, braço esticado na altura do ombro. Gire o corpo para longe da parede.',avoid:[]},
+ {k:'antebraco',n:'Antebraço e braquiorradial',t:30,side:1,how:'Braço esticado à frente, palma para baixo. Com a outra mão, puxe os dedos para baixo e para você.',avoid:[]},
+ {k:'lat-banco',n:'Dorsal ajoelhado no banco',t:40,how:'Ajoelhado na frente de um banco, cotovelos apoiados nele e mãos juntas. Leve o quadril para trás e afunde o peito.',avoid:['joelho','ombro']},
+ {k:'lat-pilar',n:'Dorsal no pilar',t:30,side:1,how:'Segure um pilar com uma mão na altura do peito, quadril para trás e para fora. Sinta a lateral das costas abrir.',avoid:[]},
+ {k:'abraco',n:'Meio das costas (abraço)',t:30,how:'Abrace a si mesmo, mãos nas escápulas. Arredonde a parte de cima das costas e empurre os cotovelos à frente.',avoid:[]},
+ {k:'trapezio',n:'Trapézio superior',t:20,side:1,how:'Incline a cabeça levando a orelha ao ombro, sem puxar. Desça o ombro oposto como se segurasse uma sacola.',avoid:['cervical']},
+ {k:'quad-pe',n:'Quadríceps em pé',t:30,side:1,how:'Segure o pé atrás, calcanhar perto do glúteo, joelhos alinhados e quadril encaixado. Apoie a mão na parede.',avoid:['joelho']},
+ {k:'quad-deitado',n:'Quadríceps deitado de lado',t:30,side:1,how:'Deitado de lado, segure o pé de cima e traga o calcanhar em direção ao glúteo sem forçar o joelho.',avoid:[]},
+ {k:'flexor',n:'Flexor do quadril em afundo',t:30,side:1,how:'Joelho de trás no chão, pé da frente à frente. Contraia o glúteo de trás e empurre o quadril à frente, tronco reto.',avoid:['joelho']},
+ {k:'posterior',n:'Posterior de coxa com toalha',t:30,side:1,how:'Deitado de costas, toalha na sola do pé. Suba a perna esticada até sentir atrás da coxa, com a lombar no chão.',avoid:[]},
+ {k:'gluteo',n:'Glúteo em figura 4',t:30,side:1,how:'Deitado, cruze o tornozelo sobre o joelho oposto e puxe a coxa de baixo em direção ao peito.',avoid:[]},
+ {k:'adutor',n:'Adutores em borboleta',t:40,how:'Sentado, junte as solas dos pés e segure os tornozelos. Coluna alta, deixe os joelhos caírem para os lados.',avoid:[]},
+ {k:'gastro',n:'Panturrilha com joelho esticado',t:30,side:1,how:'Mãos na parede, perna de trás esticada e calcanhar no chão. Incline o corpo à frente.',avoid:[]},
+ {k:'soleo',n:'Panturrilha com joelho dobrado',t:30,side:1,how:'Mesma posição na parede, mas dobre o joelho de trás mantendo o calcanhar no chão. Sente mais embaixo, perto do tornozelo.',avoid:[]},
+ {k:'abd-deitado',n:'Abdômen alongado deitado',t:30,how:'Deitado de costas, estique braços acima da cabeça e pernas para baixo, como se crescesse para os dois lados.',avoid:[]},
+ {k:'cobra',n:'Cobra suave',t:30,how:'De bruços, apoie os antebraços e eleve o peito devagar, quadril no chão. Sem dor nas costas.',avoid:['lombar']},
+ {k:'joelhos-peito',n:'Joelhos ao peito',t:40,how:'Deitado de costas, abrace os joelhos e traga ao peito. Balance de leve para os lados para soltar a lombar.',avoid:[]},
+ {k:'crianca',n:'Postura da criança',t:40,how:'Ajoelhado, sente nos calcanhares e leve os braços à frente no chão. Solte as costas e respire fundo.',avoid:['joelho']},
+ {k:'punho',n:'Punho e antebraço (palma para cima)',t:30,side:1,how:'Braço esticado à frente, palma para cima. Puxe os dedos para baixo com a outra mão.',avoid:[]}];
+const EXSTRETCH=[
+ [/supino inclinado/,['peito-alto','delt-ant']],[/supino (declinado)/,['peito-baixo']],[/supino|chest press/,['peito-medio','delt-ant','triceps-cruzado']],
+ [/crossover/,['peito-baixo','peito-medio']],[/crucifixo inverso|voador inverso|reverse fly/,['delt-post','abraco']],[/crucifixo|voador|peck/,['peito-medio','peito-alto']],
+ [/triceps frances|triceps testa|triceps acima/,['triceps','triceps-cruzado']],[/triceps|mergulho|paralela/,['triceps-cruzado','triceps']],
+ [/rosca martelo/,['antebraco','biceps']],[/rosca/,['biceps','punho']],
+ [/puxada|pulldown|barra fixa|pull ?up/,['lat-banco','lat-pilar']],[/remada|serrote|cavalinho/,['abraco','lat-pilar']],
+ [/face pull/,['delt-post']],[/desenvolvimento/,['delt-ant','triceps']],[/elevacao lateral/,['delt-lat','delt-post']],[/elevacao frontal/,['delt-ant']],[/encolhimento/,['trapezio']],
+ [/leg ?press|agachamento|hack/,['quad-pe','quad-deitado','gluteo','adutor']],[/extensora/,['quad-deitado','quad-pe']],[/afundo|passada|bulgaro/,['flexor','quad-deitado']],
+ [/flexora|stiff|terra/,['posterior']],[/pelvica|ponte|gluteo|hip thrust/,['flexor','gluteo']],
+ [/panturrilha.*sentad/,['soleo']],[/panturrilha/,['gastro','soleo']],
+ [/abdominal|crunch/,['abd-deitado','cobra']],[/elevacao de pernas/,['flexor','abd-deitado']],[/prancha/,['crianca','joelhos-peito']],[/dead bug|perdigueiro/,['joelhos-peito']],
+ [/bicicleta|bike/,['quad-deitado','flexor']],[/esteira|caminhada|corrida|cardio|eliptico/,['gastro','flexor']]];
+function stretchesFor(exs){const R=restr();const ok=k=>{const x=STRETCH.find(y=>y.k===k);return x&&!x.avoid.some(a=>R.includes(a))?x:null};const out=[];
+  exs.forEach(e=>{const n=norm(e.name);const m=EXSTRETCH.find(([r])=>r.test(n));if(!m)return;const cands=m[1].map(ok).filter(Boolean);if(!cands.length)return;
+    const fresh=cands.find(x=>!out.some(o=>o.x===x));if(fresh&&out.length<8)out.push({x:fresh,for:[e.name]});else{const o=out.find(o=>cands.includes(o.x));if(o&&!o.for.includes(e.name))o.for.push(e.name)}});
+  if(R.includes('lombar')&&!out.some(o=>o.x.k==='joelhos-peito')){const x=ok('joelhos-peito');if(x)out.push({x,for:['sua lombar']})}
+  return out}
+function stretchCard(exs,live){const L=stretchesFor(exs);if(!L.length)return '';const mins=Math.max(1,Math.round(L.reduce((a,o)=>a+o.x.t*(o.x.side?2:1),0)/60));const done=new Set((S.active&&S.active.stretched)||[]);
+  return `<details class="card stretch" ${S.stretchOpen?'open':''}><summary><div style="flex:1;min-width:0"><div class="eyebrow">Opcional · ~${mins} min · ${L.length} ${L.length===1?'alongamento':'alongamentos'}</div><h3>Alongamento deste treino</h3></div><span class="muted">${S.stretchOpen?'Fechar':'Ver'}</span></summary>
+    <div class="dtip" style="margin:10px 0 4px">${coachAv(28)}<span class="muted" style="font-size:14px">${live?'Cada um solta o músculo que você acabou de castigar. Cinco minutos e amanhã você agradece.':'Um para cada músculo que você vai trabalhar hoje.'}${restr().length?' Já tirei o que não combina com suas restrições.':''}</span></div>
+    ${L.map(o=>{const x=o.x;return `<div class="strow ${done.has(x.k)?'done':''}"><div style="flex:1;min-width:0"><div class="stfor">Depois de: ${o.for.map(esc).join(', ')}</div><b>${esc(x.n)}</b><span class="muted">${x.t} s${x.side?' cada lado':''}</span><p>${esc(x.how)}</p></div>
+      ${live?`<button class="btn ghost sm" data-act="stretchgo" data-k="${x.k}">${done.has(x.k)?'✓':x.t*(x.side?2:1)+'s'}</button>`:''}</div>`}).join('')}
     <p class="muted" style="font-size:12px;margin:8px 0 0">Alongue até sentir tensão leve, nunca dor. Respire devagar e não balance.</p></details>`}
-
 function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Isso não é uma imagem. Escolhe uma foto.');return}const r=new FileReader();
   r.onload=()=>{const img=new Image();img.onload=()=>{const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');const m=Math.min(img.width,img.height);
     x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva. Agora eu sei com quem estou falando.');render()};img.onerror=()=>toast('Não consegui abrir essa foto. Tenta outra.');img.src=r.result};r.readAsDataURL(f)}
@@ -1257,10 +1282,30 @@ document.getElementById('restSkip').onclick=()=>{S.rest=null;tick()};
 
 /* ---------- events ---------- */
 document.querySelector('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-view]');if(!b)return;if(b.dataset.view==='hoje'&&S.view==='hoje')S.picking=false;S.view=b.dataset.view;S.armed=null;window.scrollTo(0,0);render()});
+const DESTR={
+ audel:b=>{const a=audios().find(x=>x.id===b.dataset.id);return {t:'Remover da lista?',m:`"${a?(a.label||svcOf(a.url)[1]):'Esse link'}" sai dos seus salvos. O conteúdo continua no app de origem.`,ok:'Remover'}},
+ delsess:b=>{const x=S.sessions.find(y=>y.id===b.dataset.id);return {t:'Apagar do histórico?',m:`${x?x.name+' de '+fmtDate(x.date):'Esse registro'} some do histórico, junto com o XP, as calorias e a sequência daquele dia. Não dá para desfazer.`,ok:'Apagar'}},
+ pdel:b=>{const x=plans().find(y=>y.id===b.dataset.id);return {t:'Apagar essa rotina antiga?',m:`"${x?x.label:'Rotina'}" sai do histórico de treinos para sempre.`,ok:'Apagar'}},
+ rmex:b=>{const e=S.plan.workouts[+b.dataset.w].ex[+b.dataset.x];return {t:'Remover exercício?',m:`${e.name} sai do treino ${S.plan.workouts[+b.dataset.w].id}. Seus registros antigos continuam no histórico.`,ok:'Remover'}},
+ rmw:b=>{const w=S.plan.workouts[+b.dataset.w];return {t:`Apagar o treino ${w.id}?`,m:`${w.name}, com ${w.ex.length} exercícios, sai da sua rotina.`,ok:'Apagar treino'}},
+ wzrm:b=>{const e=S.wzPlan[+b.dataset.w].ex[+b.dataset.x];return {t:'Tirar do treino?',m:`${e.name} sai desta proposta.`,ok:'Tirar'}},
+ clearchat:()=>({t:'Limpar a conversa?',m:'Apago tudo o que conversamos. Sua rotina e seu histórico ficam como estão.',ok:'Limpar'}),
+ rmkey:()=>({t:'Remover a chave da IA?',m:'Sem a chave eu fico sem voz até você colocar outra.',ok:'Remover'}),
+ rmphoto:()=>({t:'Remover sua foto?',m:'Volto a te reconhecer só pela inicial.',ok:'Remover'}),
+ discard:()=>({t:'Descartar o treino?',m:'Tudo o que você marcou neste treino é perdido. Nada vai para o histórico.',ok:'Descartar'}),
+ reset:()=>({t:'Voltar à rotina padrão?',m:'Sua rotina atual vai para o histórico de treinos e a padrão entra no lugar.',ok:'Trocar'}),
+ uncheck:()=>({t:'Desfazer o check-in de hoje?',m:'O dia deixa de contar na meta e na sequência.',ok:'Desfazer'}),
+ pastday:b=>{const iso=b.dataset.d,d=new Date(iso+'T12:00:00'),k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);if(!same.length||same.some(x=>!x.checkin))return null;
+   return {t:'Apagar esse check-in?',m:`${(t=>t.charAt(0).toUpperCase()+t.slice(1))(d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))} deixa de contar na meta e na sequência.`,ok:'Apagar'}}};
+function confirmBox(c){return new Promise(res=>{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','alertdialog');o.setAttribute('aria-modal','true');
+  o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>${esc(c.t)}</h3></div></div><p>${esc(c.m)}</p><div class="row cbtns"><button class="btn ghost" data-c="0">Cancelar</button><button class="btn dangerfill" data-c="1">${esc(c.ok)}</button></div></div>`;
+  const done=v=>{o.remove();document.removeEventListener('keydown',kd);res(v)};const kd=e=>{if(e.key==='Escape')done(false)};document.addEventListener('keydown',kd);
+  o.addEventListener('click',e=>{if(e.target===o)return done(false);const x=e.target.closest('[data-c]');if(x)done(x.dataset.c==='1')});document.body.appendChild(o);o.querySelector('[data-c="0"]').focus()})}
 main.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act,a=S.active;
   const ei=+b.dataset.e,si=+b.dataset.s,wi=+b.dataset.w,xi=+b.dataset.x;
-  const twoStep=key=>{if(S.armed===key){S.armed=null;return true}arm(key);render();return false};
+  if(!S.bypass){const c=DESTR[act]&&DESTR[act](b);if(c){confirmBox(c).then(ok=>{if(ok){S.bypass=true;try{b.click()}finally{S.bypass=false}}});return}}
+  const twoStep=key=>{if(S.bypass){S.armed=null;return true}if(S.armed===key){S.armed=null;return true}arm(key);render();return false};
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
@@ -1283,9 +1328,9 @@ main.addEventListener('click',e=>{
     case 'pdel':{if(!twoStep('pd'+b.dataset.id))return;LS.set('ct.plans',plans().filter(x=>x.id!==b.dataset.id));break}
     case 'pastday':case 'pastdate':{const iso=act==='pastday'?b.dataset.d:(document.getElementById('pastDate').value||'');if(!iso){toast('Escolhe a data primeiro.');return}
       if(iso>todayISO()){toast('Treino do futuro? Primeiro você treina, depois registra.');return}
-      const d=new Date(iso+'T12:00:00');const k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);const label=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'short'});
+      const d=new Date(iso+'T12:00:00');const k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);const label=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
       if(same.some(x=>!x.checkin)){toast(label+' já está registrado. Não conto o mesmo dia duas vezes.');return}
-      if(same.length){if(S.armed!=='pd'+iso){arm('pd'+iso);render();toast('Toca de novo se quer mesmo apagar '+label+'.');return}S.armed=null;same.forEach(x=>delSession(x.id));toast('Check-in de '+label+' apagado.');render();return}
+      if(same.length){if(!S.bypass&&S.armed!=='pd'+iso){arm('pd'+iso);render();return}S.armed=null;same.forEach(x=>delSession(x.id));toast('Check-in de '+label+' apagado.');render();return}
       const isToday=iso===todayISO();addSession({id:uid(),date:(isToday?new Date():d).toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[],late:!isToday});
       render();celebrate((isToday?'Check-in feito.':'Anotei '+label+'. Esquecer de registrar, tudo bem. Esquecer de treinar, não.')+' +30 XP');return}
     case 'look':LS.set('ct.look',+b.dataset.v);break;
