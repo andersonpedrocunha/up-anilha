@@ -2054,14 +2054,15 @@ const ROMAN=['I','II','III'];
 const WEEK_BONUS=150,WEEK_PENALTY=150;
 function xpBase(s){if(s.checkin)return 30;if(s.activity)return 40+Math.min(s.minutes||0,90);return 100+Math.min(s.ex.reduce((n,e)=>n+e.sets.length,0)*2,60)}
 function xpOf(s){const b=xpBase(s);return season(new Date(s.date))==='inverno'?Math.round(b*1.25):b}
-function weekMap(){const wk=new Map();S.sessions.forEach(s=>{const k=weekStart(s.date).getTime();if(!wk.has(k))wk.set(k,new Set());wk.get(k).add(dayKey(s.date))});return wk}
+function weekMap(){const wk=new Map();S.sessions.filter(isGym).forEach(s=>{const k=weekStart(s.date).getTime();if(!wk.has(k))wk.set(k,new Set());wk.get(k).add(dayKey(s.date))});return wk}
 function weekHistory(){const g=goals().week,wk=weekMap();if(!S.sessions.length)return [];const first=weekStart(S.sessions[S.sessions.length-1].date),cur=weekStart(new Date());const out=[];
   for(let d=new Date(first);d<cur;d.setDate(d.getDate()+7)){const n=(wk.get(d.getTime())||new Set()).size,eg=effGoal(d);out.push({start:new Date(d),n,goal:eg,excused:eg===0,met:eg>0&&n>=eg})}return out}
 function weeksMet(){return weekHistory().filter(w=>w.met).length}
 function weeksExcused(){return weekHistory().filter(w=>w.excused).length}
 function weeksMissed(){return weekHistory().filter(w=>!w.met&&!w.excused).length}
 function earnedXP(){return S.sessions.reduce((a,s)=>a+xpOf(s),0)+weeksMet()*WEEK_BONUS}
-function totalXP(){return Math.max(0,earnedXP()-weeksMissed()*WEEK_PENALTY)}
+function totalXP(){const H=weekHistory(),byW=new Map();S.sessions.forEach(x=>{const k=weekStart(x.date).getTime();byW.set(k,(byW.get(k)||0)+xpOf(x))});let bal=0;H.forEach(w=>{bal+=byW.get(w.start.getTime())||0;if(w.met)bal+=WEEK_BONUS;else if(!w.excused)bal=Math.max(0,bal-WEEK_PENALTY)});return bal+(byW.get(weekStart(new Date()).getTime())||0)}
+function penTxt(){const t=totalXP();return t<=0?'Se não bater, fica sem o bônus da semana.':t<WEEK_PENALTY?`Se não bater, perde os ${t} XP que tem (o mínimo é zero).`:`Se não bater, perde ${WEEK_PENALTY} XP.`}
 function xpForLevel(L){return L<=1?0:Math.round(150*Math.pow(L-1,1.5)/10)*10}
 function levelOf(xp){let L=1;while(xpForLevel(L+1)<=xp)L++;const ri=Math.min(RANKS.length-1,Math.floor((L-1)/3));const R=RANKS[ri];
   const name=ri<RANKS.length-1?`${R[0]} ${ROMAN[(L-1)%3]}`:`${R[0]}${L-1-(RANKS.length-1)*3>0?' ★'+(L-1-(RANKS.length-1)*3):''}`;
@@ -2093,9 +2094,9 @@ function statusList(){const st=dayStreak(),ws=metStreakWeeks(),ds=daysSinceLast(
  {id:'ferrugem',name:'Ferrugem',desc:'7 dias ou mais sem exercício',bad:true,on:!activePause()&&ds!==null&&ds>=7,hint:ds!==null&&ds>=7?`${ds} dias parado. Volte para tirar a ferrugem.`:'você está em dia'}]}
 function weekRisk(){const ap=activePause();if(ap)return {ok:true,pause:true,msg:`Metas em pausa (${(PAUSE_R[ap.reason]||PAUSE_R.outro)[0].toLowerCase()}). Nada de perder XP enquanto isso.`};const g=effGoal(weekStart(new Date())),wk=weekStrip().n;if(g===0)return {ok:true,msg:'Semana quase toda em pausa: ela não conta para a meta.'};if(wk>=g)return {ok:true,msg:'Meta da semana garantida: +'+WEEK_BONUS+' XP no domingo.'};
   const left=daysLeftWeek(),need=g-wk;const wknd=left.filter(d=>d===6||d===0);
-  if(need>left.length)return {ok:false,lost:true,msg:`Não dá mais para bater a meta desta semana. Você vai perder ${WEEK_PENALTY} XP no domingo.`};
+  if(need>left.length)return {ok:false,lost:true,msg:`Não dá mais para bater a meta desta semana. ${totalXP()>0?'Você vai perder '+Math.min(WEEK_PENALTY,totalXP())+' XP no domingo (o mínimo é zero).':'Fica sem o bônus desta semana.'}`};
   const tight=need===left.length;
-  return {ok:false,lost:false,msg:`Faltam ${need} ${gNoun(need)}. Ainda dá: ${dayList(left)}.${tight?' Sem folga: precisa ir em todos.':wknd.length&&need>=left.length-wknd.length?' O fim de semana vai salvar sua semana.':''} Se não bater, perde ${WEEK_PENALTY} XP.`}}
+  return {ok:false,lost:false,msg:`Faltam ${need} ${gNoun(need)}. Ainda dá: ${dayList(left)}.${tight?' Sem folga: precisa ir em todos.':wknd.length&&need>=left.length-wknd.length?' O fim de semana vai salvar sua semana.':''} ${penTxt()}`}}
 function snapshot(){return {L:levelOf(totalXP()).L,tiers:allTiers(),status:statusList().filter(x=>x.on&&!x.bad).map(x=>x.id)}}
 (function(){if(LS.get('ct.g2',null)===null)LS.set('ct.g2',snapshot())})();
 function celebrate(msg){const old=LS.get('ct.g2',snapshot()),now=snapshot();LS.set('ct.g2',now);let extra='';
