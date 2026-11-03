@@ -234,6 +234,12 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .badge2 b{font-size:14px}.badge2 span{font-size:12px;color:var(--muted)}
 .medal{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);color:var(--muted);font-weight:800}
 .badge2.on .medal{background:var(--hot);color:var(--hot-ink)}
+.coachsay{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.coachsay b{font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
+.coachsay p{margin:2px 0 0;font-size:15px;line-height:1.4}
+.coachav{flex:none;display:block}
+.coachhero{display:flex;gap:14px;align-items:center}
+.coachname{font-size:13px}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -264,7 +270,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
     <button data-view="hoje" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Treino</button>
     <button data-view="rotina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Rotina</button>
     <button data-view="guia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Guia</button>
-    <button data-view="personal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>Personal</button>
+    <button data-view="personal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V3M5.5 9.5 12 3l6.5 6.5"/></svg><span class="coachname">Driffa</span></button>
     <button data-view="hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>Histórico</button>
   </div>
 </nav>
@@ -361,6 +367,7 @@ function viewHoje(){
   const todayW=S.plan.workouts.find(x=>x.day===new Date().getDay());const sel=S.sel||(todayW&&todayW.id)||S.plan.next||S.plan.workouts[0].id;const w=W(sel);const wk=weekStrip();
   if(!S.picking)return `<div class="stack">
     ${welcomeCard()}
+    ${coachCard()}
     <button class="trainbtn" data-act="train"><span class="trainbtn-t">Treinar</span><span class="trainbtn-s">Escolher o treino e começar</span></button>
     ${gameCard()}
     ${freqCard(wk)}
@@ -464,7 +471,7 @@ function normWorkouts(ws){if(!Array.isArray(ws))return [];const old=new Map();S.
 function ctx(){const p=profile(),g=goals();
   const plan=S.plan.workouts.map(w=>`Treino ${w.id}${w.day!=null?' ('+DAYN[w.day]+')':''} – ${w.name} (~${estMin(w)} min): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}, descanso ${e.rest}s${e.bar?' [barra]':''}`).join('; ')).join('\n');
   const hist=S.sessions.slice(0,12).map(s=>s.checkin?`${s.date.slice(0,10)}: check-in`:`${s.date.slice(0,10)}: treino ${s.workoutId}, ${Math.round(s.durationSec/60)} min – `+s.ex.map(e=>`${e.name} ${e.sets.map(t=>t.kg+'kg×'+t.reps).join(', ')}`).join('; ')).join('\n')||'nenhum ainda';
-  return `Você é o personal trainer do aluno dentro do app Up Anilha. Responda em português do Brasil, de forma direta e prática, com no máximo uns 120 palavras, a menos que o aluno peça detalhes. Use frases curtas e, se precisar de lista, linhas começando com "- ". Não use markdown com asteriscos ou títulos.
+  return `Você é a ${COACH}, treinadora do aluno dentro do app Up Anilha. Sua personagem é inspirada na valquíria nórdica Sigrdrífa, "a que impulsiona à vitória": firme, direta, encorajadora e protetora, com um toque discreto de valquíria (uma referência nórdica de vez em quando, sem exagerar e sem teatro). Fale como uma treinadora experiente e próxima. Responda em português do Brasil, de forma direta e prática, com no máximo uns 120 palavras, a menos que o aluno peça detalhes. Use frases curtas e, se precisar de lista, linhas começando com "- ". Não use markdown com asteriscos ou títulos.
 Você pode mudar a rotina com a ferramenta atualizar_rotina (sempre mande a rotina completa, todos os treinos) e as metas de frequência com atualizar_metas. Só use quando o aluno pedir ou concordar, e depois diga o que mudou. Mantenha cada treino dentro do tempo do aluno.
 Se ele relatar dor forte, lesão ou sintoma estranho, oriente procurar médico ou fisioterapeuta. Não prescreva dieta detalhada nem doses de suplemento.
 
@@ -480,7 +487,7 @@ ${hist}`}
 const TOOLS=[
  {name:'atualizar_rotina',description:'Substitui a rotina inteira do aluno (todos os treinos A, B, C...). Mande todos os treinos, inclusive os que não mudaram.',
   inputSchema:{type:'object',properties:{workouts:{type:'array',items:{type:'object',properties:{name:{type:'string',description:'Ex.: Peito e tríceps'},ex:{type:'array',items:{type:'object',properties:{name:{type:'string'},sets:{type:'integer'},reps:{type:'string',description:'Ex.: 8-10'},rest:{type:'integer',description:'Descanso em segundos'},bar:{type:'boolean',description:'true só para exercício com barra olímpica livre'}},required:['name','sets','reps','rest']}}},required:['name','ex']}}},required:['workouts']},
-  execute(inp){const ws=normWorkouts(inp.workouts);if(!ws.length)throw new Error('Rotina vazia');ws.forEach(w=>w.ex.forEach(adaptEx));S.plan.workouts=ws;if(!ws.some(w=>w.id===S.plan.next))S.plan.next=ws[0].id;S.edit=null;savePlan();toast('Rotina atualizada pelo personal');return 'Rotina salva: '+ws.map(w=>w.id+' '+w.name+' (~'+estMin(w)+' min)').join('; ')}},
+  execute(inp){const ws=normWorkouts(inp.workouts);if(!ws.length)throw new Error('Rotina vazia');ws.forEach(w=>w.ex.forEach(adaptEx));S.plan.workouts=ws;if(!ws.some(w=>w.id===S.plan.next))S.plan.next=ws[0].id;S.edit=null;savePlan();toast('Rotina atualizada pela '+COACH);return 'Rotina salva: '+ws.map(w=>w.id+' '+w.name+' (~'+estMin(w)+' min)').join('; ')}},
  {name:'atualizar_metas',description:'Muda as metas de frequência do aluno.',inputSchema:{type:'object',properties:{semana:{type:'integer',description:'Idas por semana, 1 a 7'},mes:{type:'integer',description:'Idas por mês, 1 a 31'}}},
   execute(inp){const g=goals();if(inp.semana)g.week=Math.max(1,Math.min(7,+inp.semana));if(inp.mes)g.month=Math.max(1,Math.min(31,+inp.mes));savePlan();return `Metas: ${g.week}/semana, ${g.month}/mês`}}];
 const API_MODEL='claude-sonnet-5-5';
@@ -499,10 +506,10 @@ function makeSample(){
     return {text:'Pronto, fiz as alterações.'}};
   f.json=async prompt=>{const j=await callApi({model:API_MODEL,max_tokens:4000,messages:[{role:'user',content:prompt}]});const t=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');const m=t.match(/\{[\s\S]*\}/);if(!m)throw {code:'empty'};return JSON.parse(m[0])};
   return f}
-function errMsg(e){const c=e&&e.code;return c==='bad_key'?'Chave da API inválida. Confira na aba Personal.':c==='no_credit'?'Sua conta da API está sem créditos. Adicione em console.anthropic.com.':c==='offline'?'Sem internet agora. O personal precisa de conexão.':c==='not_granted'?'Você precisa permitir o personal nesta página.':c==='rate_limited'?'Muitos pedidos seguidos. Espere um minuto e tente de novo.':'Não consegui falar com o personal agora. Tente de novo.'}
+function errMsg(e){const c=e&&e.code;return c==='bad_key'?'Chave da API inválida. Confira na aba '+COACH+'.':c==='no_credit'?'Sua conta da API está sem créditos. Adicione em console.anthropic.com.':c==='offline'?'Sem internet agora. A '+COACH+' precisa de conexão.':c==='not_granted'?'Você precisa permitir o personal nesta página.':c==='rate_limited'?'Muitos pedidos seguidos. Espere um minuto e tente de novo.':'Não consegui falar com o personal agora. Tente de novo.'}
 function saveChat(){S.chat=S.chat.slice(-40);LS.set('ct.chat',S.chat);if(chatRef)chatRef.set({msgs:S.chat}).catch(()=>{})}
 function fmtMsg(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n/g,'<br>')}
-function chatHtml(){const intro=`<div class="msg ai">Oi! Sou seu personal. Já conheço sua rotina, suas metas e seus registros. Pode me pedir para trocar um exercício, encaixar o treino em menos tempo, montar um aquecimento ou tirar dúvidas de execução.</div>`;
+function chatHtml(){const intro=`<div class="msg ai">Eu sou a ${COACH}. Já conheço sua rotina, suas metas e seus registros. Peça para trocar um exercício, encaixar o treino em menos tempo, montar um aquecimento ou corrigir sua execução. Estou aqui para te levar à vitória.</div>`;
   return intro+S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${fmtMsg(m.content)}</div>`).join('')+(S.busy==='chat'?`<div class="msg ai">${S.streaming?fmtMsg(S.streaming):'<span class="dots">Pensando…</span>'}</div>`:'')}
 function updateChatLog(){const el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatHtml();const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}
 async function sendChat(text){text=text.trim();if(!text||S.busy||!sampleApi)return;
@@ -536,21 +543,21 @@ Formato: {"workouts":[{"name":"Peito e tríceps","ex":[{"name":"Supino reto","se
 const SUGS=['Monte um aquecimento para o treino de hoje','Só tenho 40 min hoje, o que eu corto?','Como aumentar as cargas sem me machucar?','Troque um exercício que incomoda meu ombro'];
 function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${full?' class="full"':''}>${title}<select id="${id}" data-f="pf" data-k="${k}">${OPTS[k].map(([v,l])=>`<option value="${v}" ${String(p[k])===String(v)?'selected':''}>${l}</option>`).join('')}</select></label>`;
   return `<div class="stack">
-    <div><div class="eyebrow">Seu personal</div><h2>Treino sob medida</h2><p class="muted" style="margin:4px 0 0">Conte seu objetivo e quanto tempo você tem. O personal monta a rotina e ajusta quando você pedir.</p></div>
+    <div class="coachhero">${coachAv(72)}<div><div class="eyebrow">Sua treinadora</div><h2>${COACH}</h2><p class="muted" style="margin:4px 0 0">Inspirada na valquíria Sigrdrífa, "a que impulsiona à vitória". Ela monta seu treino, ajusta quando você pedir e respeita os seus limites.</p></div></div>
     <div class="card stack">
       <div class="pf">${sel('goal','pf-goal','Objetivo',1)}${sel('minutes','pf-min','Tempo por treino')}${sel('days','pf-days','Dias por semana')}${sel('level','pf-level','Nível')}${sel('place','pf-place','Onde treina')}
         <fieldset class="full restr"><legend>Restrições de saúde</legend>${Object.entries(RESTR).map(([k,R])=>`<label class="tog"><input type="checkbox" id="rs-${k}" data-f="restr" data-k="${k}" ${restr().includes(k)?'checked':''}>${R.label}</label>`).join('')}</fieldset>
         <label class="full">Outras lesões, preferências ou detalhes<textarea id="pf-notes" data-f="pf" data-k="notes" rows="2" placeholder="Ex.: dor no joelho direito, prefiro máquinas, quero focar em glúteos">${esc(p.notes)}</textarea></label></div>
       ${careCard()}
       ${sampleApi?`<button class="btn primary big ${S.armed==='gen'?'armed':''}" data-act="gen" ${S.busy?'disabled':''}>${S.busy==='gen'?'Montando seu treino…':S.armed==='gen'?'Toque de novo: substitui sua rotina':'Gerar meu treino'}</button>`
-        :`<div class="stack keycard"><h3>Ativar o personal com IA</h3><p class="muted" style="margin:0;font-size:14px">É opcional. O personal usa a IA Claude: crie uma chave em console.anthropic.com (menu API Keys), coloque alguns créditos (US$ 5 rendem muitas conversas) e cole aqui. A chave fica salva só neste celular.</p>
-          <input id="keyIn" type="password" class="wname" placeholder="sk-ant-..." autocomplete="off" aria-label="Chave da API"><button class="btn primary" data-act="savekey">Ativar personal</button></div>`}
+        :`<div class="stack keycard"><h3>Ativar a ${COACH} com IA</h3><p class="muted" style="margin:0;font-size:14px">É opcional. A ${COACH} usa a IA Claude: crie uma chave em console.anthropic.com (menu API Keys), coloque alguns créditos (US$ 5 rendem muitas conversas) e cole aqui. A chave fica salva só neste celular.</p>
+          <input id="keyIn" type="password" class="wname" placeholder="sk-ant-..." autocomplete="off" aria-label="Chave da API"><button class="btn primary" data-act="savekey">Ativar a ${COACH}</button></div>`}
     </div>
     <div class="card stack">
-      <div class="row"><div class="plate sm">P</div><div style="min-width:0"><h3>Fale com o personal</h3><div class="muted" style="font-size:13px">Ele vê sua rotina, metas e histórico, e pode alterar o treino.</div></div></div>
+      <div class="row">${coachAv(40)}<div style="min-width:0"><h3>Fale com a ${COACH}</h3><div class="muted" style="font-size:13px">Ela vê sua rotina, metas e histórico, e pode alterar o treino.</div></div></div>
       <div id="chatlog" class="chatlog" aria-live="polite">${chatHtml()}</div>
       ${!S.chat.length&&sampleApi?`<div class="sugs">${SUGS.map(t=>`<button class="chip sug" data-act="sug" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
-      ${sampleApi?`<form id="chatForm" class="chatform"><textarea id="chatIn" rows="2" placeholder="Pergunte ou peça uma mudança…" aria-label="Mensagem para o personal">${esc(S.draft)}</textarea><button class="btn primary" ${S.busy?'disabled':''}>Enviar</button></form>`:''}
+      ${sampleApi?`<form id="chatForm" class="chatform"><textarea id="chatIn" rows="2" placeholder="Pergunte ou peça uma mudança…" aria-label="Mensagem para a ${COACH}">${esc(S.draft)}</textarea><button class="btn primary" ${S.busy?'disabled':''}>Enviar</button></form>`:''}
       ${sampleApi?`<button class="btn ghost sm ${S.armed==='rmkey'?'armed':''}" data-act="rmkey" style="align-self:flex-start">${S.armed==='rmkey'?'Toque de novo para remover a chave':'Remover chave da API'}</button>`:''}
       ${S.chat.length?`<button class="btn ghost sm ${S.armed==='clearchat'?'armed':''}" data-act="clearchat" style="align-self:flex-start">${S.armed==='clearchat'?'Toque de novo para limpar':'Limpar conversa'}</button>`:''}
     </div>
@@ -667,6 +674,21 @@ function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Escolha uma ima
   r.onload=()=>{const img=new Image();img.onload=()=>{const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');const m=Math.min(img.width,img.height);
     x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva');render()};img.onerror=()=>toast('Não consegui abrir essa imagem');img.src=r.result};r.readAsDataURL(f)}
 
+/* ---------- Driffa ---------- */
+const COACH='Driffa';
+function coachAv(size){return `<svg class="coachav" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><circle cx="24" cy="24" r="23" fill="#141a2e"/><circle cx="24" cy="24" r="19" fill="none" stroke="#f2c230" stroke-opacity=".35" stroke-width="1"/><path d="M24 37V11M15.5 19.5 24 11l8.5 8.5" fill="none" stroke="#f2c230" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function daysSinceLast(){if(!S.sessions.length)return null;const d=new Date(S.sessions[0].date);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/864e5)}
+function coachLine(){const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinceLast(),name=firstName();const you=name?name+', ':'';
+  if(ds===null)return `${you}toda saga começa com um primeiro treino. Hoje é um ótimo dia para escrever a sua.`;
+  if(ds===0&&wk>=g.week)return `Meta da semana cumprida. Isso é disciplina de valquíria. Descanse bem.`;
+  if(ds===0)return pick([`Hoje você já venceu. Água, comida boa e sono: a força cresce no descanso.`,`Treino de hoje feito. Amanhã a gente vai um pouco mais longe.`]);
+  if(st>=3)return `${st} dias seguidos, ${name||'guerreiro'}. É assim que se constrói força de verdade.`;
+  if(ds>=4)return `${ds} dias longe da barra. Sem culpa: volte hoje, nem que seja um treino leve.`;
+  if(ds>=2)return `${you}faz ${ds} dias. A barra não vai se levantar sozinha.`;
+  return `${you}faltam ${Math.max(0,g.week-wk)} ${g.week-wk===1?'dia':'dias'} para a sua meta da semana. Eu sei que você consegue.`}
+function coachCard(){return `<div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${esc(coachLine())}</p></div></div>`}
+
 /* ---------- guia ---------- */
 const GIDX=(window.GUIDE||[]).map(g=>({...g,rx:new RegExp(g.re)}));
 function guideFor(name){const n=norm(name);return GIDX.find(g=>g.rx.test(n))||null}
@@ -691,7 +713,7 @@ function openGuide(name,key){const g=key?GIDX.find(x=>x.k===key):guideFor(name);
    <div class="gsec"><div class="eyebrow">Passo a passo</div><ol>${g.p.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>
    <div class="gsec"><div class="eyebrow">Erros comuns</div><ul class="errs">${g.e.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
    ${g.c?`<div class="gtip">${esc(g.c)}</div>`:''}`:`<p class="muted">Ainda não temos esse exercício no guia. Veja vídeos de execução ou pergunte ao personal.</p>`}
-   <div class="row" style="flex-wrap:wrap"><a class="btn ghost" href="${ytUrl(title)}" target="_blank" rel="noopener">Ver vídeos</a>${sampleApi?`<button class="btn ghost" data-ask="${esc(title)}">Perguntar ao personal</button>`:''}</div>`;
+   <div class="row" style="flex-wrap:wrap"><a class="btn ghost" href="${ytUrl(title)}" target="_blank" rel="noopener">Ver vídeos</a>${sampleApi?`<button class="btn ghost" data-ask="${esc(title)}">Perguntar à ${COACH}</button>`:''}</div>`;
   el.hidden=false;document.body.classList.add('noscroll');clearInterval(sheetTimer);
   const i1=document.getElementById('gimg1'),lab=document.getElementById('gfigL');
   if(i1&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){let on=false;sheetTimer=setInterval(()=>{on=!on;i1.style.opacity=on?1:0;lab.textContent=on?'Fim':'Início'},1400)}
@@ -771,7 +793,7 @@ function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=
     ${z.notes?`<div class="gtip">Suas observações: ${esc(z.notes)}. Se algum exercício incomodar, toque em Trocar.</div>`:''}
     <button class="btn primary big ${S.armed==='wzuse'?'armed':''}" data-act="wzuse">${S.armed==='wzuse'?'Toque de novo: substitui sua rotina':'Usar este treino'}</button>
     <div class="row" style="flex-wrap:wrap"><button class="btn ghost" data-act="wzregen" style="flex:1">Gerar outra opção</button><button class="btn ghost" data-act="wzgo" data-v="0" style="flex:1">Mudar respostas</button></div>
-    ${sampleApi?`<button class="btn ghost" data-act="wzask">Pedir opinião ao personal</button>`:''}`}
+    ${sampleApi?`<button class="btn ghost" data-act="wzask">Pedir opinião da ${COACH}</button>`:''}`}
   const nav=st<5?`<div class="wznav">${st>0?`<button class="btn ghost" data-act="wzgo" data-v="${st-1}">Voltar</button>`:'<span></span>'}<button class="btn primary" data-act="wzgo" data-v="${st+1}">${st===4?'Ver meu treino':'Continuar'}</button></div>`:'';
   return `<div class="stack">${head}${body}${nav}</div>`}
 function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
@@ -910,7 +932,7 @@ function finishSession(){
   const durS=Math.round((Date.now()-a.start)/1000);const sess={id:a.id,date:new Date(a.start).toISOString(),workoutId:a.workoutId,name:a.name,durationSec:durS,ex};sess.kcal=sessionKcal(sess);addSession(sess);
   const ws=S.plan.workouts,i=ws.findIndex(w=>w.id===a.workoutId);S.plan.next=ws[(i+1)%ws.length].id;S.sel=null;savePlan();
   S.active=null;saveActive();S.rest=null;try{wake&&wake.release()}catch(e){}
-  celebrate(`Treino salvo · ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);
+  celebrate(`${pick(['Vitória registrada.','Mais um capítulo da sua saga.','Isso é força de valquíria.','A barra respeita quem volta.'])} ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);
 }
 function beep(){try{if(!audio)return;[0,.25,.5].forEach(t=>{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.setValueAtTime(.25,audio.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+t+.18);o.connect(g).connect(audio.destination);o.start(audio.currentTime+t);o.stop(audio.currentTime+t+.2)})}catch(e){}
   try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
@@ -963,7 +985,7 @@ main.addEventListener('click',e=>{
       S.plan.workouts.forEach(w=>w.ex.forEach(e=>{if(e.id===ae.exId){e.name=ae.name;e.bar=false}}));ae.sets.forEach(t=>{if(!t.done)t.kg=''});saveActive();savePlan();toast('Trocado também na sua rotina');break}
     case 'gen':if(!twoStep('gen'))return;S.armed=null;generate();return;
     case 'sug':sendChat(b.dataset.t);return;
-    case 'savekey':{const v=(document.getElementById('keyIn').value||'').trim();if(!/^sk-/.test(v)){toast('A chave começa com sk-ant-');return}LS.set('ct.key',v);sampleApi=makeSample();toast('Personal ativado');break}
+    case 'savekey':{const v=(document.getElementById('keyIn').value||'').trim();if(!/^sk-/.test(v)){toast('A chave começa com sk-ant-');return}LS.set('ct.key',v);sampleApi=makeSample();toast(COACH+' ativada');break}
     case 'rmkey':if(!twoStep('rmkey'))return;try{localStorage.removeItem('ct.key')}catch(_){}sampleApi=null;break;
     case 'backup':{const blob=new Blob([JSON.stringify({app:'up-anilha',v:2,user:S.user,plan:S.plan,sessions:S.sessions,chat:S.chat},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='up-anilha-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return}
     case 'clearchat':if(!twoStep('clearchat'))return;S.chat=[];saveChat();break;
