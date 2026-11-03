@@ -1013,7 +1013,7 @@ const COACH='Driffa';
 function season(d){d=d||new Date();const m=d.getMonth()+1,day=d.getDate(),v=m*100+day;return v>=1221||v<320?'verao':v<621?'outono':v<923?'inverno':'primavera'}
 const SEASONS={verao:'Verão',outono:'Outono',inverno:'Inverno',primavera:'Primavera'};
 const SKINS={1:['inverno','primavera'],2:[],3:[]};/* estações com arte pronta, por visual */
-function dImg(kind,n){n=n||coachLook();const se=S.skinPrev||season();const has=(SKINS[n]||[]).includes(se);return `driffa-${kind?kind+'-':''}${n}${has?'-'+se:''}.jpg${AV}`}const AV='?v=20';
+function dImg(kind,n){n=n||coachLook();const se=S.skinPrev||season();const has=(SKINS[n]||[]).includes(se);return `driffa-${kind?kind+'-':''}${n}${has?'-'+se:''}.jpg${AV}`}const AV='?v=21';
 function coachLook(){const v=LS.get('ct.look',1);return [1,2,3].includes(v)?v:1}
 function coachAv(size){return `<img class="coachav" src="${dImg('face')}" width="${size}" height="${size}" alt="${COACH}">`}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
