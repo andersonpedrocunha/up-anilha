@@ -871,9 +871,9 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
     ${wk.html}
     <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px"><span class="shieldkey">pintado: treinou · madeira: planejado · rachado: faltou</span>Toque num dia que passou para registrar, ou num dia que vem para planejar.${!goalAll()&&weekInfo().n<visitsWeekAll()?'<br><span class="actdot" style="display:inline-block;vertical-align:middle"></span> atividade fora: dá XP e calorias, mas não conta como ida à academia.':''}</div>
     ${compCard()}
-    <div class="progress"><i style="width:${pctW}%;background:${wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
+    <div class="progress"><i style="width:${pctW}%;background:${wk.n>g.week?'linear-gradient(90deg,var(--good),var(--bronze))':wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
     ${goalRows((freqGoal()||{}).id)}
-    <div class="muted" style="font-size:14px">${wk.n>=g.week?'Meta da semana batida.':`Faltam ${g.week-wk.n} ${gNoun(g.week-wk.n)} para a meta.`}</div>
+    <div class="muted" style="font-size:14px">${wk.n>g.week?`Meta batida e mais ${wk.n-g.week} ${wk.n-g.week===1?'extra':'extras'}. Cada ida a mais ainda dá XP.`:wk.n>=g.week?'Meta da semana batida. Daqui pra frente, é lucro.':`Faltam ${g.week-wk.n} ${gNoun(g.week-wk.n)} para a meta.`}</div>
     ${went?`<div class="row"><div class="btn checked" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">✓ Você foi hoje</div><button class="btn ghost sm" data-act="regtoday">+ Outra</button>${ck?`<button class="btn ghost sm" data-act="uncheck" data-id="${ck.id}">Desfazer</button>`:''}</div>`
       :`<button class="btn primary big" data-act="regtoday">Registrar treino de hoje</button>`}
     <div class="mrow"><div class="row" style="justify-content:space-between"><span class="eyebrow">Em ${month}</span><span class="num" style="font-weight:700">${mv} / ${g.month}</span></div>
@@ -1873,7 +1873,8 @@ function wxSetup(){if(geo()||!feat('clima'))return '';if(S.wxCity)return `<div c
 function coachLine(){{const rr=recentReturn();if(rr&&!S.sessions.some(x=>isoOf(x.date)>rr.end))return pick([`De volta, ${firstName()||'guerreiro'}. Sem pressa no primeiro treino: carga mais leve, técnica perfeita.`,`Voltou da ${(PAUSE_R[rr.reason]||PAUSE_R.outro)[0].toLowerCase()}. Hoje a gente reacende a forja devagar.`])}
   const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinceLast(),name=firstName();const you=name?name+', ':'';
   if(ds===null)return `${you}toda saga começa com um primeiro treino. Hoje é um ótimo dia para escrever a sua.`;
-  if(ds===0&&wk>=g.week)return `Meta da semana cumprida. Isso é disciplina de valquíria. Descanse bem.`;
+  if(ds===0&&wk>g.week)return dayPick([`${wk} de ${g.week} na semana. Acima da meta: é assim que se vira lenda. Só não esquece de descansar um dia.`,`Meta já era, e você continua aparecendo. Os skalds vão ter trabalho com essa saga.`],'over');
+  if(ds===0&&wk>=g.week)return `Meta da semana cumprida. Isso é disciplina de valquíria. Daqui pra frente, cada treino é bônus.`;
   {const wl=wxLine();if(wl&&(engage().tier!=='chamas'||Math.random()<.6))return wl}
   {const hl=habitLine();if(hl&&Math.random()<.45)return hl}
   {const em=engageLine();if(em&&ds!==0)return em}
