@@ -340,6 +340,7 @@ a.btn .coachav{margin-right:8px}
 .wbars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.wb{display:flex;flex-direction:column;align-items:center;gap:3px}.wb span{font-size:10px;color:var(--muted);font-weight:600}.wb.today span{color:var(--ink)}
 .wbc{position:relative;width:100%;max-width:26px;height:72px;border-radius:6px;background:var(--sunk)}.wbc::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
 .wbc i{position:absolute;left:3px;right:3px;border-radius:3px}.wbc i.neg{background:#4aa3ff}.wbc i.pos{background:var(--hot)}.wb.today .wbc i{opacity:.55}
+.cboxx{margin-left:auto;flex:none}
 .exbtns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.exbtns .howbtn{margin:0;cursor:pointer}.howbtn.alt{color:var(--muted)}
 .sugg{display:flex;gap:8px;align-items:center;font-size:13px;border-radius:10px;padding:7px 10px;margin-top:6px}.sugg.up{background:var(--good-soft)}.sugg.hold{background:color-mix(in srgb,var(--hot) 18%,var(--surface))}
 .voicebtn{font-size:18px}
@@ -797,7 +798,7 @@ function loadOlder(el){const h0=el.scrollHeight,t0=el.scrollTop;S.chatShow=(S.ch
 document.addEventListener('click',e=>{const b=e.target.closest('[data-more]');if(!b)return;const el=b.closest('.chatlog');if(el)loadOlder(el)});
 document.addEventListener('scroll',e=>{const el=e.target;if(el.classList&&el.classList.contains('chatlog')&&el.scrollTop<30&&el.querySelector('[data-more]'))loadOlder(el)},true);
 /* ---------- Driffa flutuante ---------- */
-function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);f.classList.toggle('peek',!S.fabOpen&&(S.fabTuck||!!S.active)&&!S.chatUnread);
+function renderFab(){const f=document.getElementById('fab');if(!f)return;if(typeof syncNav==='function')setTimeout(syncNav,0);const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);f.classList.toggle('peek',!S.fabOpen&&(S.fabTuck||!!S.active)&&!S.chatUnread);
   const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="${dImg('bust')}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
   panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
   if(panel.hidden)return;
@@ -1206,7 +1207,7 @@ async function importGpx(file){let g;try{g=parseGpx(await file.text())}catch(e){
       <div class="eyebrow">O que foi?</div><div class="chips">${['caminhada','corrida','bike','trilha'].map(k=>`<button class="chip sm" data-t="${k}" aria-pressed="${k===type}">${MET[k][0]}</button>`).join('')}</div>
       <div class="muted" style="font-size:13px">Intensidade pelo ${type==='bike'?'velocidade':'ritmo'}: ${INTN[it]}.${g.start?'':' O arquivo não tem horário, então registro como hoje.'}</div>
       <div class="row cbtns"><button class="btn ghost" data-c="no">Cancelar</button><button class="btn primary" data-c="ok">Registrar</button></div></div>`};
-  draw();o.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;if(t.dataset.t){type=t.dataset.t;draw();return}
+  draw();o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;if(t.dataset.t){type=t.dataset.t;draw();return}
     if(t.dataset.c){o.remove();if(t.dataset.c!=='ok')return;const min=Math.max(1,Math.round(g.mov/60)),it=gpxInt(type,g),d=g.start?new Date(g.start):new Date();
       const sess={id:uid(),date:d.toISOString(),activity:type,workoutId:'+',name:MET[type][0],minutes:min,intensity:it,durationSec:Math.round(g.elapsed||g.mov),distM:Math.round(g.dist),gain:g.gain,route:g.route,gpxStart:g.start,ex:[]};sess.kcal=sessionKcal(sess);
       addSession(sess);LS.set('ct.lastAct',type);S.act=null;S.view='hoje';window.scrollTo(0,0);render();
@@ -1216,14 +1217,14 @@ async function importGpx(file){let g;try{g=parseGpx(await file.text())}catch(e){
 /* ---------- check-in de corpo ---------- */
 const PAIN=[['lombar','Lombar'],['joelho','Joelho'],['ombro','Ombro'],['cervical','Pescoço']];
 function bodyCheck(){return new Promise(res=>{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');let en='normal';const pains=new Set();
-  const draw=()=>{o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>Como você chegou hoje?</h3></div></div>
+  const draw=()=>{o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>Como você chegou hoje?</h3></div><button class="ic cboxx" data-c="x" aria-label="Fechar">✕</button></div>
     <div class="eyebrow">Energia</div><div class="chips">${[['baixa','Baixa'],['normal','Normal'],['alta','Alta']].map(([k,l])=>`<button class="chip sm" data-en="${k}" aria-pressed="${en===k}">${l}</button>`).join('')}</div>
     <div class="eyebrow">Alguma dor ou incômodo?</div><div class="chips"><button class="chip sm" data-pn="none" aria-pressed="${!pains.size}">Nenhum</button>${PAIN.map(([k,l])=>`<button class="chip sm" data-pn="${k}" aria-pressed="${pains.has(k)}">${l}</button>`).join('')}</div>
     <p style="font-size:13px">${en==='baixa'?'Hoje eu tiro uma série de cada exercício e aumento o descanso.':en==='alta'?'Dia de atacar a barra. Treino completo.':'Treino como planejado.'}${pains.size?' Vou trocar o que forçar '+[...pains].map(k=>PAIN.find(x=>x[0]===k)[1].toLowerCase()).join(' e ')+'.':''}</p>
     <div class="row cbtns"><button class="btn ghost" data-c="skip">Pular</button><button class="btn primary" data-c="go">Começar</button></div></div>`};
-  draw();o.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;if(t.dataset.en){en=t.dataset.en;draw();return}
+  draw();o.addEventListener('click',e=>{if(e.target===o){o.remove();res(false);return}const t=e.target.closest('button');if(!t)return;if(t.dataset.en){en=t.dataset.en;draw();return}
     if(t.dataset.pn){if(t.dataset.pn==='none')pains.clear();else pains.has(t.dataset.pn)?pains.delete(t.dataset.pn):pains.add(t.dataset.pn);draw();return}
-    if(t.dataset.c){o.remove();res(t.dataset.c==='go'?{energy:en,pains:[...pains]}:null)}});document.body.appendChild(o)})}
+    if(t.dataset.c){o.remove();res(t.dataset.c==='go'?{energy:en,pains:[...pains]}:t.dataset.c==='x'?false:null)}});document.body.appendChild(o)})}
 function adaptSession(r){const a=S.active;if(!a||!r)return;a.body=r;const msg=[];
   if(r.energy==='baixa'){let n=0;a.ex.forEach(e=>{if(/min/i.test(String(e.target.reps)))return;if(e.sets.length>2){e.sets.pop();e.target.sets=e.sets.length;n++}e.target.rest=(e.target.rest||60)+15});if(n)msg.push('versão leve: uma série a menos e mais descanso')}
   let sw=0;r.pains.forEach(k=>{const R=RESTR[k];if(!R)return;a.ex.forEach(e=>{const n=norm(e.name);const x=R.swaps.find(z=>z[0].test(n)&&norm(z[1])!==n);if(x){e.swappedFrom=e.swappedFrom||e.name;e.name=x[1];e.target.bar=false;e.sets.forEach(t=>t.kg='');e.sugg=null;sw++}})});
@@ -1232,7 +1233,7 @@ function adaptSession(r){const a=S.active;if(!a||!r)return;a.body=r;const msg=[]
   if(r.pains.length&&!sw)msg.push('nada no treino de hoje força essa região, mas pare se doer');
   const open=r.energy==='alta'?'Energia alta? Então hoje a barra vai sentir.':r.energy==='baixa'?'Dia de pouca energia também conta.':'Bom.';
   setTimeout(()=>toast(open+(msg.length?' '+msg.join('; ').replace(/^./,c=>c.toUpperCase())+'.':'')),250)}
-function beginWorkout(id,extra){bodyCheck().then(r=>{startSession(id);adaptSession(r);render();if(extra)extra();speak('Treino começou. Vamos.')})}
+function beginWorkout(id,extra){bodyCheck().then(r=>{if(r===false)return;startSession(id);adaptSession(r);render();if(extra)extra();speak('Treino começou. Vamos.')})}
 
 /* ---------- voz ---------- */
 function voiceOn(){return !!LS.get('ct.voice',false)}
@@ -1336,7 +1337,7 @@ function mealConfirm(m){let k=1;const o=document.createElement('div');o.classNam
     <div class="eyebrow">Porção que você comeu</div><div class="chips">${[[.5,'Metade'],[1,'Isso aí'],[1.5,'1,5×'],[2,'Dobro']].map(([v,l])=>`<button class="chip sm" data-k="${v}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>
     ${m.note?`<div class="coachsay sm">${coachAv(24)}<p style="margin:0;font-size:13px">${esc(m.note)}</p></div>`:''}
     <div class="row cbtns"><button class="btn ghost" data-c="no">Descartar</button><button class="btn primary" data-c="ok">Salvar refeição</button></div></div>`};
-  draw();o.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;if(t.dataset.k){k=+t.dataset.k;draw();return}
+  draw();o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;if(t.dataset.k){k=+t.dataset.k;draw();return}
     if(t.dataset.c){o.remove();if(t.dataset.c==='ok'){const f=food();f.meals.push({id:uid(),t:Date.now(),name:m.name,kcal:Math.round(m.kcal*k),prot:Math.round(m.prot*k),carb:Math.round(m.carb*k),fat:Math.round(m.fat*k),thumb:m.thumb,ai:true});saveFood(f);render();toast(`${Math.round(m.kcal*k)} kcal anotadas. Saldo do dia: ${kcalIn(f)-kcalOut().total>0?'+':''}${kcalIn(f)-kcalOut().total} kcal.`)}}});
   document.body.appendChild(o)}
 function viewNutri(){const f=food(),wg=waterGoal(),pg=protGoal(),L=supps();
@@ -1685,7 +1686,7 @@ function viewHist(){
 
 function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():S.view==='nutri'?viewNutri():viewHist());
-  renderAvatar();renderFab();document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
+  renderAvatar();renderFab();if(typeof syncNav==='function')setTimeout(syncNav,0);document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
   const cl=document.getElementById('chatlog');if(cl)cl.scrollTop=cl.scrollHeight;
   if(!S.openD)S.openD={};main.querySelectorAll('details[data-k]').forEach(d=>{d.open=!!S.openD[d.dataset.k];d.addEventListener('toggle',()=>{S.openD[d.dataset.k]=d.open})});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
@@ -1773,7 +1774,7 @@ main.addEventListener('click',e=>{
     case 'mealdel':{const f=food();f.meals=f.meals.filter(m=>m.id!==b.dataset.id);saveFood(f);break}
     case 'absmin':S.absMin=+b.dataset.v;LS.set('ct.absMin',S.absMin);break;
     case 'abslvl':S.absLvl=b.dataset.lv;LS.set('ct.absLvl',S.absLvl);break;
-    case 'absgo':{const lv=S.absLvl||'medium';bodyCheck().then(r=>{startSession({id:'ABS',name:'Abdômen · '+ABS[lv].label+(S.absMin?' · '+S.absMin+' min':''),ex:[]});S.active.custom=true;S.active.absLvl=lv;S.active.body=r||null;S.active.ex=absList(lv).map(exFromDef);saveActive();adaptSession(r);render();speak('Abdômen '+ABS[lv].label+'. Trava o core.')});return}
+    case 'absgo':{const lv=S.absLvl||'medium';bodyCheck().then(r=>{if(r===false)return;startSession({id:'ABS',name:'Abdômen · '+ABS[lv].label+(S.absMin?' · '+S.absMin+' min':''),ex:[]});S.active.custom=true;S.active.absLvl=lv;S.active.body=r||null;S.active.ex=absList(lv).map(exFromDef);saveActive();adaptSession(r);render();speak('Abdômen '+ABS[lv].label+'. Trava o core.')});return}
     case 'absadd':{const lv=S.absLvl||'medium';const have=new Set(a.ex.map(e=>norm(e.name)));const add=absList(lv).filter(e=>!have.has(norm(e.name))).map(exFromDef);a.ex.push(...add);a.abs=lv;saveActive();toast(`Abdômen ${ABS[lv].label}${S.absMin?' de '+S.absMin+' min':''} no fim do treino: ${add.length} exercícios. Não pula.`);break}
     case 'nutri':S.view='nutri';window.scrollTo(0,0);break;
     case 'water':{const f=food();f.water=Math.max(0,f.water+(+b.dataset.d));saveFood(f);if(+b.dataset.d>0&&f.water===waterGoal())toast('Meta de água batida. Hidratada como um fiorde.');break}
@@ -1924,6 +1925,22 @@ document.getElementById('fab').addEventListener('click',e=>{const t=e.target;
 document.getElementById('fab').addEventListener('input',e=>{if(e.target.id==='fabIn')S.fabDraft=e.target.value});
 document.getElementById('fab').addEventListener('submit',e=>{if(e.target.id==='fabForm'){e.preventDefault();const t=S.fabDraft||'';S.fabDraft='';sendChat(t);renderFab()}});
 document.getElementById('fab').addEventListener('keydown',e=>{if(e.target.id==='fabIn'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.target.form.requestSubmit()}});
+/* ---------- voltar (botão/gesto do celular) ---------- */
+let navUp=false,popSkip=false;
+function nonRoot(){return S.view!=='hoje'||!!S.picking||!!S.fabOpen||!!document.querySelector('.cbox')||!document.getElementById('sheet').hidden}
+function syncNav(){try{const nr=nonRoot();if(nr&&!navUp){history.pushState({up:1},'');navUp=true}else if(!nr&&navUp){navUp=false;popSkip=true;history.back()}}catch(_){}}
+function goBack(){const boxes=document.querySelectorAll('.cbox');if(boxes.length){boxes[boxes.length-1].dispatchEvent(new MouseEvent('click',{bubbles:true}));return}
+  if(!document.getElementById('sheet').hidden){closeGuide();return}
+  if(S.fabOpen){S.fabOpen=false;renderFab();return}
+  if(S.view==='montar'&&S.wz&&S.wz.step>0){S.wz.step--;render();return}
+  if(S.view==='montar'){S.view='rotina';S.wz=null;S.wzPlan=null;render();return}
+  if(S.picking){S.picking=false;window.scrollTo(0,0);render();return}
+  if(S.view!=='hoje'){S.view='hoje';window.scrollTo(0,0);render();return}}
+window.addEventListener('popstate',()=>{if(popSkip){popSkip=false;return}navUp=false;goBack();setTimeout(syncNav,0)});
+new MutationObserver(()=>syncNav()).observe(document.body,{childList:true});
+new MutationObserver(()=>syncNav()).observe(document.getElementById('sheet'),{attributes:true,attributeFilter:['hidden']});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const boxes=document.querySelectorAll('.cbox');if(boxes.length)boxes[boxes.length-1].dispatchEvent(new MouseEvent('click',{bubbles:true}))});
+
 render();
 checkDecline();
 setTimeout(fabTeaser,2500);
