@@ -146,6 +146,10 @@ details.goals summary{cursor:pointer;font-weight:600;color:var(--accent);font-si
 .pf .full{grid-column:1/-1}
 .pf select,.pf textarea{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:10px;font-size:15px;font-weight:500;color:var(--ink);text-transform:none;letter-spacing:0;width:100%;min-width:0;resize:vertical;font-family:var(--body)}
 .chatlog{display:flex;flex-direction:column;gap:8px}
+#chatlog{height:min(62vh,560px);overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 10px}
+.cday{display:flex;justify-content:center;margin:6px 0 2px}
+.cday span{background:var(--sunk);color:var(--muted);font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;box-shadow:0 1px 2px rgb(0 0 0 / .2)}
+.msg .mt{display:block;text-align:right;font-size:10.5px;opacity:.6;margin-top:3px;line-height:1}
 .msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:15px;line-height:1.45;overflow-wrap:anywhere}
 .msg.ai{background:var(--sunk);align-self:flex-start;border-bottom-left-radius:4px}
 .msg.me{background:var(--accent);color:var(--accent-ink);align-self:flex-end;border-bottom-right-radius:4px}
@@ -717,11 +721,18 @@ function makeSample(){
 function errMsg(e){const c=e&&e.code;if(c==='no_credit'){const a=aiState();if(a.credit){a.spent=Math.max(a.spent,a.credit);LS.set('ct.ai',a)}}return c==='bad_key'?'Essa chave não abre minha porta. Confere a chave na aba '+COACH+'.':c==='no_credit'?'Fiquei sem crédito. Reabasteça em console.anthropic.com e me chame de novo.':c==='offline'?'Sem internet, sem conversa. O treino offline continua valendo.':c==='not_granted'?'Preciso de permissão para falar com você.':c==='rate_limited'?'Calma. Muitas mensagens seguidas. Respira um minuto.':'Algo falhou do meu lado. Tenta de novo.'}
 function saveChat(){S.chat=S.chat.slice(-40);LS.set('ct.chat',S.chat);if(chatRef)chatRef.set({msgs:S.chat}).catch(()=>{})}
 function fmtMsg(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n/g,'<br>')}
-function chatHtml(){const intro=aiRow(`Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.`);
-  return intro+S.chat.map(m=>(m.role==='assistant'&&!m.note&&m.content==='…')?`<div class="cnote warnnote">${coachAv(20)}<span>Essa mudança não entrou. Erro antigo, já corrigido. Me pede de novo.</span></div>`:m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
-function aiRow(h){return `<div class="crow ai">${coachAv(30)}<div class="msg ai">${h}</div></div>`}
-function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><span class="uav">${avatarInner()}</span></div>`}
-function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
+function chatDay(t){if(!t)return 'Conversas anteriores';const d=new Date(t),n=new Date();const k=x=>new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime();const diff=Math.round((k(n)-k(d))/864e5);
+  if(diff===0)return 'Hoje';if(diff===1)return 'Ontem';if(diff<7)return d.toLocaleDateString('pt-BR',{weekday:'long'}).replace(/^./,c=>c.toUpperCase());return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})}
+function hhmm(t){return t?new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''}
+function chatHtml(){const intro=aiRow(`Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.`,null);
+  let last=null,out='';
+  S.chat.forEach(m=>{const day=chatDay(m.t);if(day!==last){out+=`<div class="cday"><span>${day}</span></div>`;last=day}
+    out+=(m.role==='assistant'&&!m.note&&m.content==='…')?`<div class="cnote warnnote">${coachAv(20)}<span>Essa mudança não entrou. Erro antigo, já corrigido. Me pede de novo.</span></div>`:m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content),m.t):aiRow(fmtMsg(m.content),m.t)});
+  if(S.busy==='chat'){if(last!=='Hoje')out+=`<div class="cday"><span>Hoje</span></div>`;out+=aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está digitando…</span>`,null)}
+  return intro+out}
+function aiRow(h,t){return `<div class="crow ai">${coachAv(30)}<div class="msg ai">${h}${t?`<span class="mt">${hhmm(t)}</span>`:''}</div></div>`}
+function meRow(h,t){return `<div class="crow me"><div class="msg me">${h}${t?`<span class="mt">${hhmm(t)}</span>`:''}</div><span class="uav">${avatarInner()}</span></div>`}
+function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();el.scrollTop=el.scrollHeight})}
 /* ---------- Driffa flutuante ---------- */
 function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);
   const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="${dImg('bust')}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
@@ -736,14 +747,14 @@ function renderFab(){const f=document.getElementById('fab');if(!f)return;const h
   const lg=document.getElementById('fabLog');lg.scrollTop=lg.scrollHeight}
 function fabTeaser(){if(S.teased||S.fabOpen||S.view!=='hoje')return;S.teased=true;const t=document.getElementById('fabTip');if(!t)return;t.textContent=coachLine().replace(/^./,c=>c.toUpperCase());t.hidden=false;setTimeout(()=>{t.hidden=true},7000)}
 async function sendChat(text){text=text.trim();if(!text||S.busy||!sampleApi)return;
-  S.chat.push({role:'user',content:text});S.draft='';S.busy='chat';S.streaming='';saveChat();render();
+  S.chat.push({role:'user',content:text,t:Date.now()});S.draft='';S.busy='chat';S.streaming='';saveChat();render();
   let msgs=S.chat.filter(m=>!m.note&&m.content!=='…').slice(-16).map(m=>({role:m.role,content:m.content}));while(msgs.length&&msgs[0].role!=='user')msgs.shift();
   const merged=[];msgs.forEach(m=>{const l=merged[merged.length-1];if(l&&l.role===m.role)l.content+='\n\n'+m.content;else merged.push({...m})});
   
   const opts={cache:false,system:ctx(),onText:u=>{S.streaming=u.text;updateChatLog()}};
   try{let r;try{r=await sampleApi(merged,{...opts,tools:TOOLS})}catch(e){if(e&&e.code==='tools_unavailable')r=await sampleApi(merged,opts);else throw e}
-    S.chat.push({role:'assistant',content:r.text||'Não consegui responder agora. Tente de novo.'});if(r.done&&r.done.length){S.chat.push({role:'assistant',note:true,content:'✓ '+r.done.join('\n✓ ')})}}
-  catch(e){S.chat.push({role:'assistant',content:(e&&e.text)||errMsg(e)})}
+    S.chat.push({role:'assistant',content:r.text||'Não consegui responder agora. Tente de novo.',t:Date.now()});if(r.done&&r.done.length){S.chat.push({role:'assistant',note:true,content:'✓ '+r.done.join('\n✓ '),t:Date.now()})}}
+  catch(e){S.chat.push({role:'assistant',content:(e&&e.text)||errMsg(e),t:Date.now()})}
   S.busy=null;S.streaming='';saveChat();if(!S.fabOpen&&S.view!=='personal')S.chatUnread=true;render();}
 async function generate(){if(!sampleApi||S.busy)return;const p=profile();S.busy='gen';render();
   const prompt=`Monte uma rotina de musculação para este aluno e responda só com JSON.
@@ -759,7 +770,7 @@ Regras:
 Formato: {"workouts":[{"name":"Peito e tríceps","ex":[{"name":"Supino reto","sets":4,"reps":"8-10","rest":120,"bar":true}]}],"resumo":"2 ou 3 frases para o aluno explicando a divisão e como progredir"}`;
   try{const r=await sampleApi.json(prompt,{modelTier:'default'});const ws=normWorkouts(r&&r.workouts);if(!ws.length)throw {code:'empty'};ws.forEach(w=>w.ex.forEach(adaptEx));
     archivePlan('Substituída por treino da '+COACH);S.plan.workouts=ws;S.plan.since=new Date().toISOString();S.plan.label=ws.map(w=>w.id).join('')+' · '+lbl('goal',p.goal)+' · '+p.minutes+' min · '+COACH;S.plan.next=ws[0].id;S.sel=null;S.edit=null;const g=goals();g.week=+p.days;g.month=Math.round(p.days*4.3);savePlan();
-    S.chat.push({role:'assistant',content:`Montei sua rotina ${ws.map(w=>w.id).join('/')} para ${p.days} dias por semana, com ${ws.map(w=>`${w.id} (~${estMin(w)} min)`).join(', ')}. ${r.resumo||''}\nSua meta virou ${g.week} idas por semana. Veja tudo na aba Rotina ou me peça ajustes aqui.`});saveChat();
+    S.chat.push({role:'assistant',t:Date.now(),content:`Montei sua rotina ${ws.map(w=>w.id).join('/')} para ${p.days} dias por semana, com ${ws.map(w=>`${w.id} (~${estMin(w)} min)`).join(', ')}. ${r.resumo||''}\nSua meta virou ${g.week} idas por semana. Veja tudo na aba Rotina ou me peça ajustes aqui.`});saveChat();
     toast('Seu treino está forjado. Agora é suor.')}
   catch(e){toast(errMsg(e))}
   S.busy=null;render()}
@@ -1326,7 +1337,7 @@ function viewHist(){
 function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():viewHist());
   renderAvatar();renderFab();document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
-  const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
+  const cl=document.getElementById('chatlog');if(cl)cl.scrollTop=cl.scrollHeight;
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
   tick();
