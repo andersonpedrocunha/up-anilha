@@ -238,6 +238,10 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .coachsay b{font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
 .coachsay p{margin:2px 0 0;font-size:15px;line-height:1.4}
 .coachav{flex:none;display:block;border-radius:50%;object-fit:cover;background:#141a2e}
+.looks{display:flex;align-items:center;gap:10px;justify-content:center}
+.lookbtn{width:52px;height:52px;border-radius:50%;padding:0;border:3px solid transparent;background:none;overflow:hidden}
+.lookbtn img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.lookbtn[aria-pressed="true"]{border-color:var(--accent)}
 .coachportrait{width:100%;max-width:340px;aspect-ratio:1;height:auto;border-radius:20px;align-self:center;display:block}
 .coachhero{display:flex;gap:14px;align-items:center}
 .coachname{font-size:13px}
@@ -544,7 +548,8 @@ Formato: {"workouts":[{"name":"Peito e tríceps","ex":[{"name":"Supino reto","se
 const SUGS=['Monte um aquecimento para o treino de hoje','Só tenho 40 min hoje, o que eu corto?','Como aumentar as cargas sem me machucar?','Troque um exercício que incomoda meu ombro'];
 function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${full?' class="full"':''}>${title}<select id="${id}" data-f="pf" data-k="${k}">${OPTS[k].map(([v,l])=>`<option value="${v}" ${String(p[k])===String(v)?'selected':''}>${l}</option>`).join('')}</select></label>`;
   return `<div class="stack">
-    <img class="coachportrait" src="driffa.jpg" alt="${COACH}, sua treinadora" width="720" height="720">
+    <img class="coachportrait" src="driffa-${coachLook()}.jpg" alt="${COACH}, sua treinadora" width="720" height="720">
+    <div class="looks"><span class="eyebrow">Visual</span>${[1,2].map(n=>`<button class="lookbtn" data-act="look" data-v="${n}" aria-pressed="${coachLook()===n}" aria-label="Visual ${n}"><img src="driffa-face-${n}.jpg" alt=""></button>`).join('')}</div>
     <div class="coachhero"><div><div class="eyebrow">Sua treinadora</div><h2>${COACH}</h2><p class="muted" style="margin:4px 0 0">Inspirada na valquíria Sigrdrífa, "a que impulsiona à vitória". Ela monta seu treino, ajusta quando você pedir e respeita os seus limites.</p></div></div>
     <div class="card stack">
       <div class="pf">${sel('goal','pf-goal','Objetivo',1)}${sel('minutes','pf-min','Tempo por treino')}${sel('days','pf-days','Dias por semana')}${sel('level','pf-level','Nível')}${sel('place','pf-place','Onde treina')}
@@ -678,7 +683,8 @@ function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Escolha uma ima
 
 /* ---------- Driffa ---------- */
 const COACH='Driffa';
-function coachAv(size){return `<img class="coachav" src="driffa-face.jpg" width="${size}" height="${size}" alt="${COACH}">`}
+function coachLook(){const v=LS.get('ct.look',1);return v===2?2:1}
+function coachAv(size){return `<img class="coachav" src="driffa-face-${coachLook()}.jpg" width="${size}" height="${size}" alt="${COACH}">`}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function daysSinceLast(){if(!S.sessions.length)return null;const d=new Date(S.sessions[0].date);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/864e5)}
 function coachLine(){const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinceLast(),name=firstName();const you=name?name+', ':'';
@@ -965,6 +971,7 @@ main.addEventListener('click',e=>{
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
+    case 'look':LS.set('ct.look',+b.dataset.v);break;
     case 'ativ':S.act={type:'bike',min:30,int:1,date:todayISO(),note:''};S.view='ativ';window.scrollTo(0,0);break;
     case 'atype':S.act.type=b.dataset.v;break;
     case 'amin':S.act.min=+b.dataset.v;break;
