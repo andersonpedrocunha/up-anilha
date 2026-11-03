@@ -775,7 +775,7 @@ function viewRotina(){
           <label>Séries<input type="number" min="1" max="10" id="es-${e.id}" data-w="${wi}" data-x="${ei}" data-f="sets" value="${e.sets}"></label>
           <label>Reps<input type="text" id="er-${e.id}" data-w="${wi}" data-x="${ei}" data-f="reps" value="${esc(e.reps)}"></label>
           <label>Descanso<select id="et-${e.id}" data-w="${wi}" data-x="${ei}" data-f="rest">${[0,30,45,60,75,90,120,150,180,240].map(s=>`<option value="${s}" ${s==e.rest?'selected':''}>${s?mmss(s):'Sem'}</option>`).join('')}</select></label>
-          <label class="tog"><input type="checkbox" id="eb-${e.id}" data-w="${wi}" data-x="${ei}" data-f="bar" ${e.bar?'checked':''}>Barra</label>
+          ${/min/i.test(String(e.reps))?'<span></span>':`<label class="tog" title="Mostra no treino quantas anilhas colocar de cada lado da barra"><input type="checkbox" id="eb-${e.id}" data-w="${wi}" data-x="${ei}" data-f="bar" ${e.bar?'checked':''}>Calcular anilhas</label>`}
         </div>
         <div class="ed-tools">
           <button class="ic howic" data-act="how" data-name="${esc(e.name)}" aria-label="Como fazer">?</button>
