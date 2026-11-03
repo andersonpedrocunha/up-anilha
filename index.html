@@ -689,17 +689,18 @@ function mainGoalCard(x,wk){const v=gProg(x),ok=v>=x.target,fg=freqGoal();
     ${fg?planSection():''}
     <button class="btn ghost" data-act="metas">Minhas metas</button></div>`}
 function goalsCard(wk){if(!goals().setup)return goalSetupCard();const m=mainGoal();if(!m)return goalSetupCard();if(m.type==='gym'||m.type==='any')return freqCard(wk);return mainGoalCard(m,wk)}
-function viewMetas(){const L=gList();const nt=S.gNew||'gym',T=GT[nt];const tv=S.gNewT!=null?S.gNewT:T.d;
+function gAvail(){const L=gList();return Object.keys(GT).filter(k=>!((k==='gym'||k==='any')&&L.some(x=>x.type==='gym'||x.type==='any'))&&!(k==='deficit'&&L.some(x=>x.type==='surplus'))&&!(k==='surplus'&&L.some(x=>x.type==='deficit'))&&!(k!=='act'&&L.some(x=>x.type===k)))}
+function viewMetas(){const L=gList();const av=gAvail();const nt=av.includes(S.gNew)?S.gNew:av[0]||'act',T=GT[nt];const open=S.gAddOpen||!L.length;const tv=S.gNewT!=null?S.gNewT:T.d;
   return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Minhas metas</div></div>
-  <div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${L.length?'A ★ é a principal: ela fica em destaque na tela inicial. As outras eu acompanho do lado.':'Escolha o que você quer conquistar. Pode ser uma meta ou várias.'}</p></div></div>
+  <div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${L.length?'Pode ter várias metas. A ★ é a principal e fica em destaque na tela inicial; as outras eu acompanho logo abaixo.':'Escolha o que você quer conquistar. Pode ser uma meta ou várias.'}</p></div></div>
   ${L.length?`<div class="card stack">${L.map(x=>`<div class="mrowg"><button class="ic ${x.main?'on':''}" data-act="gmain" data-id="${x.id}" aria-label="Tornar principal" title="Principal">${x.main?'★':'☆'}</button><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(gLabel(x))}</b><div class="muted" style="font-size:12px">${GT[x.type].n}${x.main?' · principal':''}</div></div>
     <span class="stepper"><button class="ic" data-act="gstep" data-id="${x.id}" data-d="-1" aria-label="Menos">−</button><button class="ic" data-act="gstep" data-id="${x.id}" data-d="1" aria-label="Mais">+</button></span><button class="ic" data-act="gdel" data-id="${x.id}" aria-label="Remover">✕</button></div>`).join('')}</div>`:''}
-  <div class="card stack"><h3>Adicionar meta</h3>
-    <div class="chips">${Object.entries(GT).map(([k,v])=>`<button class="chip sm" data-act="gnew" data-v="${k}" aria-pressed="${k===nt}">${v.ic} ${v.n}</button>`).join('')}</div>
+  ${!open?`<button class="btn ghost" data-act="gaddopen">+ Nova meta</button>`:`<div class="card stack"><div class="row" style="justify-content:space-between"><h3>Nova meta</h3>${L.length?`<button class="ic" data-act="gaddopen" aria-label="Fechar">✕</button>`:''}</div>
+    <div class="chips">${av.map(k=>`<button class="chip sm" data-act="gnew" data-v="${k}" aria-pressed="${k===nt}">${GT[k].ic} ${GT[k].n}</button>`).join('')}</div>
     ${nt==='act'?`<select id="gAct" class="sel" aria-label="Atividade">${CGT.filter(x=>!['academia','fora'].includes(x[0])||x[0]==='fora').map(([k,l])=>`<option value="${k}" ${S.gNewA===k?'selected':''}>${l}</option>`).join('')}</select>`:''}
     <div class="row" style="justify-content:space-between"><span>${nt==='deficit'||nt==='surplus'?'Total na semana':nt==='min'?'Minutos por semana':nt==='prot'||nt==='water'?'Dias por semana':'Vezes por semana'}</span><span class="stepper"><button class="ic" data-act="gnt" data-d="-1" aria-label="Menos">−</button><b class="num">${gUnitTxt({type:nt},tv)}</b><button class="ic" data-act="gnt" data-d="1" aria-label="Mais">+</button></span></div>
     <div class="muted" style="font-size:12px">${nt==='deficit'?'Referência: 3.500 a 7.000 kcal de déficit na semana ≈ 0,5 a 1 kg. Mais que isso costuma custar músculo e treino.':nt==='surplus'?'Referência: 1.500 a 2.000 kcal de sobra na semana é um ganho limpo.':nt==='min'?'A OMS recomenda pelo menos 150 min de atividade moderada por semana.':nt==='gym'?'Depois você escolhe os dias em "Meus dias de academia". É só um guia.':nt==='any'?'Academia e atividades fora contam igual.':''}</div>
-    <button class="btn primary" data-act="gadd">Adicionar meta</button></div>
+    <button class="btn primary" data-act="gadd">Adicionar meta</button></div>`}
   ${L.length?`<button class="btn primary big" data-act="gdone">Pronto</button>`:''}</div>`}
 function goalAll(){return (goals().counts||'gym')==='all'}
 function isGym(s){return goalAll()||!s.activity}
@@ -2449,14 +2450,15 @@ main.addEventListener('click',e=>{
       if(on){e.days=cur.filter(x=>x!==v);e.comp=(e.comp||[]).filter(x=>x!==v)}else e.days=[...cur,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));setWkEntry(e);
       toast(on?`${WDS[v]} saiu do plano desta semana. Sem drama, a gente encaixa em outro dia.`:`${WDS[v]} entrou no plano desta semana. Combinado.`);break}
     case 'wkreset':{const e=wkEntry()||{};delete e.days;e.comp=[];setWkEntry(e);toast('Semana de volta aos seus dias de sempre.');break}
-    case 'metas':S.view='metas';S.gNew=S.gNew||'gym';S.gNewT=null;window.scrollTo(0,0);break;
+    case 'metas':S.view='metas';S.gAddOpen=false;S.gNewT=null;window.scrollTo(0,0);break;
     case 'gnew':S.gNew=b.dataset.v;S.gNewT=null;break;
-    case 'gnt':{const T=GT[S.gNew||'gym'];const cur=S.gNewT!=null?S.gNewT:T.d;S.gNewT=Math.max(T.min,Math.min(T.max,cur+T.st*(+b.dataset.d)));break}
-    case 'gadd':{const t=S.gNew||'gym',T=GT[t];const L=gList();const act=t==='act'?(document.getElementById('gAct')||{}).value||'bike':undefined;
+    case 'gaddopen':S.gAddOpen=!S.gAddOpen;break;
+    case 'gnt':{const av=gAvail();const T=GT[av.includes(S.gNew)?S.gNew:av[0]||'act'];const cur=S.gNewT!=null?S.gNewT:T.d;S.gNewT=Math.max(T.min,Math.min(T.max,cur+T.st*(+b.dataset.d)));break}
+    case 'gadd':{const av=gAvail();const t=av.includes(S.gNew)?S.gNew:av[0]||'act',T=GT[t];const L=gList();const act=t==='act'?(document.getElementById('gAct')||{}).value||'bike':undefined;
       if((t==='gym'||t==='any')&&L.some(x=>x.type==='gym'||x.type==='any')){toast('Já existe uma meta de frequência. Ajuste ela no + e −.');return}
       if(L.some(x=>x.type===t&&x.act===act)){toast('Essa meta já existe. Ajuste no + e −.');return}
       if(t==='deficit'&&L.some(x=>x.type==='surplus')||t==='surplus'&&L.some(x=>x.type==='deficit')){toast('Déficit e superávit ao mesmo tempo não dá. Escolhe um.');return}
-      const x={id:uid(),type:t,target:S.gNewT!=null?S.gNewT:T.d,main:!L.length};if(act)x.act=act;L.push(x);S.gNewT=null;applyGoals();toast(`Meta anotada: ${gLabel(x)}. Eu vou cobrar.`);break}
+      const x={id:uid(),type:t,target:S.gNewT!=null?S.gNewT:T.d,main:!L.length};if(act)x.act=act;L.push(x);S.gNewT=null;S.gAddOpen=false;applyGoals();toast(`Meta anotada: ${gLabel(x)}. Eu vou cobrar.`);break}
     case 'gstep':{const x=gList().find(q=>q.id===b.dataset.id);if(!x)break;const T=GT[x.type];x.target=Math.max(T.min,Math.min(T.max,x.target+T.st*(+b.dataset.d)));applyGoals();break}
     case 'gmain':{gList().forEach(q=>q.main=q.id===b.dataset.id);applyGoals();break}
     case 'gdel':{const g=goals();const was=(g.list||[]).find(q=>q.id===b.dataset.id);g.list=gList().filter(q=>q.id!==b.dataset.id);if(was&&was.main&&g.list[0])g.list[0].main=true;applyGoals();break}
