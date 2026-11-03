@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="Seu treino, check-in, metas e evolução de cargas.">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Up Anilha</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,20 +21,20 @@
 /* Layout: single column phone app, sticky header, bottom tab bar, rest timer docked above it. Plate colors (IWF 20 kg blue, 15 kg yellow) drive the accents. */
 :root{
   --bg:#eceff3; --surface:#ffffff; --sunk:#e2e6ec; --ink:#141820; --muted:#5b6474; --line:#d5dae2;
-  --accent:#1f4fd1; --accent-ink:#ffffff; --accent-soft:#dfe7fb;
-  --hot:#e9b10f; --hot-ink:#1a1400; --good:#18804a; --good-soft:#dcf1e5; --danger:#c2362b;
+  --accent:#244aa0; --accent-ink:#ffffff; --accent-soft:#dfe5f3;
+  --hot:#e9b10f; --hot-ink:#1a1400; --good:#2f7a4f; --good-soft:#dcefe3; --danger:#c2362b; --ember:#c8551f; --ember-ink:#ffffff;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:14px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0e1015; --surface:#171a22; --sunk:#1f232d; --ink:#eceef3; --muted:#98a0b0; --line:#2a2f3b;
-  --accent:#6a8eff; --accent-ink:#0a0d14; --accent-soft:#1d2645;
-  --hot:#f2c230; --hot-ink:#1a1400; --good:#43c983; --good-soft:#15301f; --danger:#ff6b5e; color-scheme:dark}}
+  --accent:#7d9be0; --accent-ink:#0a0f1c; --accent-soft:#1a2747;
+  --hot:#f2c230; --hot-ink:#1a1400; --good:#5fb382; --good-soft:#15301f; --danger:#ff6b5e; --ember:#ff7a3d; --ember-ink:#1a0a02; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e1015; --surface:#171a22; --sunk:#1f232d; --ink:#eceef3; --muted:#98a0b0; --line:#2a2f3b;
-  --accent:#6a8eff; --accent-ink:#0a0d14; --accent-soft:#1d2645;
-  --hot:#f2c230; --hot-ink:#1a1400; --good:#43c983; --good-soft:#15301f; --danger:#ff6b5e; color-scheme:dark}
+  --accent:#7d9be0; --accent-ink:#0a0f1c; --accent-soft:#1a2747;
+  --hot:#f2c230; --hot-ink:#1a1400; --good:#5fb382; --good-soft:#15301f; --danger:#ff6b5e; --ember:#ff7a3d; --ember-ink:#1a0a02; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{min-height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
@@ -217,7 +217,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .opt b{font-size:17px}.opt span{font-size:14px;color:var(--muted)}
 .opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .opt.chk2{flex-direction:row;align-items:center;gap:12px;cursor:pointer}.opt.chk2 input{width:22px;height:22px;flex:none;accent-color:var(--accent)}.opt.chk2 b{font-size:15px;font-weight:600}
-.badge{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:var(--hot);color:var(--hot-ink);border-radius:999px;padding:2px 8px;vertical-align:middle}
+.badge{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:var(--ember);color:var(--ember-ink);border-radius:999px;padding:2px 8px;vertical-align:middle}
 .daysel .chip{min-width:52px}
 .wznav{display:flex;justify-content:space-between;gap:10px;position:sticky;bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:10px 4px}
 .wznav .btn{flex:1}
@@ -229,7 +229,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .bodygrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
 .bodygrid .wname{width:100%}
 .kcalcard{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.xpchip{background:var(--hot);color:var(--hot-ink);font-weight:800;border-radius:999px;padding:6px 12px;font-size:15px;white-space:nowrap}
+.xpchip{background:var(--ember);color:var(--ember-ink);font-weight:800;border-radius:999px;padding:6px 12px;font-size:15px;white-space:nowrap}
 .game .lvname{font-family:var(--display);font-weight:800;font-size:24px;line-height:1.05;text-transform:uppercase}
 .streak{display:flex;align-items:center;gap:5px;line-height:1;flex:none}.streak b{font-family:var(--display);font-size:30px}.streak span{font-size:11px;color:var(--muted);font-weight:600}
 .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -361,7 +361,11 @@ body.accmode nav.tabs,body.accmode #avatarBtn{display:none}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23f2c230' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M0 12 Q12 0 24 12 T48 12'/%3E%3Cpath d='M0 36 Q12 24 24 36 T48 36'/%3E%3Cpath d='M12 0 Q0 12 12 24 T12 48'/%3E%3Cpath d='M36 0 Q24 12 36 24 T36 48'/%3E%3C/g%3E%3C/svg%3E");background-size:48px 48px;opacity:var(--knot-op)}
 .coachsay{position:relative;border-left:3px solid var(--gold)}
 .coachsay::after{content:"ᚢ";position:absolute;right:10px;top:6px;font-family:"Noto Sans Runic",serif;font-size:13px;color:var(--gold);opacity:.55}
-.trainbtn{position:relative;overflow:hidden}
+.trainbtn{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,#000 22%,var(--accent)))}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .trainbtn{background:linear-gradient(135deg,#2c56b8,#18336f);color:#fff}}
+:root[data-theme="dark"] .trainbtn{background:linear-gradient(135deg,#2c56b8,#18336f);color:#fff}
+.trainbtn::after{color:#fff!important}
+.toast.win{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember),0 10px 30px color-mix(in srgb,var(--ember) 35%,transparent)}
 .trainbtn::after{content:"ᚢ";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:"Noto Sans Runic",serif;font-size:96px;line-height:1;color:var(--accent-ink);opacity:.12;pointer-events:none}
 .card{position:relative}
 .card::before{content:"";position:absolute;top:-1px;left:22px;right:22px;height:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 55%,transparent),transparent);border-radius:2px;pointer-events:none}
@@ -389,7 +393,7 @@ nav.tabs button[aria-current="page"]::after,nav.tabs button.on::after{content:"�
 
 <div class="wrap">
   <header class="top">
-    <div class="brandrow"><img class="logo" src="logo-mark.png" alt="" width="34" height="34"><div><div class="brand"><span class="up">Up</span> Anilha</div><div class="brandrune" aria-hidden="true">ᚢᛈ · ᚨᚾᛁᛚᚺᚨ</div></div></div>
+    <div class="brandrow"><img class="logo" src="logo-mark.png?v=2" alt="" width="34" height="34"><div><div class="brand"><span class="up">Up</span> Anilha</div><div class="brandrune" aria-hidden="true">ᚢᛈ · ᚨᚾᛁᛚᚺᚨ</div></div></div>
     <span id="sync" hidden><i></i><span></span></span>
     <button class="avatar" id="avatarBtn" aria-label="Seu perfil"></button>
   </header>
@@ -1465,7 +1469,7 @@ async function sagaBlob(){const st=monthStats(),W=1080,H=1920;const c=document.c
   const cells=[[st.treinos,'treinos'],[st.prs,st.prs===1?'recorde':'recordes'],[st.streak,'dias seguidos (recorde)'],[st.ativ,'atividades extras']];
   cells.forEach((cl,i)=>{const cx=W/4+(i%2)*W/2,cy=1400+Math.floor(i/2)*172;x.fillStyle='rgba(255,255,255,.06)';x.fillRect(cx-230,cy-95,460,160);x.fillStyle='#ffffff';x.font=`800 84px ${D}`;x.fillText(String(cl[0]),cx,cy+5);x.fillStyle='#98a0b0';x.font=`500 30px ${B}`;x.fillText(cl[1],cx,cy+48)});
   x.fillStyle='#e8e2d4';x.font=`italic 500 34px ${B}`;x.fillText('“'+(st.days>=12?'Isso não é sorte. É forja.':st.days>=6?'A saga está ganhando corpo.':'Toda lenda começa com uma série.')+'” — '+COACH,W/2,1700);x.fillStyle='#f2c230';x.font=`700 40px ${D}`;x.fillText(st.level.toUpperCase(),W/2,1775);
-  x.fillStyle='#6a8eff';x.font=`800 46px ${D}`;x.fillText('UP ANILHA',W/2-8,1860);x.fillStyle='#98a0b0';x.font=`500 26px ${B}`;x.fillText('treine com a '+COACH,W/2,1895);
+  x.fillStyle='#7d9be0';x.font=`800 46px ${D}`;x.fillText('UP ANILHA',W/2-8,1860);x.fillStyle='#98a0b0';x.font=`500 26px ${B}`;x.fillText('treine com a '+COACH,W/2,1895);
   return new Promise(r=>c.toBlob(r,'image/png'))}
 async function openSaga(){toast('Forjando sua saga…');const blob=await sagaBlob();const url=URL.createObjectURL(blob);const file=new File([blob],'saga-up-anilha.png',{type:'image/png'});
   const o=document.createElement('div');o.className='cbox';o.innerHTML=`<div class="cbox-in saga"><img src="${url}" alt="Sua saga do mês"><div class="row cbtns">${navigator.canShare&&navigator.canShare({files:[file]})?'<button class="btn primary" data-c="share">Compartilhar</button>':''}<a class="btn ghost" href="${url}" download="saga-up-anilha.png">Baixar</a><button class="btn ghost" data-c="close">Fechar</button></div></div>`;
@@ -1813,7 +1817,7 @@ function viewAtiv(){if(!S.act)S.act={type:LS.get('ct.lastAct','bike_erg'),min:30
   <button class="btn primary big" data-act="asave">Salvar atividade</button></div>`}
 
 /* ---------- gamificação ---------- */
-const RANKS=[['Recruta','#9aa2b1'],['Escudeiro','#2e9e5b'],['Guerreiro','#e9b10f'],['Berserker','#2862f2'],['Jarl','#d93a2b'],['Einherjar','#b07cff'],['Lenda de Valhalla','#f2c230']];
+const RANKS=[['Recruta','#9aa2b1'],['Escudeiro','#2e9e5b'],['Guerreiro','#e9b10f'],['Berserker','#244aa0'],['Jarl','#d93a2b'],['Einherjar','#b07cff'],['Lenda de Valhalla','#f2c230']];
 const ROMAN=['I','II','III'];
 const WEEK_BONUS=150,WEEK_PENALTY=150;
 function xpBase(s){if(s.checkin)return 30;if(s.activity)return 40+Math.min(s.minutes||0,90);return 100+Math.min(s.ex.reduce((n,e)=>n+e.sets.length,0)*2,60)}
@@ -1867,7 +1871,7 @@ function celebrate(msg){const old=LS.get('ct.g2',snapshot()),now=snapshot();LS.s
   if(now.L>old.L)extra=` Agora você é ${lv.name}. Skål!`;
   else{const f=FAMILIES.find(f=>(now.tiers[f[0]]||0)>(old.tiers[f[0]]||0));if(f)extra=` Conquista: ${f[1]} ${ROMAN[now.tiers[f[0]]-1]||now.tiers[f[0]]}. Mereceu.`;
     else{const st=now.status.find(x=>!old.status.includes(x));if(st)extra=` Status: ${statusList().find(x=>x.id===st).name}. Não perca.`}}
-  toast(msg+extra)}
+  toast(msg+extra);setTimeout(()=>{const t=[...document.querySelectorAll('.toast')].pop();if(t)t.classList.add('win')},0)}
 function checkDecline(){const old=LS.get('ct.g2',null);if(!old)return;const now=snapshot();LS.set('ct.g2',now);
   if(now.L<old.L){setTimeout(()=>toast(`Você caiu para ${levelOf(totalXP()).name}. Guerreiro que cai, levanta. Bata a meta desta semana.`),900);return}
   const lost=old.status.filter(x=>!now.status.includes(x));if(lost.length){const n=statusList().find(x=>x.id===lost[0]);setTimeout(()=>toast(`Você perdeu "${n.name}". O que se perde na preguiça, se reconquista no ferro.`),900)}}
