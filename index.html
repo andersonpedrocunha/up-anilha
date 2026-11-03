@@ -295,6 +295,7 @@ a.btn .coachav{margin-right:8px}
 .daychips .chip{min-width:0;padding:6px 10px}
 .presets{flex-wrap:wrap;gap:6px;margin-top:6px}
 .week .wd.plan{border-style:dashed;border-color:var(--accent)}
+.mrowg{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.mrowg:last-child{border-bottom:0}.mrowg .ic.on{color:#f2c230}
 .cgrows{display:flex;flex-direction:column;gap:8px}.cgrow{display:flex;flex-direction:column;gap:4px}
 .actdot{width:8px;height:8px;border-radius:50%;background:#4aa3ff}
 .week .wd.comp{border-style:dashed;border-color:var(--hot)}
@@ -501,7 +502,7 @@ function W(id){return S.plan.workouts.find(w=>w.id===id)||S.plan.workouts[0]}
 function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast dt';t.innerHTML=coachAv(28)+'<span>'+esc(msg)+'</span>';document.body.appendChild(t);setTimeout(()=>t.remove(),msg.length>60?4800:msg.length>35?3400:2400)}
 
 /* ---------- persistence ---------- */
-function savePlan(){LS.set('ct.plan',S.plan);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(planRef)planRef.set(JSON.parse(JSON.stringify(S.plan))).catch(()=>toast('A nuvem falhou. Sua rotina ficou guardada aqui no celular.'))},500)}
+function savePlan(){try{syncGoals()}catch(_){}LS.set('ct.plan',S.plan);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(planRef)planRef.set(JSON.parse(JSON.stringify(S.plan))).catch(()=>toast('A nuvem falhou. Sua rotina ficou guardada aqui no celular.'))},500)}
 function saveActive(){LS.set('ct.active',S.active)}
 function addSession(s){let cgBefore=null;try{cgBefore=customGoals().map(c=>cgProgress(c))}catch(_){}S.sessions=[s,...S.sessions.filter(x=>x.id!==s.id)].sort((a,b)=>a.date<b.date?1:-1);try{if(cgBefore)customGoals().forEach((c,i)=>{if(cgBefore[i]<c.times&&cgProgress(c)>=c.times)setTimeout(()=>toast(`Meta extra batida: ${c.label} ${c.times}× na semana. Os skalds anotaram.`),2600)})}catch(_){}LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(s.id).set(s).catch(()=>toast('Treino guardado aqui no celular. A nuvem fica para depois.'))}
 function delSession(id){S.sessions=S.sessions.filter(x=>x.id!==id);{const d=LS.get('ct.deleted',[]);d.push(id);LS.set('ct.deleted',d.slice(-2000))}LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(id).delete().catch(()=>{})}
@@ -545,6 +546,58 @@ function repsLow(r){const m=String(r).match(/\d+/);return m?m[0]:''}
 function dayKey(d){const x=new Date(d);return x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate()}
 function vol(s){return s.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+(+t.kg||0)*(+t.reps||0),0),0)}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace('.','')}
+/* ---------- metas 100% configuráveis ---------- */
+const GT={gym:{n:'Ir à academia',u:'×',min:1,max:7,st:1,d:4,ic:'🏋'},act:{n:'Atividade específica',u:'×',min:1,max:7,st:1,d:3,ic:'🚴'},any:{n:'Qualquer exercício',u:'dias',min:1,max:7,st:1,d:5,ic:'⚡'},
+  min:{n:'Minutos de exercício',u:'min',min:30,max:900,st:30,d:150,ic:'⏱'},deficit:{n:'Déficit calórico',u:'kcal',min:500,max:7000,st:250,d:2500,ic:'🔥'},surplus:{n:'Superávit calórico',u:'kcal',min:250,max:3500,st:250,d:1500,ic:'🍖'},
+  prot:{n:'Bater a proteína',u:'dias',min:1,max:7,st:1,d:5,ic:'🥚'},water:{n:'Bater a água',u:'dias',min:1,max:7,st:1,d:5,ic:'💧'}};
+function gList(){const g=goals();if(!Array.isArray(g.list)){const L=[];if(g.week)L.push({id:uid(),type:g.counts==='all'?'any':'gym',target:g.week,main:true});(g.custom||[]).forEach(c=>L.push({id:c.id||uid(),type:c.type==='academia'?'gym':c.type==='fora'?'act':'act',act:c.type,target:c.times,main:false}));g.list=L;g._wk=g.week}return g.list}
+function freqGoal(){const L=gList();return L.find(x=>x.main&&(x.type==='gym'||x.type==='any'))||L.find(x=>x.type==='gym')||L.find(x=>x.type==='any')||null}
+function mainGoal(){const L=gList();return L.find(x=>x.main)||L[0]||null}
+function syncGoals(){const g=goals();if(!Array.isArray(g.list))return;const fg=freqGoal();if(g._wk!==undefined&&g.week!==g._wk&&fg){fg.target=g.week}g._wk=g.week}
+function applyGoals(){const g=goals(),fg=freqGoal();g.week=fg?fg.target:0;g.counts=fg&&fg.type==='any'?'all':'gym';g.month=Math.min(31,Math.round(g.week*4.3));g._wk=g.week;g.setup=true;savePlan()}
+function actName(k){return (CGT.find(x=>x[0]===k)||[])[1]||(MET[k]||[])[0]||'Atividade'}
+function gLabel(x){const t=x.target;return x.type==='gym'?`Academia ${t}× na semana`:x.type==='act'?`${actName(x.act)} ${t}× na semana`:x.type==='any'?`Exercício ${t} dias na semana`:x.type==='min'?`${t} min de exercício na semana`:x.type==='deficit'?`Déficit de ${t.toLocaleString('pt-BR')} kcal na semana`:x.type==='surplus'?`Superávit de ${t.toLocaleString('pt-BR')} kcal na semana`:x.type==='prot'?`Proteína batida ${t} dias`:`Água batida ${t} dias`}
+function gWeekDays(){const ws=weekStart(new Date());return WD.map((_,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);d.setHours(12,0,0,0);return d})}
+function gProg(x){const ws=weekStart(new Date()),we=new Date(ws.getTime()+7*864e5),inW=S.sessions.filter(q=>{const t=new Date(q.date);return t>=ws&&t<we}),today=dayKey(new Date());
+  if(x.type==='gym')return new Set(inW.filter(q=>!q.activity).map(q=>dayKey(q.date))).size;
+  if(x.type==='any')return new Set(inW.map(q=>dayKey(q.date))).size;
+  if(x.type==='act')return new Set(inW.filter(q=>cgMatch(x.act,q)).map(q=>dayKey(q.date))).size;
+  if(x.type==='min')return Math.round(inW.reduce((t,q)=>t+(q.activity?(q.minutes||0):(q.durationSec||0)/60),0));
+  if(x.type==='deficit'||x.type==='surplus'){let v=0;const t0=new Date();t0.setHours(0,0,0,0);gWeekDays().forEach(d=>{if(d>=t0)return;const f=food(d);if(!f.meals.length)return;const b=kcalIn(f)-kcalOut(d).total;v+=x.type==='deficit'?-b:b});return Math.max(0,Math.round(v))}
+  if(x.type==='prot')return gWeekDays().filter(d=>d<=new Date()&&protT(food(d))>=protGoal()).length;
+  if(x.type==='water')return gWeekDays().filter(d=>d<=new Date()&&food(d).water>=waterGoal()).length;return 0}
+function gUnitTxt(x,v){return x.type==='min'?v+' min':x.type==='deficit'||x.type==='surplus'?v.toLocaleString('pt-BR')+' kcal':v}
+function gNote(x){return x.type==='deficit'||x.type==='surplus'?'conta os dias fechados com refeições registradas':x.type==='act'?'um por dia':''}
+function goalRows(skipId){const L=gList().filter(x=>x.id!==skipId);if(!L.length)return '';return `<div class="cgrows">${L.map(x=>{const v=gProg(x),ok=v>=x.target;return `<div class="cgrow"><div class="row" style="justify-content:space-between;gap:8px"><span style="font-size:14px;font-weight:600;min-width:0">${GT[x.type].ic} ${esc(gLabel(x))}</span><span class="num" style="font-weight:700;white-space:nowrap;${ok?'color:var(--good)':''}">${gUnitTxt(x,v)}/${gUnitTxt(x,x.target)}${ok?' ✓':''}</span></div><div class="progress mini"><i style="width:${Math.min(100,v/x.target*100)}%;background:${ok?'var(--good)':'var(--accent)'}"></i></div></div>`}).join('')}</div>`}
+function goalSetupCard(){return `<div class="card stack goalsetup"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>Antes de tudo: qual é a sua meta?</h3></div></div>
+  <p style="margin:0;font-size:14px">Ir à academia 4× na semana, pedalar 5×, fechar a semana em déficit, bater a proteína… Você escolhe uma ou várias, e eu cobro do jeito certo.</p>
+  <button class="btn primary big" data-act="metas">Definir minhas metas</button></div>`}
+function mainGoalCard(x,wk){const v=gProg(x),ok=v>=x.target,fg=freqGoal();
+  const line=ok?dayPick(['Meta da semana feita. É assim que se escreve uma saga.','Batida. Agora mantém, que constância vale mais que pico.'],'mg'):x.type==='deficit'?`Faltam ${(x.target-v).toLocaleString('pt-BR')} kcal de déficit. Registre as refeições: sem registro, eu não enxergo.`:x.type==='surplus'?`Faltam ${(x.target-v).toLocaleString('pt-BR')} kcal de sobra. Comida é combustível de crescimento.`:x.type==='min'?`Faltam ${x.target-v} min nesta semana. Uma sessão de 40 já muda o jogo.`:x.type==='prot'||x.type==='water'?`${v} de ${x.target} dias. Faltam ${x.target-v}.`:`Faltam ${x.target-v}. A semana ainda é sua.`;
+  return `<div class="card stack"><div class="row" style="justify-content:space-between;align-items:flex-end"><div style="min-width:0"><div class="eyebrow">Meta principal</div><h3 style="margin-top:2px">${GT[x.type].ic} ${esc(gLabel(x))}</h3></div></div>
+    <div class="big num"><b>${gUnitTxt(x,v)}</b><span>/ ${gUnitTxt(x,x.target)}</span></div>
+    <div class="progress"><i style="width:${Math.min(100,v/x.target*100)}%;background:${ok?'var(--good)':'var(--accent)'}"></i></div>
+    ${gNote(x)?`<div class="muted" style="font-size:12px">${gNote(x)}</div>`:''}
+    <div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(line)}</p></div>
+    ${wk.html}<div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">Toque num dia que passou para registrar.</div>
+    ${goalRows(x.id)}
+    <button class="btn primary big" data-act="regtoday">Registrar o que fiz hoje</button>
+    <button class="btn ghost sm pausebtn" data-act="pausego">❚❚ ${activePause()?'Ver pausa':'Pausar metas (doença, viagem, férias)'}</button>
+    ${fg?planSection():''}
+    <button class="btn ghost" data-act="metas">Minhas metas</button></div>`}
+function goalsCard(wk){if(!goals().setup)return goalSetupCard();const m=mainGoal();if(!m)return goalSetupCard();if(m.type==='gym'||m.type==='any')return freqCard(wk);return mainGoalCard(m,wk)}
+function viewMetas(){const L=gList();const nt=S.gNew||'gym',T=GT[nt];const tv=S.gNewT!=null?S.gNewT:T.d;
+  return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Minhas metas</div></div>
+  <div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${L.length?'A ★ é a principal: ela fica em destaque na tela inicial. As outras eu acompanho do lado.':'Escolha o que você quer conquistar. Pode ser uma meta ou várias.'}</p></div></div>
+  ${L.length?`<div class="card stack">${L.map(x=>`<div class="mrowg"><button class="ic ${x.main?'on':''}" data-act="gmain" data-id="${x.id}" aria-label="Tornar principal" title="Principal">${x.main?'★':'☆'}</button><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(gLabel(x))}</b><div class="muted" style="font-size:12px">${GT[x.type].n}${x.main?' · principal':''}</div></div>
+    <span class="stepper"><button class="ic" data-act="gstep" data-id="${x.id}" data-d="-1" aria-label="Menos">−</button><button class="ic" data-act="gstep" data-id="${x.id}" data-d="1" aria-label="Mais">+</button></span><button class="ic" data-act="gdel" data-id="${x.id}" aria-label="Remover">✕</button></div>`).join('')}</div>`:''}
+  <div class="card stack"><h3>Adicionar meta</h3>
+    <div class="chips">${Object.entries(GT).map(([k,v])=>`<button class="chip sm" data-act="gnew" data-v="${k}" aria-pressed="${k===nt}">${v.ic} ${v.n}</button>`).join('')}</div>
+    ${nt==='act'?`<select id="gAct" class="sel" aria-label="Atividade">${CGT.filter(x=>!['academia','fora'].includes(x[0])||x[0]==='fora').map(([k,l])=>`<option value="${k}" ${S.gNewA===k?'selected':''}>${l}</option>`).join('')}</select>`:''}
+    <div class="row" style="justify-content:space-between"><span>${nt==='deficit'||nt==='surplus'?'Total na semana':nt==='min'?'Minutos por semana':nt==='prot'||nt==='water'?'Dias por semana':'Vezes por semana'}</span><span class="stepper"><button class="ic" data-act="gnt" data-d="-1" aria-label="Menos">−</button><b class="num">${gUnitTxt({type:nt},tv)}</b><button class="ic" data-act="gnt" data-d="1" aria-label="Mais">+</button></span></div>
+    <div class="muted" style="font-size:12px">${nt==='deficit'?'Referência: 3.500 a 7.000 kcal de déficit na semana ≈ 0,5 a 1 kg. Mais que isso costuma custar músculo e treino.':nt==='surplus'?'Referência: 1.500 a 2.000 kcal de sobra na semana é um ganho limpo.':nt==='min'?'A OMS recomenda pelo menos 150 min de atividade moderada por semana.':nt==='gym'?'Depois você escolhe os dias em "Meus dias de academia". É só um guia.':nt==='any'?'Academia e atividades fora contam igual.':''}</div>
+    <button class="btn primary" data-act="gadd">Adicionar meta</button></div>
+  ${L.length?`<button class="btn primary big" data-act="gdone">Pronto</button>`:''}</div>`}
 function goalAll(){return (goals().counts||'gym')==='all'}
 function isGym(s){return goalAll()||!s.activity}
 function gNoun(n){return goalAll()?(n===1?'dia de exercício':'dias de exercício'):(n===1?'ida à academia':'idas à academia')}
@@ -615,7 +668,7 @@ function isoOf(d){d=new Date(d);return d.getFullYear()+'-'+String(d.getMonth()+1
 function pauseOn(d){const k=isoOf(d);return pauses().find(p=>p.start<=k&&(!p.end||k<=p.end))||null}
 function activePause(){return pauseOn(new Date())}
 function pausedDaysIn(ws){let n=0;for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(d.getDate()+i);if(pauseOn(d))n++}return n}
-function effGoal(ws){const g=goals().week,p=pausedDaysIn(ws);if(p>=4)return 0;return Math.max(1,Math.round(g*(7-p)/7))}
+function effGoal(ws){const g=goals().week,p=pausedDaysIn(ws);if(!g)return 0;if(p>=4)return 0;return Math.max(1,Math.round(g*(7-p)/7))}
 function recentReturn(){const t=isoOf(new Date());const y=new Date();y.setDate(y.getDate()-3);const lim=isoOf(y);return pauses().find(p=>p.end&&p.end<t&&p.end>=lim)||null}
 function fmtISO(k,opt){return new Date(k+'T12:00:00').toLocaleDateString('pt-BR',opt||{day:'numeric',month:'short'}).replace('.','')}
 function pauseCard(){const p=activePause();if(!p)return '';const R=PAUSE_R[p.reason]||PAUSE_R.outro;
@@ -666,7 +719,7 @@ function viewHoje(){
     ${pauseCard()}
     <button class="trainbtn" data-act="train"><span class="trainbtn-t">Treinar</span><span class="trainbtn-s">${(()=>{const dow=new Date().getDay();const n=W(nextId());const sc=sched();if(sc&&!sc.includes(dow))return `Hoje é descanso · se quiser, ${esc(n.id)} · ${esc(n.name)}`;return n?`${sc?"Hoje":"Próximo"}: ${esc(n.id)} · ${esc(n.name)}`:"Escolher o treino e começar"})()}</span></button>
     ${gameCard()}
-    ${freqCard(wk)}
+    ${goalsCard(wk)}
     ${nutriCard()}
     <button class="btn ghost" data-act="wzstart">Montar treino novo</button>
   </div>`;
@@ -700,7 +753,7 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
     <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">Toque num dia que passou para registrar, ou num dia que vem para planejar.${!goalAll()&&weekInfo().n<visitsWeekAll()?'<br><span class="actdot" style="display:inline-block;vertical-align:middle"></span> atividade fora: dá XP e calorias, mas não conta como ida à academia.':''}</div>
     ${compCard()}
     <div class="progress"><i style="width:${pctW}%;background:${wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
-    ${cgRows()}
+    ${goalRows((freqGoal()||{}).id)}
     <div class="muted" style="font-size:14px">${wk.n>=g.week?'Meta da semana batida.':`Faltam ${g.week-wk.n} ${gNoun(g.week-wk.n)} para a meta.`}</div>
     ${went?`<div class="row"><div class="btn checked" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">✓ Você foi hoje</div>${ck?`<button class="btn ghost sm" data-act="uncheck" data-id="${ck.id}">Desfazer</button>`:''}</div>`
       :`<button class="btn primary big" data-act="regtoday">Registrar treino de hoje</button>`}
@@ -712,17 +765,7 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
       <div class="muted" style="font-size:12px;margin-top:6px">Para registrar uma atividade com duração e calorias, use "+ Atividade fora", que também aceita data passada.</div>
     </details>
     ${planSection()}
-    <details class="goals" data-k="goals"><summary>Ajustar metas</summary>
-      <div class="eyebrow" style="margin-top:10px">O que conta na meta da semana</div>
-      <div class="seg" style="margin-top:6px"><button data-act="gcount" data-v="gym" aria-pressed="${!goalAll()}">Só academia</button><button data-act="gcount" data-v="all" aria-pressed="${goalAll()}">Academia + atividades</button></div>
-      <div class="eyebrow" style="margin-top:12px">Metas extras da semana</div>
-      ${customGoals().map(c=>`<div class="row" style="justify-content:space-between;margin-top:6px"><span style="font-size:14px">${esc(c.label)} · <b class="num">${c.times}×</b></span><button class="ic" data-act="cgdel" data-id="${c.id}" aria-label="Remover meta">✕</button></div>`).join('')||'<p class="muted" style="font-size:13px;margin:4px 0 0">Ex.: bike 5× na semana, abdômen 3×, correr 2×.</p>'}
-      <div class="row" style="margin-top:8px;flex-wrap:wrap"><select id="cgType" class="sel" style="flex:1;min-width:150px" aria-label="Atividade">${CGT.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select>
-        <span class="stepper"><button class="ic" data-act="cgn" data-d="-1" aria-label="Menos">−</button><b class="num">${S.cgTimes||3}×</b><button class="ic" data-act="cgn" data-d="1" aria-label="Mais">+</button></span>
-        <button class="btn primary sm" data-act="cgadd">Adicionar</button></div>
-      <div class="row" style="justify-content:space-between;margin-top:10px"><span>Dias por semana</span><span class="stepper"><button class="ic" data-act="goal" data-g="week" data-d="-1" aria-label="Diminuir meta semanal">−</button><b class="num">${g.week}</b><button class="ic" data-act="goal" data-g="week" data-d="1" aria-label="Aumentar meta semanal">+</button></span></div>
-      <div class="row" style="justify-content:space-between;margin-top:8px"><span>Dias por mês <small class="muted" style="display:block;font-size:11px">ajusta junto com a semanal; dá para mudar à mão</small></span><span class="stepper"><button class="ic" data-act="goal" data-g="month" data-d="-1" aria-label="Diminuir meta mensal">−</button><b class="num">${g.month}</b><button class="ic" data-act="goal" data-g="month" data-d="1" aria-label="Aumentar meta mensal">+</button></span></div>
-    </details>
+    <button class="btn ghost" data-act="metas">Minhas metas</button>
   </div>`}
 
 const PROFILE_DEF={goal:'hipertrofia',minutes:60,days:4,level:'intermediario',place:'academia',notes:''};
@@ -836,7 +879,7 @@ Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body(
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} min por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações: ${p.notes||'nenhuma'}.
 Restrições de saúde: ${restrText()}. Nunca sugira exercícios contraindicados para essas condições; prefira variações com apoio e explique o motivo da troca.
-Metas: ${g.week} dias por semana, ${g.month} por mês. ${goalAll()?'Dias com exercício nesta semana (academia e atividades fora contam para a meta)':'Idas à academia nesta semana (atividades fora como corrida e bike NÃO contam para a meta, só para XP e calorias)'}: ${weekStrip().n}. Metas extras: ${customGoals().map(c=>c.label+' '+cgProgress(c)+'/'+c.times).join(', ')||'nenhuma'}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino da sequência (o aluno faz A, B, C… em ordem; se faltou um dia, o pendente continua sendo o próximo): ${nextId()}.
+Metas: ${g.week} dias por semana, ${g.month} por mês. ${goalAll()?'Dias com exercício nesta semana (academia e atividades fora contam para a meta)':'Idas à academia nesta semana (atividades fora como corrida e bike NÃO contam para a meta, só para XP e calorias)'}: ${weekStrip().n}. Metas do aluno nesta semana: ${gList().map(x=>(x.main?'[principal] ':'')+gLabel(x)+' — feito '+gUnitTxt(x,gProg(x))).join('; ')||'nenhuma definida'}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino da sequência (o aluno faz A, B, C… em ordem; se faltou um dia, o pendente continua sendo o próximo): ${nextId()}.
 Rotina atual:
 ${plan}
 Últimos registros:
@@ -1865,7 +1908,7 @@ function viewHist(){
   </div>`}
 
 function render(){
-  main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():S.view==='nutri'?viewNutri():S.view==='conta'?viewConta():viewHist());
+  main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():S.view==='nutri'?viewNutri():S.view==='conta'?viewConta():S.view==='metas'?viewMetas():viewHist());
   renderAvatar();renderFab();if(typeof syncNav==='function')setTimeout(syncNav,0);if(cloudOn()&&sbSess())setTimeout(hydratePhotos,0);document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
   const cl=document.getElementById('chatlog');if(cl)cl.scrollTop=cl.scrollHeight;
   if(!S.openD)S.openD={};main.querySelectorAll('details[data-k]').forEach(d=>{d.open=!!S.openD[d.dataset.k];d.addEventListener('toggle',()=>{S.openD[d.dataset.k]=d.open})});
@@ -2046,6 +2089,18 @@ main.addEventListener('click',e=>{
       if(on){e.days=cur.filter(x=>x!==v);e.comp=(e.comp||[]).filter(x=>x!==v)}else e.days=[...cur,v].sort((x,y)=>WD.indexOf(x)-WD.indexOf(y));setWkEntry(e);
       toast(on?`${WDS[v]} saiu do plano desta semana. Sem drama, a gente encaixa em outro dia.`:`${WDS[v]} entrou no plano desta semana. Combinado.`);break}
     case 'wkreset':{const e=wkEntry()||{};delete e.days;e.comp=[];setWkEntry(e);toast('Semana de volta aos seus dias de sempre.');break}
+    case 'metas':S.view='metas';S.gNew=S.gNew||'gym';S.gNewT=null;window.scrollTo(0,0);break;
+    case 'gnew':S.gNew=b.dataset.v;S.gNewT=null;break;
+    case 'gnt':{const T=GT[S.gNew||'gym'];const cur=S.gNewT!=null?S.gNewT:T.d;S.gNewT=Math.max(T.min,Math.min(T.max,cur+T.st*(+b.dataset.d)));break}
+    case 'gadd':{const t=S.gNew||'gym',T=GT[t];const L=gList();const act=t==='act'?(document.getElementById('gAct')||{}).value||'bike':undefined;
+      if((t==='gym'||t==='any')&&L.some(x=>x.type==='gym'||x.type==='any')){toast('Já existe uma meta de frequência. Ajuste ela no + e −.');return}
+      if(L.some(x=>x.type===t&&x.act===act)){toast('Essa meta já existe. Ajuste no + e −.');return}
+      if(t==='deficit'&&L.some(x=>x.type==='surplus')||t==='surplus'&&L.some(x=>x.type==='deficit')){toast('Déficit e superávit ao mesmo tempo não dá. Escolhe um.');return}
+      const x={id:uid(),type:t,target:S.gNewT!=null?S.gNewT:T.d,main:!L.length};if(act)x.act=act;L.push(x);S.gNewT=null;applyGoals();toast(`Meta anotada: ${gLabel(x)}. Eu vou cobrar.`);break}
+    case 'gstep':{const x=gList().find(q=>q.id===b.dataset.id);if(!x)break;const T=GT[x.type];x.target=Math.max(T.min,Math.min(T.max,x.target+T.st*(+b.dataset.d)));applyGoals();break}
+    case 'gmain':{gList().forEach(q=>q.main=q.id===b.dataset.id);applyGoals();break}
+    case 'gdel':{const g=goals();const was=(g.list||[]).find(q=>q.id===b.dataset.id);g.list=gList().filter(q=>q.id!==b.dataset.id);if(was&&was.main&&g.list[0])g.list[0].main=true;applyGoals();break}
+    case 'gdone':S.view='hoje';window.scrollTo(0,0);toast('Metas definidas. Agora é cumprir, e eu fico de olho.');break;
     case 'gcount':{const g=goals();g.counts=b.dataset.v;savePlan();toast(b.dataset.v==='all'?'Fechado: corrida, bike e o resto também contam na meta. Movimento é movimento.':'Meta só da academia. Atividades fora seguem dando XP e calorias.');break}
     case 'cgn':S.cgTimes=Math.max(1,Math.min(7,(S.cgTimes||3)+(+b.dataset.d)));break;
     case 'cgadd':{const t=document.getElementById('cgType').value;const lab=(CGT.find(x=>x[0]===t)||[])[1]||t;const L=customGoals();if(L.some(c=>c.type===t)){toast('Essa meta já existe. Ajuste removendo e criando de novo.');return}L.push({id:uid(),type:t,label:lab,times:S.cgTimes||3});savePlan();toast(`Meta nova: ${lab} ${S.cgTimes||3}× na semana. Eu vou cobrar.`);break}
