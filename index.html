@@ -541,18 +541,18 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
     <div class="mrow"><div class="row" style="justify-content:space-between"><span class="eyebrow">Em ${month}</span><span class="num" style="font-weight:700">${mv} / ${g.month}</span></div>
       <div class="progress"><i style="width:${pctM}%;background:${mv>=g.month?'var(--good)':'var(--accent)'}"></i></div></div>
     <button class="btn ghost sm pausebtn" data-act="pausego">❚❚ ${activePause()?'Ver pausa':'Pausar metas (doença, viagem, férias)'}</button>
-    <details class="goals pastform"><summary>Registrar um dia mais antigo</summary>
+    <details class="goals pastform" data-k="past"><summary>Registrar um dia mais antigo</summary>
       <div class="row" style="margin-top:10px;flex-wrap:wrap"><input type="date" id="pastDate" class="wname" style="flex:1;min-width:150px" max="${todayISO()}" min="${(()=>{const d=new Date();d.setDate(d.getDate()-60);return d.toISOString().slice(0,10)})()}" aria-label="Data do exercício"><button class="btn primary sm" data-act="pastdate">Registrar check-in</button></div>
       <div class="muted" style="font-size:12px;margin-top:6px">Para registrar uma atividade com duração e calorias, use "+ Atividade fora", que também aceita data passada.</div>
     </details>
-    <details class="goals"><summary>Dias que posso treinar</summary>
+    <details class="goals" data-k="avail"><summary>Dias que posso treinar</summary>
       <p class="muted" style="font-size:13px;margin:8px 0">Marque os dias que você realmente consegue ir. Se a semana é corrida, compense no fim de semana.</p>
       ${dayChips('avday',avail())}
       ${sched()?`<p class="muted" style="font-size:13px;margin:8px 0 0">Sua semana planejada: ${dayList(sched())}.</p>`:''}
     </details>
-    <details class="goals"><summary>Ajustar metas</summary>
+    <details class="goals" data-k="goals"><summary>Ajustar metas</summary>
       <div class="row" style="justify-content:space-between;margin-top:10px"><span>Dias por semana</span><span class="stepper"><button class="ic" data-act="goal" data-g="week" data-d="-1" aria-label="Diminuir meta semanal">−</button><b class="num">${g.week}</b><button class="ic" data-act="goal" data-g="week" data-d="1" aria-label="Aumentar meta semanal">+</button></span></div>
-      <div class="row" style="justify-content:space-between;margin-top:8px"><span>Dias por mês</span><span class="stepper"><button class="ic" data-act="goal" data-g="month" data-d="-1" aria-label="Diminuir meta mensal">−</button><b class="num">${g.month}</b><button class="ic" data-act="goal" data-g="month" data-d="1" aria-label="Aumentar meta mensal">+</button></span></div>
+      <div class="row" style="justify-content:space-between;margin-top:8px"><span>Dias por mês <small class="muted" style="display:block;font-size:11px">ajusta junto com a semanal; dá para mudar à mão</small></span><span class="stepper"><button class="ic" data-act="goal" data-g="month" data-d="-1" aria-label="Diminuir meta mensal">−</button><b class="num">${g.month}</b><button class="ic" data-act="goal" data-g="month" data-d="1" aria-label="Aumentar meta mensal">+</button></span></div>
     </details>
   </div>`}
 
@@ -699,7 +699,7 @@ function creditCard(){const a=aiState(),left=aiLeft(),m=MODELS[apiModel()];
   return `<div class="credit ${cls}"><div class="row" style="justify-content:space-between"><b>Crédito da IA</b><span class="num"><b>${usd(left)}</b> <span class="muted">de ${usd(a.credit)}</span></span></div>
     <div class="progress" style="margin:8px 0"><i style="width:${Math.round(pct*100)}%"></i></div>
     <div class="muted num" style="font-size:13px">${left>0?`Dá para cerca de ${msgs.toLocaleString('pt-BR')} mensagens no modo ${m.name.toLowerCase()} · ${a.msgs} ${a.msgs===1?'mensagem enviada':'mensagens enviadas'}`:'Crédito esgotado. Coloque mais crédito na Anthropic e atualize aqui.'}</div>
-    <details class="goals" style="margin-top:8px"><summary>Atualizar crédito</summary>
+    <details class="goals" data-k="credit" style="margin-top:8px"><summary>Atualizar crédito</summary>
       <div class="row" style="margin-top:8px;flex-wrap:wrap"><input id="credIn" class="wname" inputmode="decimal" placeholder="US$" style="width:90px" aria-label="Valor em dólares"><button class="btn ghost sm" data-act="credadd">Adicionei esse valor</button><button class="btn ghost sm" data-act="credfix">Meu saldo é esse</button></div>
       <p class="muted" style="font-size:12px;margin:6px 0 0">O valor é uma estimativa feita neste celular com base no uso. O saldo exato fica em console.anthropic.com, em Billing.</p></details></div>`}
 function modelPicker(){const cur=apiModel();return `<div class="row modelpick">${Object.entries(MODELS).map(([k,v])=>`<button class="opt sm2" data-act="model" data-v="${k}" aria-pressed="${cur===k}"><b>${v.name}</b><span>${v.desc}</span></button>`).join('')}</div>`}
@@ -1338,7 +1338,7 @@ function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():viewHist());
   renderAvatar();renderFab();document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
   const cl=document.getElementById('chatlog');if(cl)cl.scrollTop=cl.scrollHeight;
-  const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
+  if(!S.openD)S.openD={};main.querySelectorAll('details[data-k]').forEach(d=>{d.open=!!S.openD[d.dataset.k];d.addEventListener('toggle',()=>{S.openD[d.dataset.k]=d.open})});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
   tick();
 }
@@ -1428,7 +1428,7 @@ main.addEventListener('click',e=>{
       const label=document.getElementById('auLabel').value.trim().slice(0,40);const kind=(S.auDraft&&S.auDraft.kind)||'musica';audios().push({id:uid(),url,label,kind,used:Date.now()});S.auDraft=null;saveUser();
       toast(kind==='audiobook'?'Audiobook salvo. Músculo e cabeça crescendo juntos.':kind==='podcast'?'Podcast salvo. Ouve e levanta.':'Salvo. Agora aumenta o volume e a carga.');break}
     case 'audel':S.user.audio=audios().filter(x=>x.id!==b.dataset.id);saveUser();break;
-    case 'avday':{const p=profile();p.avail=toggleDays(avail(),b.dataset.v);const g=goals();if(g.week>p.avail.length){g.week=p.avail.length;toast('Ajustei sua meta para '+g.week+' dias. É o que cabe na sua semana.')}p.sched=spreadDays(p.avail,Math.min(g.week,p.avail.length));S.goalsOpen=false;savePlan();break}
+    case 'avday':{const p=profile();p.avail=toggleDays(avail(),b.dataset.v);const g=goals();if(g.week>p.avail.length){g.week=p.avail.length;toast('Ajustei sua meta para '+g.week+' dias. É o que cabe na sua semana.')}p.sched=spreadDays(p.avail,Math.min(g.week,p.avail.length));savePlan();break}
     case 'model':LS.set('ct.model',b.dataset.v);{const a=aiState();a.avg=0;LS.set('ct.ai',a)}toast(b.dataset.v==='claude-haiku-5-5'?'Modo econômico. Falo menos, gasto menos.':'Modo inteligente. Agora eu penso com calma.');break;
     case 'credset':case 'credadd':case 'credfix':{const v=parseFloat(String(document.getElementById('credIn').value||'').replace(',','.'));if(!(v>0)){toast('Me diz o valor em dólares.');return}const a=aiState();
       if(act==='credset'){a.credit=v+a.spent}else if(act==='credadd'){a.credit=(a.credit||a.spent)+v}else{a.credit=a.spent+v}a.warned=0;LS.set('ct.ai',a);toast('Crédito anotado. Estou de volta.');break}
@@ -1473,7 +1473,7 @@ main.addEventListener('click',e=>{
     case 'clearchat':if(!twoStep('clearchat'))return;S.chat=[];saveChat();break;
     case 'checkin':addSession({id:uid(),date:new Date().toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[]});celebrate(pick(['Presença registrada. Aparecer já é metade da batalha.','Check-in feito. Agora vai lá e honra ele.'])+' +30 XP');break;
     case 'uncheck':delSession(b.dataset.id);break;
-    case 'goal':{const g=goals(),k=b.dataset.g,max=k==='week'?7:31;g[k]=Math.max(1,Math.min(max,g[k]+(+b.dataset.d)));S.goalsOpen=true;savePlan();break}
+    case 'goal':{const g=goals(),k=b.dataset.g,max=k==='week'?7:31;g[k]=Math.max(1,Math.min(max,g[k]+(+b.dataset.d)));if(k==='week'){g.month=Math.min(31,Math.round(g.week*4.3));const p=profile();p.sched=spreadDays(avail(),Math.min(g.week,avail().length))}savePlan();break}
     case 'go':S.view=b.dataset.v;break;
     case 'start':startSession(b.dataset.id);break;
     case 'done':{const s=a.ex[ei].sets[si];s.done=!s.done;
