@@ -667,7 +667,7 @@ Rotina atual:
 ${plan}
 Últimos registros:
 ${hist}
-Pausa de metas: ${activePause()?(PAUSE_R[activePause().reason]||PAUSE_R.outro)[0]+' desde '+activePause().start+(activePause().end?' até '+activePause().end:' sem data de fim')+'. Não cobre treino; foque em recuperação e no retorno gradual.':'nenhuma ativa'}. Sequência atual: ${dayStreak()} dias. Dias desde o último exercício: ${daysSinceLast()??'nunca treinou'}. Semana: ${weekRisk().msg}`}
+Estação atual (Brasil, hemisfério sul): ${SEASONS[season()]}. ${season()==='inverno'?'No frio a motivação cai: incentive com firmeza, lembre que o XP vale 25% a mais no inverno, sugira deixar a roupa pronta na véspera, aquecimento mais longo e treino em horário mais quente.':season()==='verao'?'No calor: hidratação, treino em horário fresco, cuidado com férias quebrando a rotina.':season()==='outono'?'Dias mais curtos: ajude a manter a rotina antes do inverno.':'Dias maiores: bom momento para progredir carga e se preparar para o verão.'} Pausa de metas: ${activePause()?(PAUSE_R[activePause().reason]||PAUSE_R.outro)[0]+' desde '+activePause().start+(activePause().end?' até '+activePause().end:' sem data de fim')+'. Não cobre treino; foque em recuperação e no retorno gradual.':'nenhuma ativa'}. Sequência atual: ${dayStreak()} dias. Dias desde o último exercício: ${daysSinceLast()??'nunca treinou'}. Semana: ${weekRisk().msg}`}
 function ctx(){return persona()+'\n\n'+ctxData()}
 const TOOLS=[
  {name:'atualizar_rotina',description:'Substitui a rotina inteira do aluno (todos os treinos A, B, C...). Mande todos os treinos, inclusive os que não mudaram.',
@@ -723,7 +723,7 @@ function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><sp
 function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
 /* ---------- Driffa flutuante ---------- */
 function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);
-  const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="driffa-bust-${coachLook()}.jpg${AV}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
+  const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="${dImg('bust')}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
   panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
   if(panel.hidden)return;
   panel.innerHTML=`<div class="fabhead">${coachAv(36)}<div style="flex:1;min-width:0"><b>${COACH}</b><span>${sampleApi?(S.busy==='chat'?'digitando…':'Sua treinadora'):'IA desativada'}</span></div>
@@ -765,8 +765,8 @@ Formato: {"workouts":[{"name":"Peito e tríceps","ex":[{"name":"Supino reto","se
 const SUGS=['Monte um aquecimento para o treino de hoje','Só tenho 40 min hoje, o que eu corto?','Como aumentar as cargas sem me machucar?','Troque um exercício que incomoda meu ombro'];
 function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${full?' class="full"':''}>${title}<select id="${id}" data-f="pf" data-k="${k}">${OPTS[k].map(([v,l])=>`<option value="${v}" ${String(p[k])===String(v)?'selected':''}>${l}</option>`).join('')}</select></label>`;
   return `<div class="stack">
-    <img class="coachportrait" src="driffa-${coachLook()}.jpg${AV}" alt="${COACH}, sua treinadora" width="720" height="720">
-    <div class="looks"><span class="eyebrow">Escolha o visual</span>${[1,2,3].map(n=>`<button class="lookbtn" data-act="look" data-v="${n}" aria-pressed="${coachLook()===n}" aria-label="Visual ${n}"><img src="driffa-face-${n}.jpg${AV}" alt=""></button>`).join('')}</div>
+    <img class="coachportrait" src="${dImg('')}" alt="${COACH}, sua treinadora" width="720" height="720">
+    <div class="looks"><span class="eyebrow">Escolha o visual</span>${[1,2,3].map(n=>`<button class="lookbtn" data-act="look" data-v="${n}" aria-pressed="${coachLook()===n}" aria-label="Visual ${n}"><img src="${dImg('face',n)}" alt=""></button>`).join('')}</div>
     <div class="coachhero"><div><div class="eyebrow">Sua treinadora</div><h2>${COACH}</h2><p class="muted" style="margin:4px 0 0">Inspirada na valquíria Sigrdrífa, "a que impulsiona à vitória". Ela monta seu treino, ajusta quando você pedir e respeita os seus limites.</p></div></div>
     <div class="card stack">
       <div class="pf">${sel('goal','pf-goal','Objetivo',1)}${sel('minutes','pf-min','Tempo por treino')}${sel('days','pf-days','Dias por semana')}${sel('level','pf-level','Nível')}${sel('place','pf-place','Onde treina')}
@@ -1006,9 +1006,14 @@ function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Isso não é um
     x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva. Agora eu sei com quem estou falando.');render()};img.onerror=()=>toast('Não consegui abrir essa foto. Tenta outra.');img.src=r.result};r.readAsDataURL(f)}
 
 /* ---------- Driffa ---------- */
-const COACH='Driffa';const AV='?v=18';
+const COACH='Driffa';
+/* estações (hemisfério sul) e skins */
+function season(d){d=d||new Date();const m=d.getMonth()+1,day=d.getDate(),v=m*100+day;return v>=1221||v<320?'verao':v<621?'outono':v<923?'inverno':'primavera'}
+const SEASONS={verao:'Verão',outono:'Outono',inverno:'Inverno',primavera:'Primavera'};
+const SKINS={1:[],2:[],3:[]};/* estações com arte pronta, por visual */
+function dImg(kind,n){n=n||coachLook();const se=season();const has=(SKINS[n]||[]).includes(se);return `driffa-${kind?kind+'-':''}${n}${has?'-'+se:''}.jpg${AV}`}const AV='?v=18';
 function coachLook(){const v=LS.get('ct.look',1);return [1,2,3].includes(v)?v:1}
-function coachAv(size){return `<img class="coachav" src="driffa-face-${coachLook()}.jpg${AV}" width="${size}" height="${size}" alt="${COACH}">`}
+function coachAv(size){return `<img class="coachav" src="${dImg('face')}" width="${size}" height="${size}" alt="${COACH}">`}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function daysSinceLast(){if(!S.sessions.length)return null;const d=new Date(S.sessions[0].date);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);let n=Math.round((t-d)/864e5);const x=new Date(d);for(let i=0;i<n;i++){x.setDate(x.getDate()+1);if(pauseOn(x))n--}return Math.max(0,n)}
 function coachLine(){{const rr=recentReturn();if(rr&&!S.sessions.some(x=>isoOf(x.date)>rr.end))return pick([`De volta, ${firstName()||'guerreiro'}. Sem pressa no primeiro treino: carga mais leve, técnica perfeita.`,`Voltou da ${(PAUSE_R[rr.reason]||PAUSE_R.outro)[0].toLowerCase()}. Hoje a gente reacende a forja devagar.`])}
@@ -1023,7 +1028,13 @@ function coachLine(){{const rr=recentReturn();if(rr&&!S.sessions.some(x=>isoOf(x
   if(st>=3)return `${st} dias seguidos, ${name||'guerreiro'}. É assim que se constrói força de verdade.`;
   if(ds>=4)return `${ds} dias longe da barra. Sem culpa: volte hoje, nem que seja um treino leve.`;
   if(ds>=2)return `${you}faz ${ds} dias. A barra não vai se levantar sozinha.`;
-  const h=new Date().getHours(),need=Math.max(0,g.week-wk),N=name||'guerreiro';
+  const h=new Date().getHours(),need=Math.max(0,g.week-wk),N=name||'guerreiro';const se=season();
+  if(Math.random()<0.45||(se==='inverno'&&(h<9||ds>=2))){const SL={
+    inverno:[`${N}, frio lá fora? No norte de onde eu vim, o inverno dura seis meses e ninguém deixa de treinar. Casaco e vai.`,`Inverno é a estação de quem quer chegar no verão pronto. Aqui não tem hibernação.`,`O frio é mentiroso: diz que a cama é melhor. Depois do aquecimento, ele some. E no inverno seu XP vale 25% a mais.`,`${N}, deixa a roupa da academia separada na noite anterior. Guerreiro decide antes de sentir frio.`],
+    verao:[`Verão, ${N}. Calor pede água antes, durante e depois. E treino cedo, antes do sol virar forja.`,`O corpo de verão se constrói no inverno, mas se mantém agora. Não some nas férias.`,`Dia quente: menos descanso entre séries vira cardio de graça. Hidrata e vai.`],
+    outono:[`Outono: os dias encurtam e a preguiça cresce. É agora que se separa quem treina de quem promete.`,`${N}, folhas caindo, carga subindo. Prepara o corpo para o inverno.`,`Outono é estação de colheita. Colha o que plantou no verão: volta para a rotina firme.`],
+    primavera:[`Primavera, ${N}. Dias maiores, energia maior. Hora de subir a carga.`,`Tudo floresce na primavera. Seu supino também precisa.`,`Faltam poucos meses para o verão. Quem começa agora chega pronto.`]};
+    if(!(need===0&&ds===0))return pick(SL[se])}
   if(h<5)return `${N}, acordado a essa hora? Dorme. Músculo cresce no descanso, não na tela.`;
   if(h<9)return pick([`${N}. Cedo assim, a barra está livre e a academia é sua.`,`Bom dia não, ${N}: dia bom é o que tem treino.`]);
   if(h>=21)return pick([`${N}, ainda dá tempo de um treino curto. Ou descansa e amanhã vem com tudo.`,`Noite, ${N}. Amanhã a gente cobra. ${need?`Faltam ${need} para a meta.`:''}`]);
@@ -1195,7 +1206,8 @@ function viewAtiv(){if(!S.act)S.act={type:LS.get('ct.lastAct','bike_erg'),min:30
 const RANKS=[['Recruta','#9aa2b1'],['Escudeiro','#2e9e5b'],['Guerreiro','#e9b10f'],['Berserker','#2862f2'],['Jarl','#d93a2b'],['Einherjar','#b07cff'],['Lenda de Valhalla','#f2c230']];
 const ROMAN=['I','II','III'];
 const WEEK_BONUS=150,WEEK_PENALTY=150;
-function xpOf(s){if(s.checkin)return 30;if(s.activity)return 40+Math.min(s.minutes||0,90);return 100+Math.min(s.ex.reduce((n,e)=>n+e.sets.length,0)*2,60)}
+function xpBase(s){if(s.checkin)return 30;if(s.activity)return 40+Math.min(s.minutes||0,90);return 100+Math.min(s.ex.reduce((n,e)=>n+e.sets.length,0)*2,60)}
+function xpOf(s){const b=xpBase(s);return season(new Date(s.date))==='inverno'?Math.round(b*1.25):b}
 function weekMap(){const wk=new Map();S.sessions.forEach(s=>{const k=weekStart(s.date).getTime();if(!wk.has(k))wk.set(k,new Set());wk.get(k).add(dayKey(s.date))});return wk}
 function weekHistory(){const g=goals().week,wk=weekMap();if(!S.sessions.length)return [];const first=weekStart(S.sessions[S.sessions.length-1].date),cur=weekStart(new Date());const out=[];
   for(let d=new Date(first);d<cur;d.setDate(d.getDate()+7)){const n=(wk.get(d.getTime())||new Set()).size,eg=effGoal(d);out.push({start:new Date(d),n,goal:eg,excused:eg===0,met:eg>0&&n>=eg})}return out}
@@ -1267,7 +1279,7 @@ function viewConq(){const xp=totalXP(),lv=levelOf(xp),st=stats();const risk=week
     <p class="muted" style="font-size:13px;margin:0">Cada patente tem 3 graus (I, II e III). Depois da Lenda de Valhalla, você continua ganhando estrelas para sempre.</p></div>
   <div class="risk ${risk.ok?'ok':risk.lost?'bad':''}">${risk.msg}</div>
   <div class="card"><div class="eyebrow" style="margin-bottom:8px">Como ganhar e perder XP</div><ul class="xplist">
-    <li><span>Treino concluído</span><b>+100 a 160</b></li><li><span>Atividade fora da academia</span><b>+40 e 1 por minuto</b></li><li><span>Check-in</span><b>+30</b></li>
+    <li><span>Treino concluído</span><b>+100 a 160</b></li><li><span>Atividade fora da academia</span><b>+40 e 1 por minuto</b></li><li><span>Check-in</span><b>+30</b></li><li><span>Bônus de inverno (jun a set)</span><b>+25% em tudo</b></li>
     <li><span>Semana com a meta batida</span><b>+${WEEK_BONUS}</b></li><li class="lose"><span>Semana sem bater a meta</span><b>−${WEEK_PENALTY}</b></li></ul>
     <p class="muted" style="font-size:13px;margin:8px 0 0">Se o XP cair, você pode descer de nível e de patente. Nesta conta: ${weeksMet()} ${weeksMet()===1?'semana batida':'semanas batidas'} e ${weeksMissed()} ${weeksMissed()===1?'perdida':'perdidas'}.</p></div>
   <div class="eyebrow">Status (só vale enquanto você mantém)</div>
@@ -1311,7 +1323,7 @@ function viewHist(){
 
 function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():viewHist());
-  renderAvatar();renderFab();document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`driffa-face-${coachLook()}.jpg${AV}`}
+  renderAvatar();renderFab();document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
   const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
