@@ -431,6 +431,7 @@ body.nf-agua [data-feat="agua"],body.nf-prot [data-feat="prot"],body.nf-cal [dat
 .feats{display:flex;flex-direction:column;margin-top:8px}.featrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}.featrow:last-child{border-bottom:0}.featrow b{display:block;font-size:14px}.featrow span{font-size:12px;color:var(--muted)}
 .switch{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0}.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgb(0 0 0 / .3)}.switch:checked{background:var(--accent)}.switch:checked::after{transform:translateX(18px)}
 .weigh{width:100%;border-top:1px solid var(--line);padding-top:10px}
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}.daynav b{font-size:14px}.daynav .ic:disabled{opacity:.3}
 .kghint{font-size:12px;color:var(--muted);margin:8px 0 -2px}.kghint b{color:var(--ink)}
 .watch{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin-top:6px}.watch b{color:var(--gold);font-weight:700}
 .memlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}.memlist li{display:flex;gap:10px;align-items:flex-start;font-size:14px}.memlist li>span{flex:none;width:20px;text-align:center;color:var(--gold)}
@@ -1659,12 +1660,13 @@ function protT(f){return Math.round((f.prot||0)+(f.meals||[]).reduce((t,m)=>t+(+
 function kcalIn(f){return Math.round((f.meals||[]).reduce((t,m)=>t+(+m.kcal||0),0))}
 function kcalOut(d){const k=dayKey(d||new Date());const ex=S.sessions.filter(s=>dayKey(s.date)===k).reduce((t,s)=>t+sessionKcal(s),0);const base=Math.round(bmrDay()*1.2);return {base,ex,total:base+ex}}
 function balTarget(){const g=profile().goal;return g==='emagrecimento'?-400:g==='hipertrofia'||g==='forca'?250:0}
-function saveFood(f){const a=foodAll();const k0=isoOf(new Date());a[k0]=f;const lim=isoOf(new Date(Date.now()-2*864e5));Object.keys(a).forEach(k=>{if(k<lim&&a[k].meals)a[k].meals.forEach(m=>{delete m.thumb})});try{LS.set('ct.food',a)}catch(e){Object.values(a).forEach(x=>(x.meals||[]).forEach(m=>{if(x!==f)delete m.thumb}));LS.set('ct.food',a)}}
+function nDate(){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+(S.nDay||0));return d}
+function saveFood(f,d){const a=foodAll();const k0=isoOf(d||new Date());a[k0]=f;const lim=isoOf(new Date(Date.now()-2*864e5));Object.keys(a).forEach(k=>{if(k<lim&&a[k].meals)a[k].meals.forEach(m=>{delete m.thumb})});try{LS.set('ct.food',a)}catch(e){Object.values(a).forEach(x=>(x.meals||[]).forEach(m=>{if(x!==f)delete m.thumb}));LS.set('ct.food',a)}}
 function waterGoal(){return Math.max(6,Math.round((+body().weight||70)*35/250))}
 function protRange(){const g=profile().goal,w=+body().weight||70;const [a,b]=g==='hipertrofia'||g==='forca'||g==='emagrecimento'?[1.6,2.2]:[1.2,1.6];return {lo:Math.round(w*a),hi:Math.round(w*b),a,b,w}}
 function protMeals(f){const ev=[...(f.log||[]).filter(x=>x.t).map(x=>({t:x.t,g:x.g})),...(f.meals||[]).map(m=>({t:m.t,g:+m.prot||0}))].sort((a,b)=>a.t-b.t);const out=[];ev.forEach(e=>{const l=out[out.length-1];if(l&&e.t-l.t<90*60000){l.g+=e.g}else out.push({t:e.t,g:e.g})});return out}
 function protWeek(){let tot=0,n=0;for(let i=1;i<=7;i++){const d=new Date();d.setDate(d.getDate()-i);const f=food(d);const v=protT(f);if(v>0){tot+=v;n++}}return n?{avg:Math.round(tot/n),n}:null}
-function protLine(f){const pt=protT(f),pg=protGoal(),R=protRange(),h=new Date().getHours(),M=protMeals(f),good=M.filter(m=>m.g>=25).length;
+function protLine(f){const pt=protT(f),pg=protGoal(),R=protRange(),h=(S.view==='nutri'&&(S.nDay||0)<0)?23:new Date().getHours(),M=protMeals(f),good=M.filter(m=>m.g>=25).length;
   if(pt>R.hi+20)return `Já são ${pt} g. Passou da faixa útil (${R.hi} g): o excesso não vira músculo, vira caloria cara. Pode parar de contar hoje.`;
   if(pt>=pg)return pick([`Meta batida: ${pt} g. Agora quem constrói é o treino e o sono, não mais um shake.`,`Proteína do dia feita. Não precisa caçar grama a mais: o músculo agradece o descanso.`]);
   if(!pt)return h<11?'Começa o dia com proteína: ovos, iogurte ou queijo. Facilita o resto.':h<15?'Nada de proteína registrado ainda. No almoço, capricha na carne, frango, peixe ou ovo.':`Zero proteína até agora. Sem pânico: duas boas refeições ainda fecham a conta.`;
@@ -1692,7 +1694,7 @@ function nutriCard(){const f=food(),wg=waterGoal(),pg=protGoal(),S2=supps();cons
     <div data-feat="cal"><b class="num">${f.meals.length?((kcalIn(f)-kcalOut().total>0?'+':'')+(kcalIn(f)-kcalOut().total)):'–'}</b><span>saldo kcal</span><div class="progress mini"><i style="width:${f.meals.length?100:0}%;background:${kcalIn(f)-kcalOut().total<0?'#4aa3ff':'var(--hot)'}"></i></div></div>
     <div style="display:none"><b class="num">${S2.length?sd+'<small>/'+S2.length+'</small>':'–'}</b><span>suplementos</span><div class="progress mini"><i style="width:${S2.length?sd/S2.length*100:0}%;background:var(--hot)"></i></div></div></div></button>`}
 function yday(){const d=new Date();d.setDate(d.getDate()-1);const f=food(d);if(!f.water&&!protT(f)&&!f.meals.length)return '';return `<div class="muted" style="font-size:13px">Ontem: ${f.water} copos · ${protT(f)} g de proteína${f.meals.length?` · ${kcalIn(f)} kcal em ${f.meals.length} ${f.meals.length===1?'refeição':'refeições'}`:''}. Todo dia à meia-noite o registro recomeça.</div>`}
-function balLine(f){const i=kcalIn(f),o=kcalOut(),b=i-o.total,t=balTarget(),h=new Date().getHours();if(!f.meals.length)return 'Registre as refeições e eu mostro se você está em déficit ou superávit.';
+function balLine(f,d){const past=(S.nDay||0)<0&&S.view==='nutri';const i=kcalIn(f),o=kcalOut(d),b=i-o.total,t=balTarget(),h=past?23:new Date().getHours();if(!f.meals.length)return 'Registre as refeições e eu mostro se você está em déficit ou superávit.';
   if(h<18)return t<0?'Dia ainda em andamento. Para emagrecer, a meta é fechar o dia uns 300 a 500 kcal abaixo do gasto.':t>0?'Dia ainda em andamento. Para ganhar massa, feche o dia um pouco acima do gasto, uns 200 a 300 kcal.':'Dia ainda em andamento. Para manter, feche perto do gasto.';
   if(t<0)return b<=-700?'Déficit grande demais. Fome assim derruba treino e músculo. Come algo com proteína.':b<=-200?'Déficit no ponto. É assim que a balança anda sem perder força.':b<=150?'Quase empatado. Para emagrecer, precisa de um pouco mais de déficit.':'Hoje passou do gasto. Um dia não define nada, a semana sim.';
   if(t>0)return b<100?'Comeu menos do que gastou. Músculo novo precisa de sobra. Reforça uma refeição.':b<=500?'Superávit na medida. Combustível para crescer.':'Superávit alto. Cresce, mas leva gordura junto.';
@@ -1705,11 +1707,11 @@ function weekBalHtml(){const W7=weekBal();const done=W7.filter(x=>x.has&&!x.toda
     sum=`<div class="muted num" style="font-size:12px">${done.length} ${done.length===1?'dia completo':'dias completos'}: ${tot>0?'+':''}${tot.toLocaleString('pt-BR')} kcal · média ${avg>0?'+':''}${avg}/dia · ≈ ${kg>0?'+':'−'}${Math.abs(kg).toFixed(2).replace('.',',')} kg</div>`}
   else sum='<div class="muted" style="font-size:12px">A conta da semana começa quando fechar o primeiro dia completo.</div>';
   return `<div class="wbal"><div class="eyebrow">Últimos 7 dias</div><div class="wbars">${bars}</div>${sum}</div>`}
-function mealsCard(f){const i=kcalIn(f),o=kcalOut(),b=i-o.total,t=balTarget();
+function mealsCard(f,d){const i=kcalIn(f),o=kcalOut(d),b=i-o.total,t=balTarget();
   return `<div class="card stack"><div class="row" style="justify-content:space-between"><h3>Calorias do dia</h3>${t?`<span class="muted" style="font-size:12px">alvo ${t>0?'+':''}${t} kcal</span>`:''}</div>
     <div class="balgrid"><div><b class="num">${i}</b><span>consumidas</span></div><div><b class="num">${o.total}</b><span>gastas</span></div><div class="${!f.meals.length?'':b<0?'neg':'pos'}"><b class="num">${f.meals.length?(b>0?'+':'')+b:'–'}</b><span>${!f.meals.length?'saldo':b<0?'déficit':'superávit'}</span></div></div>
     <div class="muted" style="font-size:12px">Gasto = corpo em repouso e rotina leve (${o.base} kcal) + exercícios registrados hoje (${o.ex} kcal).</div>
-    <div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(balLine(f))}</p></div>
+    <div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(balLine(f,d))}</p></div>
     ${weekBalHtml()}
     ${f.meals.length?`<ul class="meals">${f.meals.map(m=>`<li>${m.thumb?`<img src="${m.thumb}" alt="">`:m.photo?`<img data-sbphoto="${esc(m.photo)}" alt="">`:'<span class="mthumb">🍽</span>'}<div style="flex:1;min-width:0">${m.kind?`<div class="mkind">${esc(m.kind)}</div>`:''}<b>${esc(m.name)}</b><div class="muted num" style="font-size:12px">${m.kcal} kcal${m.prot!=null?` · P ${m.prot} g`:''}${m.carb!=null?` · C ${m.carb} g`:''}${m.fat!=null?` · G ${m.fat} g`:''} · ${hhmm(m.t)}</div></div><button class="ic" data-act="mealdel" data-id="${m.id}" aria-label="Remover refeição">✕</button></li>`).join('')}</ul>`:''}
     <div class="row" style="flex-wrap:wrap">${sampleApi?`<label class="btn primary" for="mealPhoto" style="flex:2;text-align:center;cursor:pointer">📷 Foto da refeição</label><input type="file" id="mealPhoto" accept="image/*" capture="environment" hidden>`:''}<button class="btn ghost" data-act="mealman" style="flex:1">+ Manual</button></div>
@@ -1750,13 +1752,15 @@ function mealConfirm(m){let k=1;const o=document.createElement('div');o.classNam
     ${m.note?`<div class="coachsay sm">${coachAv(24)}<p style="margin:0;font-size:13px">${esc(m.note)}</p></div>`:''}
     <div class="row cbtns"><button class="btn ghost" data-c="no">Descartar</button><button class="btn primary" data-c="ok">Salvar refeição</button></div></div>`};
   draw();o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;if(t.dataset.k){k=+t.dataset.k;draw();return}
-    if(t.dataset.c){o.remove();if(t.dataset.c==='ok'){const f=food();const mid=uid();if(m.file&&cloudOn()&&sbSess()){const path=sbSess().user.id+'/refeicao-'+mid+'.jpg';imgBlob(m.file,800).then(bl=>bl&&sbUpload(path,bl)).then(()=>{const f2=food();const x=f2.meals.find(q=>q.id===mid);if(x){x.photo=path;delete x.thumb;saveFood(f2)}}).catch(()=>{})}f.meals.push({id:mid,t:Date.now(),kind:m.kind||'',name:m.name,kcal:Math.round(m.kcal*k),prot:Math.round(m.prot*k),carb:Math.round(m.carb*k),fat:Math.round(m.fat*k),thumb:m.thumb,ai:true});saveFood(f);render();toast(`${Math.round(m.kcal*k)} kcal anotadas. Saldo do dia: ${kcalIn(f)-kcalOut().total>0?'+':''}${kcalIn(f)-kcalOut().total} kcal.`)}}});
+    if(t.dataset.c){o.remove();if(t.dataset.c==='ok'){const f=food(nDate());const mid=uid();const nd=nDate();if(m.file&&cloudOn()&&sbSess()){const path=sbSess().user.id+'/refeicao-'+mid+'.jpg';imgBlob(m.file,800).then(bl=>bl&&sbUpload(path,bl)).then(()=>{const f2=food(nd);const x=f2.meals.find(q=>q.id===mid);if(x){x.photo=path;delete x.thumb;saveFood(f2,nd)}}).catch(()=>{})}f.meals.push({id:mid,t:S.nDay?nd.getTime():Date.now(),kind:m.kind||'',name:m.name,kcal:Math.round(m.kcal*k),prot:Math.round(m.prot*k),carb:Math.round(m.carb*k),fat:Math.round(m.fat*k),thumb:m.thumb,ai:true});saveFood(f,nd);render();toast(`${Math.round(m.kcal*k)} kcal anotadas. Saldo do dia: ${kcalIn(f)-kcalOut(nd).total>0?'+':''}${kcalIn(f)-kcalOut(nd).total} kcal.`)}}});
   document.body.appendChild(o)}
-function viewNutri(){const f=food(),wg=waterGoal(),pg=protGoal(),L=supps();
-  return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Alimentação e suplementação</div></div>
-  <div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${esc(foodLine(f))}</p></div></div>
-  ${yday()}
-  <div data-feat="cal">${mealsCard(f)}</div>
+function viewNutri(){const nd=nDate(),f=food(nd),wg=waterGoal(),pg=protGoal(),L=supps(),past=(S.nDay||0)<0;
+  return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow" style="flex:1">Alimentação e suplementação</div></div>
+  <div class="daynav"><button class="ic" data-act="nday" data-d="-1" aria-label="Dia anterior">‹</button><b>${past?(S.nDay===-1?'Ontem · ':'')+nd.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'short'}).replace(/^./,c=>c.toUpperCase()):'Hoje'}</b><button class="ic" data-act="nday" data-d="1" aria-label="Próximo dia" ${past?'':'disabled'}>›</button></div>
+  ${past?`<div class="muted" style="font-size:12px;text-align:center;margin-top:-6px">Vendo um dia passado. Dá para corrigir o que esqueceu de anotar. <button class="linkbtn" data-act="nday0" style="font-size:12px">Voltar para hoje</button></div>`:''}
+  <div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${esc(past?`Resumo do dia: ${f.water} copos de água, ${protT(f)} g de proteína${f.meals.length?', '+kcalIn(f)+' kcal em '+f.meals.length+(f.meals.length===1?' refeição':' refeições'):''}.`:foodLine(f))}</p></div></div>
+  ${past?'':yday()}
+  <div data-feat="cal">${mealsCard(f,nd)}</div>
   <div class="card stack" data-feat="agua"><div class="row" style="justify-content:space-between"><h3>Água</h3><span class="num" style="font-weight:700">${f.water} / ${wg} copos</span></div>
     <div class="cups">${Array.from({length:wg},(_,i)=>`<span class="cup ${i<f.water?'on':''}"></span>`).join('')}</div>
     <div class="row"><button class="btn ghost" data-act="water" data-d="-1" style="flex:1">− Copo</button><button class="btn primary" data-act="water" data-d="1" style="flex:2">+ 1 copo (250 ml)</button></div>
@@ -2317,6 +2321,8 @@ main.addEventListener('click',e=>{
     case 'voice':LS.set('ct.voice',!voiceOn());if(voiceOn()){try{speechSynthesis.getVoices()}catch(_){}speak('Voz ligada. Eu aviso quando o descanso acabar.')}else toast('Fico quieta. Mas continuo de olho.');break;
     case 'busy':busyPick(ei);return;
     case 'saga':openSaga();return;
+    case 'nday':S.nDay=Math.min(0,Math.max(-90,(S.nDay||0)+(+b.dataset.d)));break;
+    case 'nday0':S.nDay=0;break;
     case 'wopen':S.wOpen=!S.wOpen;break;
     case 'wfreq':LS.set('ct.weighFreq',+b.dataset.v);toast(+b.dataset.v?'Combinado. Eu lembro com calma, sem pressão.':'Sem lembretes. Quando quiser registrar, é só tocar em Pesei.');break;
     case 'wsave':{const kg=parseFloat(String(document.getElementById('wKg').value).replace(',','.')),d=document.getElementById('wDate').value||todayISO();if(!(kg>25&&kg<300)){toast('Coloca o peso em kg, tipo 82,5.');return}
@@ -2340,8 +2346,8 @@ main.addEventListener('click',e=>{
     case 'vtest':speak(pick([`Oi, ${firstName()||'guerreiro'}. Eu sou a ${COACH}. Série feita. Descanso de noventa segundos.`,`Descanso acabou. Próxima série. Mostra pra barra quem manda.`]),true);return;
     case 'gpxhelp':S.gpxHelp=!S.gpxHelp;break;
     case 'mealman':S.mealMan=!S.mealMan;break;
-    case 'mealadd':{const n=document.getElementById('mlName').value.trim()||'Refeição',k=parseInt(document.getElementById('mlKcal').value),pr=parseInt(document.getElementById('mlProt').value);if(!(k>0)){toast('Quantas calorias, mais ou menos?');return}const f=food();f.meals.push({id:uid(),t:Date.now(),kind:(document.getElementById('mlKindM')||{}).value||'',name:n.slice(0,60),kcal:k,prot:pr>0?pr:null});saveFood(f);S.mealMan=false;toast(`${k} kcal anotadas.`);break}
-    case 'mealdel':{const f=food();const x=f.meals.find(m=>m.id===b.dataset.id);if(x&&x.photo)sbDelPhoto(x.photo);f.meals=f.meals.filter(m=>m.id!==b.dataset.id);saveFood(f);break}
+    case 'mealadd':{const n=document.getElementById('mlName').value.trim()||'Refeição',k=parseInt(document.getElementById('mlKcal').value),pr=parseInt(document.getElementById('mlProt').value);if(!(k>0)){toast('Quantas calorias, mais ou menos?');return}const f=food(nDate());f.meals.push({id:uid(),t:S.nDay?nDate().getTime():Date.now(),kind:(document.getElementById('mlKindM')||{}).value||'',name:n.slice(0,60),kcal:k,prot:pr>0?pr:null});saveFood(f,nDate());S.mealMan=false;toast(`${k} kcal anotadas.`);break}
+    case 'mealdel':{const f=food(nDate());const x=f.meals.find(m=>m.id===b.dataset.id);if(x&&x.photo)sbDelPhoto(x.photo);f.meals=f.meals.filter(m=>m.id!==b.dataset.id);saveFood(f,nDate());break}
     case 'absmin':S.absMin=+b.dataset.v;LS.set('ct.absMin',S.absMin);break;
     case 'skip':{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');const ae=a.ex[ei];
       o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>Pular ${esc(ae.name)}?</h3></div></div><p style="margin:0;font-size:14px">Sem drama. Me diz o motivo, que eu ajusto o resto.</p>
@@ -2355,12 +2361,12 @@ main.addEventListener('click',e=>{
     case 'abslvl':S.absLvl=b.dataset.lv;LS.set('ct.absLvl',S.absLvl);break;
     case 'absgo':{const lv=S.absLvl||'medium';bodyCheck().then(r=>{if(r===false)return;startSession({id:'ABS',name:'Abdômen · '+ABS[lv].label+(S.absMin?' · '+S.absMin+' min':''),ex:[]});S.active.custom=true;S.active.absLvl=lv;S.active.body=r||null;S.active.ex=absList(lv).map(exFromDef);saveActive();adaptSession(r);render();speak('Abdômen '+ABS[lv].label+'. Trava o core.')});return}
     case 'absadd':{const lv=S.absLvl||'medium';const have=new Set(a.ex.map(e=>norm(e.name)));const add=absList(lv).filter(e=>!have.has(norm(e.name))).map(exFromDef);a.ex.splice(cardioTail(a.ex,e=>e.target.reps),0,...add);a.abs=lv;saveActive();toast(`Abdômen ${ABS[lv].label}${S.absMin?' de '+S.absMin+' min':''} no fim do treino: ${add.length} exercícios. Não pula.`);break}
-    case 'nutri':S.view='nutri';window.scrollTo(0,0);break;
-    case 'water':{const f=food();f.water=Math.max(0,f.water+(+b.dataset.d));saveFood(f);if(+b.dataset.d>0&&f.water===waterGoal())toast('Meta de água batida. Hidratada como um fiorde.');break}
-    case 'prot':{const f=food();f.prot+=+b.dataset.g;f.log.push({n:b.dataset.n,g:+b.dataset.g,t:Date.now()});saveFood(f);if(protT(f)>=protGoal()&&protT(f)-(+b.dataset.g)<protGoal())toast('Proteína do dia batida. A forja agradece.');break}
-    case 'protc':{const g=parseInt(document.getElementById('protIn').value);if(!(g>0)){toast('Quantos gramas?');return}const f=food();f.prot+=g;f.log.push({n:g+' g',g,t:Date.now()});saveFood(f);break}
-    case 'protundo':{const f=food();const x=f.log.pop();if(x)f.prot=Math.max(0,f.prot-x.g);saveFood(f);break}
-    case 'supp':{const f=food();f.supp[b.dataset.id]=!f.supp[b.dataset.id];saveFood(f);break}
+    case 'nutri':S.nDay=0;S.view='nutri';window.scrollTo(0,0);break;
+    case 'water':{const f=food(nDate());f.water=Math.max(0,f.water+(+b.dataset.d));saveFood(f,nDate());if(+b.dataset.d>0&&f.water===waterGoal())toast('Meta de água batida. Hidratada como um fiorde.');break}
+    case 'prot':{const f=food(nDate());f.prot+=+b.dataset.g;f.log.push({n:b.dataset.n,g:+b.dataset.g,t:Date.now()});saveFood(f,nDate());if(protT(f)>=protGoal()&&protT(f)-(+b.dataset.g)<protGoal())toast('Proteína do dia batida. A forja agradece.');break}
+    case 'protc':{const g=parseInt(document.getElementById('protIn').value);if(!(g>0)){toast('Quantos gramas?');return}const f=food(nDate());f.prot+=g;f.log.push({n:g+' g',g,t:Date.now()});saveFood(f,nDate());break}
+    case 'protundo':{const f=food(nDate());const x=f.log.pop();if(x)f.prot=Math.max(0,f.prot-x.g);saveFood(f,nDate());break}
+    case 'supp':{const f=food(nDate());f.supp[b.dataset.id]=!f.supp[b.dataset.id];saveFood(f,nDate());break}
     case 'suppadd':{const n=document.getElementById('spName').value.trim();if(!n){toast('Qual é o suplemento?');return}supps().push({id:uid(),name:n.slice(0,40),dose:document.getElementById('spDose').value.trim().slice(0,40),when:document.getElementById('spWhen').value.trim().slice(0,40)});saveUser();break}
     case 'suppdel':S.user.supps=supps().filter(x=>x.id!==b.dataset.id);saveUser();break;
     case 'pausego':S.pz=null;S.view='pausa';window.scrollTo(0,0);break;
@@ -2569,6 +2575,7 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const boxes=d
   main.addEventListener('click',e=>{const el=e.target.closest('[data-tip]');if(el){show(el,e.clientX,e.clientY);clearTimeout(tip._t);tip._t=setTimeout(()=>tip.hidden=true,2500)}else tip.hidden=true});
   window.addEventListener('scroll',()=>{tip.hidden=true},{passive:true})}
 setTimeout(()=>wxFetch(),1200);document.addEventListener('visibilitychange',()=>{if(!document.hidden)wxFetch()});
+{let lastDay=todayISO();setInterval(()=>{const t=todayISO();if(t!==lastDay){lastDay=t;S.nDay=0;if(!S.active)render()}},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&todayISO()!==lastDay){lastDay=todayISO();S.nDay=0;render()}})}
 render();
 checkDecline();
 setTimeout(fabTeaser,2500);
