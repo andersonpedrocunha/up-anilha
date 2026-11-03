@@ -16,7 +16,7 @@
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Up Anilha</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=Noto+Sans+Runic&display=swap">
 <style>
 /* Layout: single column phone app, sticky header, bottom tab bar, rest timer docked above it. Plate colors (IWF 20 kg blue, 15 kg yellow) drive the accents. */
 :root{
@@ -348,6 +348,21 @@ a.btn .coachav{margin-right:8px}
 body.accmode nav.tabs,body.accmode #avatarBtn{display:none}
 .pbar{position:relative;height:10px;border-radius:6px;background:var(--sunk);overflow:hidden}.pbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;opacity:.9}.pbar .pzone{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--good) 22%,transparent)}.pbar b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.6}
 .pmeals{display:flex;gap:6px;flex-wrap:wrap}.pmeals span{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:6px 10px;border:1px solid transparent}.pmeals span.ok{border-color:color-mix(in srgb,var(--good) 55%,transparent)}.pmeals b{font-size:15px;color:var(--ink)}
+.brandrune{font-family:"Noto Sans Runic",serif;font-size:10px;letter-spacing:.32em;color:#c99a1e;opacity:.85;margin-top:1px;line-height:1}
+:root{--gold:#b8860b;--knot-op:.035}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--gold:#d4a72c;--knot-op:.05}}
+:root[data-theme="dark"]{--gold:#d4a72c;--knot-op:.05}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23f2c230' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M0 12 Q12 0 24 12 T48 12'/%3E%3Cpath d='M0 36 Q12 24 24 36 T48 36'/%3E%3Cpath d='M12 0 Q0 12 12 24 T12 48'/%3E%3Cpath d='M36 0 Q24 12 36 24 T36 48'/%3E%3C/g%3E%3C/svg%3E");background-size:48px 48px;opacity:var(--knot-op)}
+.coachsay{position:relative;border-left:3px solid var(--gold)}
+.coachsay::after{content:"ᚢ";position:absolute;right:10px;top:6px;font-family:"Noto Sans Runic",serif;font-size:13px;color:var(--gold);opacity:.55}
+.trainbtn{position:relative;overflow:hidden}
+.trainbtn::after{content:"ᚢ";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:"Noto Sans Runic",serif;font-size:96px;line-height:1;color:var(--accent-ink);opacity:.12;pointer-events:none}
+.card{position:relative}
+.card::before{content:"";position:absolute;top:-1px;left:22px;right:22px;height:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 55%,transparent),transparent);border-radius:2px;pointer-events:none}
+.runediv{display:flex;align-items:center;gap:10px;color:var(--gold);opacity:.6;font-family:"Noto Sans Runic",serif;font-size:12px;letter-spacing:.4em;margin:6px 0}
+.runediv::before,.runediv::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent)}
+.eyebrow::before{content:"ᛁ ";font-family:"Noto Sans Runic",serif;color:var(--gold);opacity:.7;letter-spacing:0}
+nav.tabs button[aria-current="page"]::after,nav.tabs button.on::after{content:"ᚢ";display:block;font-family:"Noto Sans Runic",serif;font-size:9px;line-height:1;color:var(--gold);margin-top:1px}
 .exbtns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.exbtns .howbtn{margin:0;cursor:pointer}.howbtn.alt{color:var(--muted)}
 .sugg{display:flex;gap:8px;align-items:center;font-size:13px;border-radius:10px;padding:7px 10px;margin-top:6px}.sugg.up{background:var(--good-soft)}.sugg.hold{background:color-mix(in srgb,var(--hot) 18%,var(--surface))}
 .voicebtn{font-size:18px}
@@ -366,7 +381,7 @@ body.accmode nav.tabs,body.accmode #avatarBtn{display:none}
 
 <div class="wrap">
   <header class="top">
-    <div class="brandrow"><img class="logo" src="logo-mark.png" alt="" width="34" height="34"><div class="brand"><span class="up">Up</span> Anilha</div></div>
+    <div class="brandrow"><img class="logo" src="logo-mark.png" alt="" width="34" height="34"><div><div class="brand"><span class="up">Up</span> Anilha</div><div class="brandrune" aria-hidden="true">ᚢᛈ · ᚨᚾᛁᛚᚺᚨ</div></div></div>
     <span id="sync" hidden><i></i><span></span></span>
     <button class="avatar" id="avatarBtn" aria-label="Seu perfil"></button>
   </header>
@@ -722,6 +737,7 @@ function viewHoje(){
     ${goalsCard(wk)}
     ${nutriCard()}
     <button class="btn ghost" data-act="wzstart">Montar treino novo</button>
+    <div class="runediv" aria-hidden="true">ᚢᛈ ᚨᚾᛁᛚᚺᚨ</div>
   </div>`;
   return `<div class="stack">
     <div class="row"><button class="ic" data-act="untrain" aria-label="Voltar">←</button><div class="eyebrow" style="flex:1">Treinar</div></div>
