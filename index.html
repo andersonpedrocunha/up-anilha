@@ -371,29 +371,34 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 .card::before{content:"";position:absolute;top:-1px;left:22px;right:22px;height:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 55%,transparent),transparent);border-radius:2px;pointer-events:none}
 
 /* escudos vikings */
-.week .wd,.week .wd.plan,.week .wd.comp,.week .wd.done,.week .wd.miss,.week .wd.paused{border:0!important;background:none!important;box-shadow:none!important;width:40px;height:40px;padding:0;opacity:1;position:relative;transition:transform .15s}
+.week .wd,.week .wd.plan,.week .wd.comp,.week .wd.done,.week .wd.miss,.week .wd.paused{border:0!important;background:none!important;box-shadow:none!important;width:44px;height:44px;padding:0;opacity:1;position:relative;transition:transform .15s}
 .week .wd::after{display:none!important}
 .week .wd:active{transform:scale(.92)}
-.shield{width:40px;height:40px;display:block;overflow:visible}
-.shield .sh-rim{fill:none;stroke:var(--sh-rim);stroke-width:2.6}
-.shield .sh-face{fill:var(--sh-face)}
-.shield .sh-pl path{stroke:var(--sh-pl);stroke-width:1;fill:none}
+.shield{width:44px;height:44px;display:block;overflow:visible}
+.shield .sh-p1{fill:var(--sh-face)}.shield .sh-p2{fill:var(--sh-face2)}
+.shield .sh-gr{fill:none;stroke:#000;stroke-opacity:.16;stroke-width:.5}
+.shield .sh-rim{fill:none;stroke:var(--sh-rim);stroke-width:3.2}
+.shield .sh-rimhl{fill:none;stroke:url(#shRimG);stroke-width:3.2}
 .shield .sh-rv{fill:var(--sh-rv)}
-.shield .sh-boss{fill:var(--sh-boss);stroke:color-mix(in srgb,#000 25%,var(--sh-boss));stroke-width:.8}
-.shield .sh-hl{fill:#fff;opacity:.45}
-.shield .sh-q{fill:var(--sh-q)}
-.shield .sh-crack{fill:none;stroke:var(--danger);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
-:root{--wood:#c9a77a;--wood-d:#a8865a;--iron:#8d96a3}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--wood:#5a4630;--wood-d:#43341f;--iron:#7f8794}}
-:root[data-theme="dark"]{--wood:#5a4630;--wood-d:#43341f;--iron:#7f8794}
-.wd .shield{--sh-rim:var(--line);--sh-face:transparent;--sh-pl:color-mix(in srgb,var(--line) 60%,transparent);--sh-rv:var(--line);--sh-boss:var(--line)}
-.wd.fut:not(.plan):not(.comp) .shield{opacity:.55}
-.wd.plan .shield{--sh-rim:var(--iron);--sh-face:var(--wood);--sh-pl:var(--wood-d);--sh-rv:var(--iron);--sh-boss:var(--iron)}
-.wd.comp .shield{--sh-rim:var(--gold);--sh-face:var(--wood);--sh-pl:var(--wood-d);--sh-rv:var(--gold);--sh-boss:var(--gold)}
-.wd.done .shield{--sh-rim:var(--gold);--sh-face:#2c56b8;--sh-pl:#1d3d86;--sh-rv:#ffe08a;--sh-boss:var(--gold);--sh-q:#f2f0e8;filter:drop-shadow(0 2px 6px color-mix(in srgb,#2c56b8 45%,transparent))}
-.wd.miss .shield{--sh-rim:color-mix(in srgb,var(--danger) 70%,var(--iron));--sh-face:color-mix(in srgb,var(--wood) 70%,var(--danger) 12%);--sh-pl:var(--wood-d);--sh-rv:var(--iron);--sh-boss:var(--iron);opacity:.85}
-.wd.today .shield{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--ink) 35%,transparent))}
-.wd.today.done .shield{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--gold) 70%,transparent))}
+.shield .sh-boss{fill:var(--sh-boss);stroke:#000;stroke-opacity:.35;stroke-width:.7}
+.shield .sh-qa{fill:var(--sh-qa)}.shield .sh-qb{fill:var(--sh-qb)}
+.shield .sh-gap{fill:none;stroke:var(--bg);stroke-width:1.4;stroke-linejoin:round}
+.shield .sh-spl{fill:none;stroke:var(--sh-face2);stroke-width:1.1;stroke-linecap:round}
+:root{--wood:#c49a64;--wood2:#ae8550;--iron:#8a929e;--bronze:#c9962c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--wood:#6b5034;--wood2:#5a4229;--iron:#8a929e;--bronze:#d4a72c}}
+:root[data-theme="dark"]{--wood:#6b5034;--wood2:#5a4229;--iron:#8a929e;--bronze:#d4a72c}
+.wd .shield{--sh-rim:var(--line);--sh-face:transparent;--sh-face2:transparent;--sh-rv:var(--line);--sh-boss:var(--line)}
+.wd .shield .sh-gr{stroke-opacity:0}
+.wd:not(.plan):not(.comp):not(.done):not(.miss) .shield{opacity:.5}
+.wd:not(.plan):not(.comp):not(.done):not(.miss) .shield .sh-rimhl{stroke:none}
+.wd.plan .shield,.wd.comp .shield,.wd.done .shield,.wd.miss .shield{--sh-face:var(--wood);--sh-face2:var(--wood2)}
+.wd.plan .shield .sh-gr,.wd.comp .shield .sh-gr,.wd.done .shield .sh-gr,.wd.miss .shield .sh-gr{stroke-opacity:.18}
+.wd.plan .shield{--sh-rim:var(--iron);--sh-rv:#d9dde3;--sh-boss:var(--iron)}
+.wd.comp .shield{--sh-rim:var(--bronze);--sh-rv:#ffe9a8;--sh-boss:var(--bronze)}
+.wd.done .shield{--sh-rim:var(--bronze);--sh-rv:#fff3c4;--sh-boss:var(--bronze);--sh-qa:#2c56b8;--sh-qb:#efe9da;filter:drop-shadow(0 3px 6px rgb(0 0 0 / .35))}
+.wd.miss .shield{--sh-rim:#6d6560;--sh-rv:#9a918a;--sh-boss:#6d6560;--sh-face:color-mix(in srgb,var(--wood) 62%,#4a120c);--sh-face2:color-mix(in srgb,var(--wood2) 62%,#4a120c);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--danger) 55%,transparent))}
+.wd.today .shield{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ink) 35%,transparent))}
+.wd.today.done .shield{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--bronze) 75%,transparent))}
 .wd.paused .shield{opacity:.4}
 .wd.armed .shield{--sh-rim:var(--danger)}
 .actdot.under{display:block;margin:3px auto 0;width:6px;height:6px}
@@ -761,13 +766,22 @@ function arm(key){S.armed=key;clearTimeout(armTimer);armTimer=setTimeout(()=>{S.
 /* ---------- views ---------- */
 function nextId(){const ws=S.plan.workouts.filter(w=>w.ex.length);if(!ws.length)return (S.plan.workouts[0]||{}).id;const ids=ws.map(w=>w.id);const since=S.plan.since||'';
   const last=S.sessions.find(x=>!x.custom&&ids.includes(x.workoutId)&&(!since||x.date>=since));return last?ids[(ids.indexOf(last.workoutId)+1)%ids.length]:ids[0]}
-function shieldSvg(st){const rv=[0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180;return `<circle cx="${(20+16.6*Math.cos(r)).toFixed(1)}" cy="${(20+16.6*Math.sin(r)).toFixed(1)}" r="1" class="sh-rv"/>`}).join('');
-  return `<svg class="shield" viewBox="0 0 40 40" aria-hidden="true"><defs><clipPath id="shc"><circle cx="20" cy="20" r="15.6"/></clipPath></defs>
-  <circle cx="20" cy="20" r="17.4" class="sh-rim"/><circle cx="20" cy="20" r="15.6" class="sh-face"/>
-  <g clip-path="url(#shc)" class="sh-pl"><path d="M12.5 3v34M20 3v34M27.5 3v34"/></g>
-  ${st==='done'?'<g clip-path="url(#shc)"><path d="M20 4.4A15.6 15.6 0 0 1 35.6 20H20z M20 35.6A15.6 15.6 0 0 1 4.4 20H20z" class="sh-q"/></g>':''}
-  ${rv}${st==='miss'?'<path d="M24.5 4.8l-3 6.2 3.2 3.4-4.4 5.6 2.6 3.8-3.6 7" class="sh-crack"/>':''}
-  <circle cx="20" cy="20" r="${st==='done'?5.4:4.4}" class="sh-boss"/><circle cx="18.6" cy="18.6" r="${st==='done'?1.9:1.4}" class="sh-hl"/></svg>`}
+function shieldSvg(st){const C=22,R=18;
+  const rv=Array.from({length:10},(_,k)=>{const a=k*36*Math.PI/180;return `<circle cx="${(C+19.6*Math.cos(a)).toFixed(2)}" cy="${(C+19.6*Math.sin(a)).toFixed(2)}" r="1.05" class="sh-rv"/>`}).join('');
+  const planks=[0,1,2,3,4,5].map(k=>`<rect x="${4+k*6.2}" y="2" width="6.2" height="40" class="${k%2?'sh-p2':'sh-p1'}"/><path d="M${4+k*6.2+2.2} 4 q1.2 9 -.4 18 t.6 18" class="sh-gr"/>`).join('');
+  const face=`<g clip-path="url(#shC)">${planks}${st==='done'?`<path d="M${C} ${C-R}A${R} ${R} 0 0 1 ${C+R} ${C}H${C}z M${C} ${C+R}A${R} ${R} 0 0 1 ${C-R} ${C}H${C}z" class="sh-qa"/><path d="M${C+R} ${C}A${R} ${R} 0 0 1 ${C} ${C+R}V${C}z M${C-R} ${C}A${R} ${R} 0 0 1 ${C} ${C-R}V${C}z" class="sh-qb"/>`:''}<circle cx="${C}" cy="${C}" r="${R}" fill="url(#shShade)"/></g>`;
+  const rim=`<circle cx="${C}" cy="${C}" r="19.6" class="sh-rim"/><circle cx="${C}" cy="${C}" r="19.6" class="sh-rimhl"/>${rv}`;
+  const boss=`<circle cx="${C}" cy="${C}" r="${st==='done'?5.8:5}" class="sh-boss"/><circle cx="${C}" cy="${C}" r="${st==='done'?5.8:5}" fill="url(#shDome)"/>`;
+  const defs=`<defs><clipPath id="shC"><circle cx="${C}" cy="${C}" r="${R}"/></clipPath>
+    <radialGradient id="shShade" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
+    <radialGradient id="shDome" cx="36%" cy="32%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".35" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+    <linearGradient id="shRimG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+    <clipPath id="shL"><path d="M0 0H23.5L21 7.5 24.8 13 20.2 19.5 23.6 25.5 19.4 32 22.4 37.5 20 44H0z"/></clipPath>
+    <clipPath id="shR"><path d="M44 0H23.5L21 7.5 24.8 13 20.2 19.5 23.6 25.5 19.4 32 22.4 37.5 20 44H44z"/></clipPath></defs>`;
+  const whole=`${face}${rim}${boss}`;
+  const body=st==='miss'?`<g clip-path="url(#shL)" transform="rotate(-7 22 34) translate(-1.6 1)">${whole}</g><g clip-path="url(#shR)" transform="rotate(6 22 34) translate(1.5 .8)">${whole}</g>
+    <path d="M23.5 1.5 21 7.5 24.8 13 20.2 19.5 23.6 25.5 19.4 32 22.4 37.5 20 43" class="sh-gap"/><path d="M14 10l-3-2.5M30 34l3 2M16 33l-2.6 2.4" class="sh-spl"/>`:whole;
+  return `<svg class="shield" viewBox="0 0 44 44" aria-hidden="true">${defs}${body}</svg>`}
 function weekStrip(){const now=new Date();const start=weekStart(now);
   const days=visitSet(),acts=actSet();const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const done=days.has(dayKey(d));if(done)n++;
