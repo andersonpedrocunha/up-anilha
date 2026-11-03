@@ -417,6 +417,11 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 .hmleg{display:flex;align-items:center;gap:4px;justify-content:flex-end;font-size:11px;color:var(--muted);margin-top:6px}.hmleg i{width:11px;height:11px;border-radius:2.5px;display:inline-block}.hmleg i.hm0{background:var(--sunk)}.hmleg i.hm1{background:color-mix(in srgb,#4aa3ff 45%,var(--sunk))}.hmleg i.hm2{background:color-mix(in srgb,var(--accent) 60%,var(--sunk))}.hmleg i.hm3{background:var(--accent)}
 .calkpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.calkpi div{background:var(--sunk);border-radius:12px;padding:8px}.calkpi b{display:block;font-family:var(--display);font-size:22px;line-height:1.1}.calkpi small{font-size:13px;color:var(--muted)}.calkpi span{font-size:11px;color:var(--muted)}
 .chart .cdef,.lg.cdef{fill:#4aa3ff;background:#4aa3ff}.chart .csur,.lg.csur{fill:var(--ember);background:var(--ember)}.chart .cnone,.lg.cnone{fill:var(--line);background:var(--line)}.hmleg i.lg{width:10px;height:10px;border-radius:2px;display:inline-block}
+.actcalc{display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--gold)}.actcalc .big{display:flex;align-items:baseline;gap:6px}.actcalc b#actK{transition:opacity .2s}
+.calcdots{display:none;gap:3px;margin-left:6px}.calcdots i{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;animation:cd 0.9s infinite ease-in-out}.calcdots i:nth-child(2){animation-delay:.15s}.calcdots i:nth-child(3){animation-delay:.3s}
+.actcalc.busy .calcdots{display:inline-flex}.actcalc.busy b#actK,.actcalc.busy #actLine{opacity:.25}
+@keyframes cd{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.calcdots i{animation:none}}
 .ctip{position:fixed;z-index:70;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;padding:6px 9px;border-radius:8px;pointer-events:none;max-width:240px;box-shadow:0 6px 18px rgb(0 0 0 / .3)}
 nav.tabs button:focus{outline:none}nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
 .shieldkey{display:block;font-size:11px;opacity:.85;margin-bottom:2px}
@@ -678,7 +683,7 @@ function viewMetas(){const L=gList();const nt=S.gNew||'gym',T=GT[nt];const tv=S.
 function goalAll(){return (goals().counts||'gym')==='all'}
 function isGym(s){return goalAll()||!s.activity}
 function gNoun(n){return goalAll()?(n===1?'dia de exercício':'dias de exercício'):(n===1?'ida à academia':'idas à academia')}
-const CGT=[['pilates','Pilates'],['lutas','Lutas'],['crossfit','Crossfit'],['futebol','Futebol'],['basquete','Basquete'],['volei','Vôlei'],['raquete','Tênis / beach tennis / padel'],['yoga','Yoga'],['spinning','Spinning'],['bike','Bicicleta (rua)'],['bike_erg','Bicicleta ergométrica'],['corrida','Corrida'],['esteira_corrida','Esteira (corrida)'],['caminhada','Caminhada'],['natacao','Natação'],['abs','Treino de abdômen'],['fora','Qualquer atividade fora'],['academia','Academia']];
+const CGT=[['pilates','Pilates'],['lutas','Lutas'],['crossfit','Crossfit'],['futebol','Futebol'],['basquete','Basquete'],['volei','Vôlei'],['beach','Beach tennis'],['raquete','Tênis / padel'],['yoga','Yoga'],['spinning','Spinning'],['bike','Bicicleta (rua)'],['bike_erg','Bicicleta ergométrica'],['corrida','Corrida'],['esteira_corrida','Esteira (corrida)'],['caminhada','Caminhada'],['natacao','Natação'],['abs','Treino de abdômen'],['fora','Qualquer atividade fora'],['academia','Academia']];
 function cgMatch(t,x){if(t==='fora')return !!x.activity;if(t==='academia')return !x.activity;if(t==='abs')return x.workoutId==='ABS'||/abd[oô]men/i.test(x.name||'');if(t==='bike')return x.activity==='bike';return x.activity===t}
 function customGoals(){const g=goals();if(!Array.isArray(g.custom))g.custom=[];return g.custom}
 function cgProgress(c){const ws=weekStart(new Date()),we=new Date(ws.getTime()+7*864e5);return new Set(S.sessions.filter(x=>{const t=new Date(x.date);return t>=ws&&t<we&&cgMatch(c.type,x)}).map(x=>dayKey(x.date))).size}
@@ -1915,7 +1920,7 @@ const MET={
  musc_casa:['Musculação em casa',3.5,5,6,'casa'],funcional:['Funcional / HIIT',3.8,6,8,'casa'],corda:['Pular corda',8.8,11,12.3,'casa'],
  pilates:['Pilates',2.8,3.5,4.5,'aula'],yoga:['Yoga',2.5,3,4,'aula'],crossfit:['Crossfit',5.5,8,10,'aula'],spinning:['Spinning',5.5,8.5,11,'aula'],lutas:['Lutas (jiu-jitsu, muay thai, boxe…)',5.5,7.8,10.3,'aula'],danca:['Dança',4.5,5.5,7.8,'aula'],natacao:['Natação',5.8,7,9.8,'aula'],hidro:['Hidroginástica',3.5,4.5,5.5,'aula'],
  bike:['Bicicleta na rua',4,6.8,10,'rua'],caminhada:['Caminhada',3,3.8,5,'rua'],corrida:['Corrida',7,9.8,11.5,'rua'],trilha:['Trilha',5.3,6,7.8,'rua'],patins:['Patins / skate',4,6,9,'rua'],remo:['Remo / canoa',3.5,5.8,8.5,'rua'],surf:['Surf / SUP',3,5,6,'rua'],escalada:['Escalada',5.8,7.5,8,'rua'],
- futebol:['Futebol',5,7,10,'esporte'],basquete:['Basquete',4.5,6.5,8,'esporte'],volei:['Vôlei',3,4,6,'esporte'],raquete:['Tênis, beach tennis, padel',4.5,7,8,'esporte'],handebol:['Handebol',6,8,10,'esporte'],outro:['Outra atividade',3.5,5,7,'esporte']};
+ futebol:['Futebol',5,7,10,'esporte'],basquete:['Basquete',4.5,6.5,8,'esporte'],volei:['Vôlei',3,4,6,'esporte'],beach:['Beach tennis',5,7,8.5,'esporte'],raquete:['Tênis / padel',4.5,7,8,'esporte'],handebol:['Handebol',6,8,10,'esporte'],outro:['Outra atividade',3.5,5,7,'esporte']};
 const MET_GROUPS=[['aula','Aulas e estúdio'],['casa','Em casa'],['rua','Ao ar livre'],['esporte','Esportes e outros']];
 const INTN=['leve','moderada','intensa'];
 function sessionKcal(s){if(s.checkin)return 0;if(s.activity){const m=MET[s.activity]||MET.outro;return kcalFor(m[1+(s.intensity??1)],s.minutes||0)}
@@ -1928,13 +1933,19 @@ function gymKcal(ex,min){if(!ex||!ex.length)return kcalFor(MET_GYM,min);const g=
 function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 
 /* ---------- atividades ---------- */
-function actK(){const a=S.act,m=MET[a.type];return kcalFor(m[1+a.int],a.min)}
+function actK(){const a=S.act,m=MET[a.type]||MET.outro;return kcalFor(m[1+a.int],a.min)}
+function topActs(){const c={};S.sessions.filter(x=>x.activity).forEach(x=>c[x.activity]=(c[x.activity]||0)+1);const mine=Object.entries(c).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);return [...new Set([...mine.slice(0,3),'futebol','beach','caminhada','corrida','bike','pilates'])].filter(k=>MET[k]).slice(0,6)}
+function actLine(){const a=S.act,m=MET[a.type]||MET.outro,k=actK(),nm=a.type==='outro'?(a.cname||'essa atividade'):m[0].toLowerCase(),it=['leve','moderada','intensa'][a.int];
+  const flair={futebol:'Pelada também é treino de guerreiro.',beach:'Areia cobra perna e fôlego.',corrida:'Cada km é uma runa a mais na saga.',bike:'Roda girando, motor queimando.',pilates:'Core forte segura qualquer barra.',lutas:'Arte de guerra de verdade.',crossfit:'Intensidade de berserker.',yoga:'Mobilidade é armadura.',natacao:'Fôlego de quem cruza fiordes.'}[a.type]||'Movimento é movimento.';
+  return `${a.min} min de ${nm}, ${it}: cerca de ${k} kcal pelo seu peso. ${flair}`}
+function actCalc(){const c=document.getElementById('actCalc');if(!c)return;c.classList.add('busy');clearTimeout(c._t);c._t=setTimeout(()=>{c.classList.remove('busy');actRefresh();const l=document.getElementById('actLine');if(l)l.textContent=actLine()},420)}
 function actRefresh(){const k=document.getElementById('actK');if(k)k.textContent=actK();const x=document.getElementById('actX');if(x)x.textContent='+'+(40+Math.min(S.act.min,90))+' XP'}
 function viewAtiv(){if(!S.act)S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:todayISO(),note:''};const a=S.act;
   return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Registrar atividade</div></div>
   <h2>O que você fez?</h2>
   <div class="row gpxrow"><label class="btn ghost sm" for="gpxIn" style="cursor:pointer">↥ Importar GPX</label><input type="file" id="gpxIn" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden><span class="muted" style="font-size:12px;flex:1;min-width:0">Strava, Garmin, relógio… <button class="linkbtn" data-act="gpxhelp" style="font-size:12px">como exportar</button></span></div>
   ${S.gpxHelp?`<div class="muted" style="font-size:12px;display:flex;flex-direction:column;gap:3px;margin-top:-6px"><span><b>Strava:</b> atividade no site → ⋯ → Exportar GPX.</span><span><b>Garmin Connect:</b> atividade → engrenagem → Exportar para GPX.</span><span><b>Polar, Coros, Suunto:</b> na atividade, Exportar → GPX.</span></div>`:''}
+  <div class="eyebrow" style="margin-top:4px">Mais escolhidos</div><div class="chips">${topActs().map(k=>`<button class="chip sm" data-act="atype" data-v="${k}" aria-pressed="${a.type===k}">${MET[k][0]}</button>`).join('')}</div>
   ${MET_GROUPS.map(([gk,gl])=>`<div class="eyebrow" style="margin-top:4px">${gl}</div><div class="chips">${Object.entries(MET).filter(([k,v])=>v[4]===gk).map(([k,v])=>`<button class="chip sm" data-act="atype" data-v="${k}" aria-pressed="${a.type===k}">${v[0]}</button>`).join('')}</div>`).join('')}
   ${a.type==='outro'?`<label class="field">Qual atividade?<input id="actName" class="wname" value="${esc(a.cname||'')}" placeholder="Ex.: Capoeira, handebol de praia, slackline"></label>`:''}
   ${(()=>{const t=a.date||todayISO();const L=S.sessions.filter(x=>isoOf(x.date)===t);return L.length?`<div class="muted" style="font-size:13px">Já registrado ${t===todayISO()?'hoje':'nesse dia'}: ${L.map(x=>esc(x.name)).join(' · ')}. Pode somar quantas atividades quiser.</div>`:''})()}
@@ -1945,8 +1956,8 @@ function viewAtiv(){if(!S.act)S.act={type:LS.get('ct.lastAct','bike_erg'),min:30
   <div class="opts">${[['Leve','Dá para conversar tranquilo'],['Moderada','Respiração acelerada, ainda fala frases'],['Intensa','Difícil falar, suor forte']].map(([t,sb],i)=>opt('aint',i,a.int,t,sb)).join('')}</div>
   <h3>Quando?</h3><input type="date" id="actDate" class="wname" value="${a.date}" max="${todayISO()}" aria-label="Data">
   <label class="field">Observação (opcional)<input id="actNote" class="wname" value="${esc(a.note)}" placeholder="Ex.: pedal na orla, 12 km"></label>
-  <div class="card kcalcard"><div><div class="eyebrow">Calorias estimadas</div><div class="big num"><b id="actK">${actK()}</b><span>kcal</span></div></div><div class="xpchip" id="actX">+${40+Math.min(a.min,90)} XP</div></div>
-  ${hasBody()?'':`<p class="muted" style="margin:0;font-size:13px">Estimativa usando 70 kg. <button class="linkbtn" data-act="go" data-v="perfil">Informe idade, peso e altura</button> para um cálculo mais preciso.</p>`}
+  ${hasBody()?`<div class="card actcalc" id="actCalc"><div class="row">${coachAv(36)}<div style="min-width:0;flex:1"><div class="eyebrow">${COACH} calculou</div><div class="big num"><b id="actK">${actK()}</b><span>kcal</span><i class="calcdots"><i></i><i></i><i></i></i></div></div><div class="xpchip" id="actX">+${40+Math.min(a.min,90)} XP</div></div><p id="actLine" style="margin:0;font-size:13px">${esc(actLine())}</p></div>`
+   :`<div class="card actcalc"><div class="row">${coachAv(36)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><b>Me diz seu peso que eu calculo suas calorias.</b></div></div><div class="row"><input id="actW" class="wname" inputmode="decimal" placeholder="Peso (kg)" style="width:120px"><button class="btn primary sm" data-act="actw">Calcular</button></div><div class="muted" style="font-size:12px">Idade e altura deixam ainda mais preciso, no seu perfil.</div></div>`}
   <button class="btn primary big" data-act="asave">Salvar atividade</button></div>`}
 
 /* ---------- gamificação ---------- */
@@ -2221,9 +2232,10 @@ main.addEventListener('click',e=>{
       regDay(iso);return}
     case 'look':LS.set('ct.look',+b.dataset.v);break;
     case 'ativ':S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:todayISO(),note:''};S.view='ativ';window.scrollTo(0,0);break;
-    case 'atype':{const n=document.getElementById('actName');if(n)S.act.cname=n.value;S.act.type=b.dataset.v;break}
-    case 'amin':S.act.min=+b.dataset.v;break;
-    case 'aint':S.act.int=+b.dataset.v;break;
+    case 'atype':{const n=document.getElementById('actName');if(n)S.act.cname=n.value;S.act.type=b.dataset.v;render();actCalc();return}
+    case 'amin':S.act.min=+b.dataset.v;render();actCalc();return;
+    case 'aint':S.act.int=+b.dataset.v;render();actCalc();return;
+    case 'actw':{const w=parseFloat(String(document.getElementById('actW').value).replace(',','.'));if(!(w>25&&w<300)){toast('Coloca seu peso em kg, tipo 82.');return}body().weight=w;saveUser();render();actCalc();return}
     case 'asave':{const a=S.act;if(!a.min){toast('Quanto tempo? Sem isso eu não calculo nada.');return}const today=a.date===todayISO();const d=today?new Date():new Date(a.date+'T12:00:00');
       const m=MET[a.type]||MET.outro;LS.set('ct.lastAct',a.type);const cn=a.type==='outro'?((document.getElementById('actName')||{}).value||'').trim().slice(0,40):'';const sess={id:uid(),date:d.toISOString(),activity:a.type,workoutId:'+',name:cn||m[0],minutes:a.min,intensity:a.int,durationSec:a.min*60,note:a.note,ex:[]};sess.kcal=sessionKcal(sess);
       addSession(sess);S.act=null;S.view='hoje';window.scrollTo(0,0);render();celebrate(`${m[0]} anotada. Guerreiro se move até fora da arena. ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);return}
@@ -2319,7 +2331,7 @@ main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chat
   if(f==='wzr'&&S.wz){const r=S.wz.restr,k=t.dataset.k;if(t.checked&&!r.includes(k))r.push(k);if(!t.checked&&r.includes(k))r.splice(r.indexOf(k),1);S.wzPlan=null;return}
   if(f==='uname'){S.user.name=t.value;saveUser();return}
   if(f==='body'){body()[t.dataset.k]=t.dataset.k==='sex'?t.value:String(t.value).replace(',','.');saveUser();return}
-  if(t.id==='actMin'&&S.act){S.act.min=Math.max(1,Math.min(600,+t.value||0));actRefresh();return}
+  if(t.id==='actMin'&&S.act){S.act.min=Math.max(1,Math.min(600,+t.value||0));actCalc();return}
   if(t.id==='actDate'&&S.act){S.act.date=t.value;return}
   if(t.id==='actNote'&&S.act){S.act.note=t.value;return}if(!f)return;
   if(f==='restr'){const r=restr(),k=t.dataset.k;if(t.checked&&!r.includes(k))r.push(k);if(!t.checked)r.splice(r.indexOf(k),1);const n=adaptPlan();savePlan();render();
