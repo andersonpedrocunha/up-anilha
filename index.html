@@ -305,6 +305,8 @@ a.btn .coachav{margin-right:8px}
 .cbox-in h3{font-size:20px}.cbox-in p{margin:0;color:var(--muted);line-height:1.45}
 .cbtns{justify-content:flex-end}.cbtns .btn{flex:1}
 .btn.dangerfill{background:var(--danger);color:#fff}
+.btn.startlisten{flex-direction:column;gap:2px;text-decoration:none;color:var(--accent-ink)}.btn.startlisten span{color:inherit;font-size:inherit}.btn.startlisten small{font-family:var(--body);font-size:13px;text-transform:none;letter-spacing:0;font-weight:600;opacity:.85}
+.svc.pref{border-color:var(--accent)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);background:#141a2e;color:#f4f1ea;border:1px solid #f2c23066;padding:10px 16px 10px 10px;border-radius:16px;font-weight:600;z-index:40;font-size:14px;line-height:1.35;width:max-content;max-width:min(440px,calc(100% - 32px));box-shadow:0 10px 30px rgb(0 0 0 / .35)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -454,7 +456,6 @@ function viewHoje(){
   </div>`;
   return `<div class="stack">
     <div class="row"><button class="ic" data-act="untrain" aria-label="Voltar">←</button><div class="eyebrow" style="flex:1">Treinar</div></div>
-    ${audioBar()}
     <div class="stack" style="gap:10px">
       <div class="eyebrow">Escolha o treino</div>
       <div class="chips">${S.plan.workouts.map(x=>`<button class="chip" data-act="pick" data-id="${x.id}" aria-pressed="${x.id===w.id}">${x.day!=null?DAYN[x.day].slice(0,3):esc(x.id)}</button>`).join('')}</div>
@@ -463,7 +464,9 @@ function viewHoje(){
       <div class="row"><div class="plate">${esc(w.id)}</div><div style="min-width:0"><div class="eyebrow">${w.day!=null?DAYN[w.day]+(w===todayW?' · hoje':''):(w.id===S.plan.next?'Próximo da rotina':'Treino '+esc(w.id))} · ~${estMin(w)} min</div><h2>${esc(w.name)}</h2></div></div>
       <ul class="exlist">${w.ex.map(e=>{const l=lastFor(e.id,e.name);const top=l?Math.max(...l.sets.map(t=>+t.kg||0)):0;
         return `<li><div class="n"><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button>${issues(e.name).length?' <span class="flag">⚠ adaptar</span>':''}${e.orig?' <span class="flag ok">adaptado</span>':''}${top?`<div class="muted num" style="font-size:13px;font-weight:400">Última: ${fmtKg(top)} kg</div>`:''}</div><div class="t">${e.sets} × ${esc(e.reps)}<br>${mmss(e.rest)}</div></li>`}).join('')||'<li class="muted">Sem exercícios. Adicione na aba Rotina.</li>'}</ul>
-      <button class="btn primary big" data-act="start" data-id="${w.id}" ${w.ex.length?'':'disabled'}>Começar treino ${esc(w.id)}</button>
+      ${(()=>{const au=audioFor(w.id);return au&&w.ex.length?`<a class="btn primary big startlisten" href="${esc(au.url)}" target="_blank" rel="noopener" data-act="startlisten" data-id="${w.id}" data-aid="${au.id}" data-w="${w.id}"><span>Começar e ouvir</span><small>${esc(au.label||svcOf(au.url)[1])}</small></a>
+      <button class="btn ghost" data-act="start" data-id="${w.id}">Começar sem ouvir nada</button>`:`<button class="btn primary big" data-act="start" data-id="${w.id}" ${w.ex.length?'':'disabled'}>Começar treino ${esc(w.id)}</button>`})()}
+      ${audioBar(w)}
     </div>
     ${stretchCard(w.ex,false)}
   </div>`}
@@ -744,7 +747,7 @@ function viewSession(){
   const a=S.active;const total=a.ex.reduce((n,e)=>n+e.sets.length,0),done=a.ex.reduce((n,e)=>n+e.sets.filter(s=>s.done).length,0);
   return `<div class="stack">
     <div class="row"><div class="plate">${esc(a.workoutId)}</div><div style="min-width:0;flex:1"><div class="eyebrow">Em andamento · <span id="elapsed" class="num">0:00</span> · <span id="kcalLive" class="num">0</span> kcal</div><h2>${esc(a.name)}</h2></div></div>
-    ${audioBar()}
+    ${audioBar(W(a.workoutId)||{id:a.workoutId,name:a.name})}
     ${careCard()}
     <div class="row"><div class="progress" style="flex:1"><i style="width:${total?done/total*100:0}%"></i></div><span class="muted num" style="font-size:13px">${done}/${total} séries</span></div>
     ${a.ex.map((e,ei)=>{const l=lastFor(e.exId,e.name);
@@ -868,15 +871,25 @@ const KINDS={musica:'Música',podcast:'Podcast',audiobook:'Audiobook'};
 function svcOf(url){const u=String(url||'').toLowerCase();return SERVICES.find(x=>x[2].test(u))||['link','Link',null,url,'var(--muted)']}
 function audios(){if(!Array.isArray(S.user.audio))S.user.audio=[];return S.user.audio}
 function safeUrl(u){u=String(u||'').trim();if(!/^https?:\/\//i.test(u))u='https://'+u;try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}}
-function audioBar(){const A=audios().slice().sort((a,b)=>(b.used||0)-(a.used||0));
+function audioBy(){if(!S.user.audioBy||typeof S.user.audioBy!=='object')S.user.audioBy={};return S.user.audioBy}
+function audioFor(wid){const A=audios();if(!A.length)return null;const id=audioBy()[wid];return A.find(x=>x.id===id)||A.slice().sort((a,b)=>(b.used||0)-(a.used||0))[0]}
+function audioQuip(au,w){if(!au)return '';const L=au.label||svcOf(au.url)[1],wn=(w&&w.name||'treino').toLowerCase(),again=audioBy()[w&&w.id]===au.id;
+  if(au.kind==='podcast')return again?`${L} de novo? ${w&&w.name?w.name+' combina':'Combina'} com cabeça ocupada. Só não esquece de contar as séries.`:`${L} no fone. Ouve, pensa e levanta.`;
+  if(au.kind==='audiobook')return again?`Mais um capítulo de ${L}. Corpo e cabeça crescendo juntos.`:`${L} hoje? Um capítulo por exercício e a saga segue.`;
+  return again?`${L} de novo para ${wn}. Time que está ganhando não se mexe.`:`${L} no volume máximo e carga na barra.`}
+function audioBar(w){const wid=w&&w.id;const pref=wid?audioFor(wid):null;const A=audios().slice().sort((a,b)=>(pref&&a.id===pref.id?-1:pref&&b.id===pref.id?1:(b.used||0)-(a.used||0)));
   if(!A.length)return `<div class="card audio"><div class="row" style="justify-content:space-between"><b>O que vai ouvir?</b><button class="btn ghost sm" data-act="audioedit">Salvar link</button></div>
     <div class="svcs">${SERVICES.filter(x=>['spotify','ytmusic','audible','amazon','apple'].includes(x[0])).map(x=>`<a class="svc" href="${x[3]}" target="_blank" rel="noopener" data-svc="${x[0]}"><i style="background:${x[4]}"></i>${x[1]}</a>`).join('')}</div>
     <div class="muted" style="font-size:12px">Música, podcast ou audiobook. Salve o link da sua playlist ou do livro e abra com um toque.</div></div>`;
   return `<div class="card audio"><div class="row" style="justify-content:space-between"><b>Ouvir agora</b><button class="btn ghost sm" data-act="audioedit">Editar</button></div>
-    <div class="svcs">${A.slice(0,6).map(a=>{const v=svcOf(a.url);return `<a class="svc big" href="${esc(a.url)}" target="_blank" rel="noopener" data-aid="${a.id}"><i style="background:${v[4]}"></i><span><b>${esc(a.label||v[1])}</b><small>${KINDS[a.kind]||''}${KINDS[a.kind]?' · ':''}${v[1]}</small></span></a>`}).join('')}</div></div>`}
+    ${pref?`<div class="dtip">${coachAv(28)}<span class="muted" style="font-size:14px">${esc(audioQuip(pref,w))}</span></div>`:''}
+    <div class="svcs">${A.slice(0,6).map(a=>{const v=svcOf(a.url);return `<a class="svc big ${pref&&a.id===pref.id?'pref':''}" href="${esc(a.url)}" target="_blank" rel="noopener" data-aid="${a.id}" ${wid?`data-w="${esc(wid)}"`:''}><i style="background:${v[4]}"></i><span><b>${esc(a.label||v[1])}</b><small>${pref&&a.id===pref.id?'Para este treino · ':''}${KINDS[a.kind]||''}${KINDS[a.kind]?' · ':''}${v[1]}</small></span></a>`}).join('')}</div></div>`}
 function viewAudio(){const A=audios();
   return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="${S.audioBack||'hoje'}" aria-label="Voltar">←</button><div class="eyebrow">O que ouvir no treino</div></div>
   <div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>Música para levantar, podcast para pensar, audiobook para crescer por dentro também. Salve aqui e eu deixo a um toque no seu treino.</p></div></div>
+  <div class="card stack"><h3>Onde isso aparece</h3>
+    <ol class="steps"><li>Na tela inicial, toque em <b>Treinar</b>.</li><li>O botão vira <b>Começar e ouvir</b>: um toque inicia o treino e abre seu podcast, playlist ou audiobook no app de origem.</li><li>Durante o treino, o cartão <b>Ouvir agora</b> fica no topo para você trocar.</li><li>Eu lembro o que você ouve em cada treino e sugiro de novo na próxima vez.</li></ol>
+    <p class="muted" style="font-size:12px;margin:0">O app abre o conteúdo, mas o play, pause e a troca de faixa acontecem no app de música ou audiobook.</p></div>
   <div class="card stack"><h3>Adicionar</h3>
     <label class="field">Link<input id="auUrl" class="wname" inputmode="url" placeholder="Cole o link do Spotify, YouTube, Audible, Amazon Music…" value="${esc(S.auDraft&&S.auDraft.url||'')}"></label>
     <label class="field">Nome (opcional)<input id="auLabel" class="wname" placeholder="Ex.: Playlist pesada, Hábitos Atômicos" value="${esc(S.auDraft&&S.auDraft.label||'')}"></label>
@@ -885,7 +898,7 @@ function viewAudio(){const A=audios();
     <p class="muted" style="font-size:12px;margin:0">Como pegar o link: no app de música, podcast ou audiobook, toque em Compartilhar e depois em Copiar link.</p></div>
   ${A.length?`<div class="card stack"><h3>Salvos</h3>${A.map(a=>{const v=svcOf(a.url);return `<div class="aurow"><i style="background:${v[4]}"></i><div style="flex:1;min-width:0"><b>${esc(a.label||v[1])}</b><div class="muted" style="font-size:12px">${KINDS[a.kind]||''} · ${v[1]}</div></div><button class="ic" data-act="audel" data-id="${a.id}" aria-label="Remover">✕</button></div>`}).join('')}</div>`:''}
   </div>`}
-document.addEventListener('click',e=>{const a=e.target.closest('a[data-aid]');if(!a)return;const it=audios().find(x=>x.id===a.dataset.aid);if(it){it.used=Date.now();saveUser()}});
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-aid]');if(!a)return;const it=audios().find(x=>x.id===a.dataset.aid);if(it){it.used=Date.now();if(a.dataset.w)audioBy()[a.dataset.w]=it.id;saveUser()}});
 
 /* ---------- alongamento ---------- */
 const STRETCH=[
@@ -1312,6 +1325,7 @@ main.addEventListener('click',e=>{
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
+    case 'startlisten':{const au=audios().find(x=>x.id===b.dataset.aid);startSession(b.dataset.id);render();if(au)setTimeout(()=>toast(audioQuip(au,W(b.dataset.id))),300);return}
     case 'stretchgo':{const x=STRETCH.find(y=>y.k===b.dataset.k);if(!x||!S.active)return;S.rest={end:Date.now()+x.t*(x.side?2:1)*1000,label:x.n+(x.side?' (troque de lado na metade)':''),fired:false,kind:'stretch'};
       S.active.stretched=[...new Set([...(S.active.stretched||[]),x.k])];saveActive();break}
     case 'audioedit':S.audioBack=S.view==='audio'?'hoje':S.view;S.view='audio';window.scrollTo(0,0);break;
