@@ -295,6 +295,10 @@ a.btn .coachav{margin-right:8px}
 .svc i,.aurow i{width:10px;height:10px;border-radius:50%;flex:none}
 .svc.big{border-radius:12px;padding:8px 12px;flex:1 1 140px;min-width:0}.svc.big span{display:flex;flex-direction:column;min-width:0}.svc.big b{color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.svc.big small{font-size:11px;color:var(--muted);font-weight:500}
 .aurow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.aurow:first-of-type{border-top:0}
+.stretch summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.stretch summary::-webkit-details-marker{display:none}
+.strow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.strow b{display:block}.strow span{font-size:13px}.strow p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.strow.done b{color:var(--good)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);background:#141a2e;color:#f4f1ea;border:1px solid #f2c23066;padding:10px 16px 10px 10px;border-radius:16px;font-weight:600;z-index:40;font-size:14px;line-height:1.35;width:max-content;max-width:min(440px,calc(100% - 32px));box-shadow:0 10px 30px rgb(0 0 0 / .35)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -455,6 +459,7 @@ function viewHoje(){
         return `<li><div class="n"><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button>${issues(e.name).length?' <span class="flag">⚠ adaptar</span>':''}${e.orig?' <span class="flag ok">adaptado</span>':''}${top?`<div class="muted num" style="font-size:13px;font-weight:400">Última: ${fmtKg(top)} kg</div>`:''}</div><div class="t">${e.sets} × ${esc(e.reps)}<br>${mmss(e.rest)}</div></li>`}).join('')||'<li class="muted">Sem exercícios. Adicione na aba Rotina.</li>'}</ul>
       <button class="btn primary big" data-act="start" data-id="${w.id}" ${w.ex.length?'':'disabled'}>Começar treino ${esc(w.id)}</button>
     </div>
+    ${stretchCard(w.ex,false)}
   </div>`}
 
 function freqCard(wk){const g=goals(),now=new Date(),m0=new Date(now.getFullYear(),now.getMonth(),1),m1=new Date(now.getFullYear(),now.getMonth()+1,1);
@@ -750,6 +755,7 @@ function viewSession(){
         </div>
         <div class="ex-foot"><button class="btn ghost sm" data-act="addset" data-e="${ei}">+ Série</button>${e.sets.length>1?`<button class="btn ghost sm" data-act="rmset" data-e="${ei}">− Série</button>`:''}</div>
       </div>`}).join('')}
+    ${stretchCard(a.ex,true)}
     <button class="btn primary big ${S.armed==='finish'?'armed':''}" data-act="finish">${S.armed==='finish'?'Toque de novo para salvar':'Concluir treino'}</button>
     <button class="btn ghost danger ${S.armed==='discard'?'armed':''}" data-act="discard">${S.armed==='discard'?'Toque de novo para descartar':'Descartar treino'}</button>
   </div>`}
@@ -874,6 +880,39 @@ function viewAudio(){const A=audios();
   ${A.length?`<div class="card stack"><h3>Salvos</h3>${A.map(a=>{const v=svcOf(a.url);return `<div class="aurow"><i style="background:${v[4]}"></i><div style="flex:1;min-width:0"><b>${esc(a.label||v[1])}</b><div class="muted" style="font-size:12px">${KINDS[a.kind]||''} · ${v[1]}</div></div><button class="ic" data-act="audel" data-id="${a.id}" aria-label="Remover">✕</button></div>`}).join('')}</div>`:''}
   </div>`}
 document.addEventListener('click',e=>{const a=e.target.closest('a[data-aid]');if(!a)return;const it=audios().find(x=>x.id===a.dataset.aid);if(it){it.used=Date.now();saveUser()}});
+
+/* ---------- alongamento ---------- */
+const STRETCH=[
+ {k:'peito-parede',n:'Peito na parede',g:['peito','ombro'],t:30,side:1,how:'Antebraço apoiado no batente na altura do ombro. Gire o tronco para o lado oposto até sentir o peito abrir.',avoid:[]},
+ {k:'maos-costas',n:'Abertura com mãos atrás',g:['peito','ombro'],t:30,how:'Entrelace os dedos atrás das costas, braços esticados. Abra o peito e afaste as mãos do corpo, sem arquear a lombar.',avoid:['ombro']},
+ {k:'ombro-cruzado',n:'Ombro cruzado',g:['ombro','costas'],t:30,side:1,how:'Leve um braço esticado na frente do peito e puxe com a outra mão pelo cotovelo. Ombro longe da orelha.',avoid:[]},
+ {k:'triceps',n:'Tríceps atrás da cabeça',g:['triceps','ombro'],t:30,side:1,how:'Mão nas costas, entre as escápulas. A outra mão empurra o cotovelo de leve para trás.',avoid:['ombro']},
+ {k:'biceps',n:'Bíceps na parede',g:['biceps','peito'],t:30,side:1,how:'Palma na parede atrás de você, braço esticado na altura do ombro. Gire o corpo para longe da parede.',avoid:[]},
+ {k:'dorsal',n:'Dorsal no pilar',g:['costas'],t:30,side:1,how:'Segure um pilar ou batente com uma mão, quadril para trás e para o lado. Sinta a lateral das costas esticar.',avoid:[]},
+ {k:'crianca',n:'Postura da criança',g:['costas','core'],t:40,how:'Ajoelhado, sente nos calcanhares e leve os braços à frente no chão. Respire fundo e solte as costas.',avoid:['joelho']},
+ {k:'gato-vaca',n:'Gato e vaca',g:['costas','core'],t:40,how:'De quatro, alterne arredondar a coluna para cima e afundar devagar, no ritmo da respiração. Movimento pequeno e sem dor.',avoid:[]},
+ {k:'joelhos-peito',n:'Joelhos ao peito',g:['core','glut','costas'],t:40,how:'Deitado de costas, abrace os joelhos e traga para o peito. Balance de leve de um lado para o outro.',avoid:[]},
+ {k:'quadriceps',n:'Quadríceps em pé',g:['quad'],t:30,side:1,how:'Segure o pé atrás, calcanhar perto do glúteo, joelhos juntos. Apoie a outra mão na parede.',avoid:['joelho']},
+ {k:'quad-deitado',n:'Quadríceps deitado de lado',g:['quad'],t:30,side:1,how:'Deitado de lado, segure o pé de cima e leve o calcanhar ao glúteo sem forçar o joelho.',avoid:[]},
+ {k:'posterior-toalha',n:'Posterior com toalha',g:['post','quad'],t:30,side:1,how:'Deitado de costas, passe uma toalha na sola do pé e suba a perna esticada até sentir atrás da coxa. Lombar no chão.',avoid:[]},
+ {k:'figura4',n:'Glúteo em figura 4',g:['glut','post'],t:30,side:1,how:'Deitado, cruze o tornozelo sobre o joelho oposto e puxe a coxa de baixo em direção ao peito.',avoid:[]},
+ {k:'flexor',n:'Flexor do quadril',g:['quad','glut'],t:30,side:1,how:'Em posição de afundo com o joelho de trás no chão, empurre o quadril à frente. Tronco reto, abdômen firme.',avoid:['joelho']},
+ {k:'panturrilha',n:'Panturrilha na parede',g:['pant','quad'],t:30,side:1,how:'Mãos na parede, uma perna atrás esticada com o calcanhar no chão. Incline o corpo à frente.',avoid:[]},
+ {k:'pescoco',n:'Lateral do pescoço',g:['ombro','costas'],t:20,side:1,how:'Incline a cabeça para o lado, levando a orelha ao ombro, sem puxar com a mão. Ombro oposto relaxado.',avoid:['cervical']}];
+function exGroups(name){const n=norm(name),out=new Set();const L=LIB.find(x=>norm(x.n)===n);if(L)out.add(L.g);
+  [[/supino|crucifixo|crossover|voador|peck|chest/,'peito'],[/puxada|remada|serrote|barra fixa|pulldown|cavalinho/,'costas'],[/desenvolvimento|elevacao (lateral|frontal)|face pull|crucifixo inverso|encolhimento/,'ombro'],
+   [/triceps|mergulho/,'triceps'],[/rosca|biceps/,'biceps'],[/agachamento|leg ?press|extensora|afundo|passada|hack/,'quad'],[/flexora|stiff|terra/,'post'],[/pelvica|ponte|gluteo/,'glut'],[/panturrilha/,'pant'],[/prancha|abdominal|dead bug|perdigueiro|elevacao de pernas/,'core']].forEach(([r,g])=>{if(r.test(n))out.add(g)});return [...out]}
+function stretchesFor(exs){const gs=new Set();exs.forEach(e=>exGroups(e.name).forEach(g=>gs.add(g)));if(!gs.size)['quad','costas','ombro'].forEach(g=>gs.add(g));const R=restr();
+  const ok=STRETCH.filter(x=>!x.avoid.some(a=>R.includes(a)));const pickd=[];
+  for(const g of gs){const c=ok.find(x=>x.g[0]===g&&!pickd.includes(x))||ok.find(x=>x.g.includes(g)&&!pickd.includes(x));if(c)pickd.push(c)}
+  if(R.includes('lombar')){['joelhos-peito','gato-vaca'].forEach(k=>{const x=ok.find(y=>y.k===k);if(x&&!pickd.includes(x))pickd.push(x)})}
+  for(const x of ok){if(pickd.length>=5)break;if(!pickd.includes(x)&&x.g.some(g=>gs.has(g)))pickd.push(x)}return pickd.slice(0,6)}
+function stretchCard(exs,live){const L=stretchesFor(exs);const mins=Math.round(L.reduce((a,x)=>a+x.t*(x.side?2:1),0)/60);const done=new Set((S.active&&S.active.stretched)||[]);
+  return `<details class="card stretch" ${S.stretchOpen?'open':''}><summary><div style="flex:1;min-width:0"><div class="eyebrow">Opcional · ~${mins} min</div><h3>Alongamento</h3></div><span class="muted">${S.stretchOpen?'Fechar':'Ver'}</span></summary>
+    <div class="dtip" style="margin:10px 0 4px">${coachAv(28)}<span class="muted" style="font-size:14px">${live?'Terminou? Cinco minutos aqui e amanhã você agradece.':'Escolhidos para os músculos deste treino.'}${restr().length?' Já tirei o que não combina com suas restrições.':''}</span></div>
+    ${L.map(x=>`<div class="strow ${done.has(x.k)?'done':''}"><div style="flex:1;min-width:0"><b>${esc(x.n)}</b><span class="muted">${x.t} s${x.side?' cada lado':''}</span><p>${esc(x.how)}</p></div>
+      ${live?`<button class="btn ghost sm" data-act="stretchgo" data-k="${x.k}">${done.has(x.k)?'✓':x.t+'s'}</button>`:''}</div>`).join('')}
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Alongue até sentir tensão leve, nunca dor. Respire devagar e não balance.</p></details>`}
 
 function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Isso não é uma imagem. Escolhe uma foto.');return}const r=new FileReader();
   r.onload=()=>{const img=new Image();img.onload=()=>{const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');const m=Math.min(img.width,img.height);
@@ -1171,7 +1210,7 @@ function viewHist(){
 
 function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():viewHist());
-  renderAvatar();renderFab();{const n=document.querySelector('.navav');if(n)n.src=`driffa-face-${coachLook()}.jpg${AV}`}
+  renderAvatar();renderFab();document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`driffa-face-${coachLook()}.jpg${AV}`}
   const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
@@ -1207,7 +1246,7 @@ function tick(){
     if(left<=0&&!S.rest.fired){S.rest.fired=true;beep()}
     restEl.classList.toggle('done',left<=0);
     document.getElementById('restClock').textContent=left>0?mmss(left):'0:00';
-    document.getElementById('restLbl').textContent=left>0?'Descanso · '+S.rest.label:'Hora da próxima série';
+    document.getElementById('restLbl').textContent=left>0?(S.rest.kind==='stretch'?'Alongando · ':'Descanso · ')+S.rest.label:'Hora da próxima série';
     if(left<-20)S.rest=null;
   }else restEl.hidden=true;
 }
@@ -1225,6 +1264,8 @@ main.addEventListener('click',e=>{
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
+    case 'stretchgo':{const x=STRETCH.find(y=>y.k===b.dataset.k);if(!x||!S.active)return;S.rest={end:Date.now()+x.t*(x.side?2:1)*1000,label:x.n+(x.side?' (troque de lado na metade)':''),fired:false,kind:'stretch'};
+      S.active.stretched=[...new Set([...(S.active.stretched||[]),x.k])];saveActive();break}
     case 'audioedit':S.audioBack=S.view==='audio'?'hoje':S.view;S.view='audio';window.scrollTo(0,0);break;
     case 'aukind':S.auDraft=Object.assign(S.auDraft||{},{url:document.getElementById('auUrl').value,label:document.getElementById('auLabel').value,kind:b.dataset.v});break;
     case 'ausave':{const url=safeUrl(document.getElementById('auUrl').value);if(!url){toast('Cola um link válido. Compartilhar, copiar link.');return}
