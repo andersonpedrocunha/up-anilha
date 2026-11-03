@@ -284,6 +284,7 @@ a.btn .coachav{margin-right:8px}
 .navav{width:24px;height:24px;border-radius:50%;object-fit:cover;border:1.5px solid currentColor}
 .toast.dt{display:flex;align-items:center;gap:8px;text-align:left}.toast .coachav{width:26px;height:26px}
 .cnote{display:flex;align-items:center;gap:8px}
+.cnote.warnnote{background:color-mix(in srgb,var(--hot) 20%,var(--surface));color:var(--ink)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -625,7 +626,7 @@ function errMsg(e){const c=e&&e.code;if(c==='no_credit'){const a=aiState();if(a.
 function saveChat(){S.chat=S.chat.slice(-40);LS.set('ct.chat',S.chat);if(chatRef)chatRef.set({msgs:S.chat}).catch(()=>{})}
 function fmtMsg(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n/g,'<br>')}
 function chatHtml(){const intro=aiRow(`Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.`);
-  return intro+S.chat.map(m=>m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
+  return intro+S.chat.map(m=>(m.role==='assistant'&&!m.note&&m.content==='…')?`<div class="cnote warnnote">${coachAv(20)}<span>Essa mudança não foi aplicada (erro antigo, já corrigido). Peça de novo.</span></div>`:m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
 function aiRow(h){return `<div class="crow ai">${coachAv(30)}<div class="msg ai">${h}</div></div>`}
 function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><span class="uav">${avatarInner()}</span></div>`}
 function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
@@ -644,7 +645,7 @@ function renderFab(){const f=document.getElementById('fab');if(!f)return;const h
 function fabTeaser(){if(S.teased||S.fabOpen||S.view!=='hoje')return;S.teased=true;const t=document.getElementById('fabTip');if(!t)return;t.textContent=coachLine().replace(/^./,c=>c.toUpperCase());t.hidden=false;setTimeout(()=>{t.hidden=true},7000)}
 async function sendChat(text){text=text.trim();if(!text||S.busy||!sampleApi)return;
   S.chat.push({role:'user',content:text});S.draft='';S.busy='chat';S.streaming='';saveChat();render();
-  let msgs=S.chat.filter(m=>!m.note).slice(-16).map(m=>({role:m.role,content:m.content}));while(msgs.length&&msgs[0].role!=='user')msgs.shift();
+  let msgs=S.chat.filter(m=>!m.note&&m.content!=='…').slice(-16).map(m=>({role:m.role,content:m.content}));while(msgs.length&&msgs[0].role!=='user')msgs.shift();
   const merged=[];msgs.forEach(m=>{const l=merged[merged.length-1];if(l&&l.role===m.role)l.content+='\n\n'+m.content;else merged.push({...m})});
   
   const opts={cache:false,system:ctx(),onText:u=>{S.streaming=u.text;updateChatLog()}};
