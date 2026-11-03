@@ -1135,27 +1135,29 @@ function busyPick(ei){const a=S.active;let seen=[];
 
 /* ---------- registrar treino (sem check-in solto) ---------- */
 function regDay(iso){const today=iso===todayISO();const d=new Date(iso+'T12:00:00');const label=today?'hoje':d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'});
-  const ws=S.plan.workouts.filter(w=>w.ex.length);let wid=(W(S.plan.next)||ws[0]||{}).id||'ABS';let min=null;
-  const opts=[...ws.map(w=>({id:w.id,name:w.name,min:estMin(w)})),{id:'ABS',name:'Abdômen',min:20}];
+  const ws=S.plan.workouts.filter(w=>w.ex.length);let wid=(W(S.plan.next)||ws[0]||{}).id||'ABS';let en='normal';
+  const pm=+profile().minutes||0;const absMin=Math.round(absList(S.absLvl||'medium').reduce((t,e)=>t+e.sets*(35+e.rest),0)/60);
+  const opts=[...ws.map(w=>({id:w.id,name:w.name,min:pm||estMin(w)})),{id:'ABS',name:'Abdômen '+ABS[S.absLvl||'medium'].label,min:absMin}];
   const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
-  const draw=()=>{const cur=opts.find(x=>x.id===wid)||opts[0];const m=min||Math.max(15,Math.round(cur.min/15)*15);
+  const draw=()=>{const cur=opts.find(x=>x.id===wid)||opts[0];const m=en==='baixa'?Math.round(cur.min*.8/5)*5:cur.min;
     o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>O que você treinou ${esc(label)}?</h3></div></div>
       ${today?`<button class="btn primary" data-c="now">Vou treinar agora</button>`:''}
       <div class="regsec"><div class="eyebrow">Treino da rotina${today?', já feito':''}</div>
         <div class="chips">${opts.map(x=>`<button class="chip sm" data-w="${esc(x.id)}" aria-pressed="${x.id===cur.id}">${x.id==='ABS'?'Abdômen':esc(x.id)+' · '+esc(x.name.split(/[,·]/)[0])}</button>`).join('')}</div>
-        <div class="eyebrow" style="margin-top:4px">Duração</div>
-        <div class="chips">${[15,30,45,60,75,90].map(v=>`<button class="chip sm" data-m="${v}" aria-pressed="${v===m}">${v} min</button>`).join('')}</div>
+        <div class="eyebrow" style="margin-top:4px">Como estava a energia?</div>
+        <div class="chips">${[['baixa','Baixa'],['normal','Normal'],['alta','Alta']].map(([k,l])=>`<button class="chip sm" data-en="${k}" aria-pressed="${en===k}">${l}</button>`).join('')}</div>
+        <div class="muted" style="font-size:13px">Duração: <b class="num">${m} min</b> ${en==='baixa'?'· versão leve, uma série a menos por exercício':cur.id==='ABS'?'· do nível escolhido':pm?'· do seu plano':'· estimada pelo treino'}</div>
         <button class="btn ${today?'ghost':'primary'}" data-c="log" data-min="${m}">Registrar ${cur.id==='ABS'?'abdômen':'treino '+esc(cur.id)}</button></div>
       <button class="btn ghost" data-c="out">Atividade fora da academia (corrida, bike, esporte…)</button>
       <button class="linkbtn" data-c="x" style="align-self:center">Cancelar</button></div>`};
   draw();
   o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;
-    if(t.dataset.w){wid=t.dataset.w;min=null;draw();return}if(t.dataset.m){min=+t.dataset.m;draw();return}
+    if(t.dataset.w){wid=t.dataset.w;draw();return}if(t.dataset.en){en=t.dataset.en;draw();return}
     const c=t.dataset.c;if(!c)return;o.remove();if(c==='x')return;
     if(c==='now'){S.view='hoje';S.picking=true;window.scrollTo(0,0);render();return}
     if(c==='out'){S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:iso,note:''};S.view='ativ';window.scrollTo(0,0);render();return}
     if(c==='log'){const cur=opts.find(x=>x.id===wid)||opts[0];const mm=+t.dataset.min;
-      const qs={id:uid(),date:(today?new Date():d).toISOString(),quick:true,workoutId:cur.id==='ABS'?'ABS':cur.id,name:cur.id==='ABS'?'Abdômen':cur.name,durationSec:mm*60,ex:[],late:!today};addSession(qs);
+      const qs={id:uid(),date:(today?new Date():d).toISOString(),quick:true,workoutId:cur.id==='ABS'?'ABS':cur.id,name:cur.id==='ABS'?cur.name:cur.name,durationSec:mm*60,ex:[],late:!today,body:{energy:en,pains:[]}};addSession(qs);
       if(cur.id!=='ABS'&&today){const i=S.plan.workouts.findIndex(w=>w.id===cur.id);if(i>=0){S.plan.next=S.plan.workouts[(i+1)%S.plan.workouts.length].id;savePlan()}}
       render();celebrate((today?`Treino ${cur.id==='ABS'?'de abdômen':cur.id} registrado. Da próxima vez, registra as séries comigo, que eu ajusto a carga.`:`Anotei ${label}. Esquecer de registrar, tudo bem. Esquecer de treinar, não.`)+` +${xpOf(qs)} XP`)}});
   document.body.appendChild(o)}
