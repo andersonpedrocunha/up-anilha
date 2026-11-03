@@ -678,7 +678,7 @@ function viewMetas(){const L=gList();const nt=S.gNew||'gym',T=GT[nt];const tv=S.
 function goalAll(){return (goals().counts||'gym')==='all'}
 function isGym(s){return goalAll()||!s.activity}
 function gNoun(n){return goalAll()?(n===1?'dia de exercício':'dias de exercício'):(n===1?'ida à academia':'idas à academia')}
-const CGT=[['bike','Bicicleta (rua)'],['bike_erg','Bicicleta ergométrica'],['corrida','Corrida'],['esteira_corrida','Esteira (corrida)'],['caminhada','Caminhada'],['natacao','Natação'],['futebol','Futebol'],['abs','Treino de abdômen'],['fora','Qualquer atividade fora'],['academia','Academia']];
+const CGT=[['pilates','Pilates'],['lutas','Lutas'],['crossfit','Crossfit'],['futebol','Futebol'],['basquete','Basquete'],['volei','Vôlei'],['raquete','Tênis / beach tennis / padel'],['yoga','Yoga'],['spinning','Spinning'],['bike','Bicicleta (rua)'],['bike_erg','Bicicleta ergométrica'],['corrida','Corrida'],['esteira_corrida','Esteira (corrida)'],['caminhada','Caminhada'],['natacao','Natação'],['abs','Treino de abdômen'],['fora','Qualquer atividade fora'],['academia','Academia']];
 function cgMatch(t,x){if(t==='fora')return !!x.activity;if(t==='academia')return !x.activity;if(t==='abs')return x.workoutId==='ABS'||/abd[oô]men/i.test(x.name||'');if(t==='bike')return x.activity==='bike';return x.activity===t}
 function customGoals(){const g=goals();if(!Array.isArray(g.custom))g.custom=[];return g.custom}
 function cgProgress(c){const ws=weekStart(new Date()),we=new Date(ws.getTime()+7*864e5);return new Set(S.sessions.filter(x=>{const t=new Date(x.date);return t>=ws&&t<we&&cgMatch(c.type,x)}).map(x=>dayKey(x.date))).size}
@@ -849,7 +849,7 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
     <div class="progress"><i style="width:${pctW}%;background:${wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
     ${goalRows((freqGoal()||{}).id)}
     <div class="muted" style="font-size:14px">${wk.n>=g.week?'Meta da semana batida.':`Faltam ${g.week-wk.n} ${gNoun(g.week-wk.n)} para a meta.`}</div>
-    ${went?`<div class="row"><div class="btn checked" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">✓ Você foi hoje</div>${ck?`<button class="btn ghost sm" data-act="uncheck" data-id="${ck.id}">Desfazer</button>`:''}</div>`
+    ${went?`<div class="row"><div class="btn checked" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">✓ Você foi hoje</div><button class="btn ghost sm" data-act="regtoday">+ Outra</button>${ck?`<button class="btn ghost sm" data-act="uncheck" data-id="${ck.id}">Desfazer</button>`:''}</div>`
       :`<button class="btn primary big" data-act="regtoday">Registrar treino de hoje</button>`}
     <div class="mrow"><div class="row" style="justify-content:space-between"><span class="eyebrow">Em ${month}</span><span class="num" style="font-weight:700">${mv} / ${g.month}</span></div>
       <div class="progress"><i style="width:${pctM}%;background:${mv>=g.month?'var(--good)':'var(--accent)'}"></i></div></div>
@@ -1470,7 +1470,9 @@ function regDay(iso){const today=iso===todayISO();const d=new Date(iso+'T12:00:0
   const opts=[...ws.map(w=>({id:w.id,name:w.name,min:pm||estMin(w)})),{id:'ABS',name:'Abdômen '+ABS[S.absLvl||'medium'].label,min:absMin}];
   const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
   const draw=()=>{const cur=opts.find(x=>x.id===wid)||opts[0];const m=en==='baixa'?Math.round(cur.min*.8/5)*5:cur.min;
-    o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>O que você treinou ${esc(label)}?</h3></div></div>
+    const already=S.sessions.filter(x=>isoOf(x.date)===iso);
+    o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>${already.length?'Mais alguma coisa '+esc(label)+'?':'O que você treinou '+esc(label)+'?'}</h3></div></div>
+      ${already.length?`<div class="muted" style="font-size:13px">Já registrado: ${already.map(x=>esc(x.name)).join(' · ')}. Pode somar mais.</div>`:''}
       ${today?`<button class="btn primary" data-c="now">Vou treinar agora</button>`:''}
       <div class="regsec"><div class="eyebrow">Treino da rotina${today?', já feito':''}</div>
         <div class="chips">${opts.map(x=>`<button class="chip sm" data-w="${esc(x.id)}" aria-pressed="${x.id===cur.id}">${x.id==='ABS'?'Abdômen':esc(x.id)+' · '+esc(x.name.split(/[,·]/)[0])}</button>`).join('')}</div>
@@ -1478,7 +1480,7 @@ function regDay(iso){const today=iso===todayISO();const d=new Date(iso+'T12:00:0
         <div class="chips">${[['baixa','Baixa'],['normal','Normal'],['alta','Alta']].map(([k,l])=>`<button class="chip sm" data-en="${k}" aria-pressed="${en===k}">${l}</button>`).join('')}</div>
         <div class="muted" style="font-size:13px">Duração: <b class="num">${m} min</b> ${en==='baixa'?'· versão leve, uma série a menos por exercício':cur.id==='ABS'?'· do nível escolhido':pm?'· do seu plano':'· estimada pelo treino'}</div>
         <button class="btn ${today?'ghost':'primary'}" data-c="log" data-min="${m}">Registrar ${cur.id==='ABS'?'abdômen':'treino '+esc(cur.id)}</button></div>
-      <button class="btn ghost" data-c="out">Atividade fora da academia (corrida, bike, esporte…)</button>
+      <button class="btn ghost" data-c="out">Outra atividade: pilates, luta, bike, esporte…</button>
       <button class="linkbtn" data-c="x" style="align-self:center">Cancelar</button></div>`};
   draw();
   o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;
@@ -1910,10 +1912,11 @@ function kcalFor(met,min){return Math.max(0,Math.round(met*bmrDay()/1440*min))}
 const MET_GYM=5;
 const MET={
  bike_erg:['Bicicleta ergométrica',3.5,6.8,8.8,'casa'],esteira:['Esteira (caminhada)',3.5,4.3,5.5,'casa'],esteira_corrida:['Esteira (corrida)',7,9,11,'casa'],eliptico:['Elíptico',4.6,5,7,'casa'],
- musc_casa:['Musculação em casa',3.5,5,6,'casa'],funcional:['Funcional em casa',3.8,5,8,'casa'],yoga:['Yoga ou pilates',2.5,3,4,'casa'],
- bike:['Bicicleta na rua',4,6.8,10,'rua'],caminhada:['Caminhada',3,3.8,5,'rua'],corrida:['Corrida',7,9.8,11.5,'rua'],trilha:['Trilha',5.3,6,7.8,'rua'],
- natacao:['Natação',5.8,7,9.8,'esporte'],futebol:['Futebol',5,7,10,'esporte'],raquete:['Tênis, beach tennis ou vôlei',4.5,6,8,'esporte'],lutas:['Lutas',5.5,7.8,10.3,'esporte'],danca:['Dança',4.5,5.5,7.8,'esporte'],outro:['Outra atividade',3.5,5,7,'esporte']};
-const MET_GROUPS=[['casa','Em casa'],['rua','Ao ar livre'],['esporte','Esportes e outros']];
+ musc_casa:['Musculação em casa',3.5,5,6,'casa'],funcional:['Funcional / HIIT',3.8,6,8,'casa'],corda:['Pular corda',8.8,11,12.3,'casa'],
+ pilates:['Pilates',2.8,3.5,4.5,'aula'],yoga:['Yoga',2.5,3,4,'aula'],crossfit:['Crossfit',5.5,8,10,'aula'],spinning:['Spinning',5.5,8.5,11,'aula'],lutas:['Lutas (jiu-jitsu, muay thai, boxe…)',5.5,7.8,10.3,'aula'],danca:['Dança',4.5,5.5,7.8,'aula'],natacao:['Natação',5.8,7,9.8,'aula'],hidro:['Hidroginástica',3.5,4.5,5.5,'aula'],
+ bike:['Bicicleta na rua',4,6.8,10,'rua'],caminhada:['Caminhada',3,3.8,5,'rua'],corrida:['Corrida',7,9.8,11.5,'rua'],trilha:['Trilha',5.3,6,7.8,'rua'],patins:['Patins / skate',4,6,9,'rua'],remo:['Remo / canoa',3.5,5.8,8.5,'rua'],surf:['Surf / SUP',3,5,6,'rua'],escalada:['Escalada',5.8,7.5,8,'rua'],
+ futebol:['Futebol',5,7,10,'esporte'],basquete:['Basquete',4.5,6.5,8,'esporte'],volei:['Vôlei',3,4,6,'esporte'],raquete:['Tênis, beach tennis, padel',4.5,7,8,'esporte'],handebol:['Handebol',6,8,10,'esporte'],outro:['Outra atividade',3.5,5,7,'esporte']};
+const MET_GROUPS=[['aula','Aulas e estúdio'],['casa','Em casa'],['rua','Ao ar livre'],['esporte','Esportes e outros']];
 const INTN=['leve','moderada','intensa'];
 function sessionKcal(s){if(s.checkin)return 0;if(s.activity){const m=MET[s.activity]||MET.outro;return kcalFor(m[1+(s.intensity??1)],s.minutes||0)}
   let min=Math.min(180,(s.durationSec||0)/60);if(min<5)min=s.ex.reduce((n,e)=>n+e.sets.length,0)*2.5;return gymKcal(s.ex.map(e=>({name:e.name,sets:e.sets})),min)}
@@ -1928,11 +1931,13 @@ function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 function actK(){const a=S.act,m=MET[a.type];return kcalFor(m[1+a.int],a.min)}
 function actRefresh(){const k=document.getElementById('actK');if(k)k.textContent=actK();const x=document.getElementById('actX');if(x)x.textContent='+'+(40+Math.min(S.act.min,90))+' XP'}
 function viewAtiv(){if(!S.act)S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:todayISO(),note:''};const a=S.act;
-  return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Atividade fora da academia</div></div>
+  return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Registrar atividade</div></div>
   <h2>O que você fez?</h2>
   <div class="row gpxrow"><label class="btn ghost sm" for="gpxIn" style="cursor:pointer">↥ Importar GPX</label><input type="file" id="gpxIn" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden><span class="muted" style="font-size:12px;flex:1;min-width:0">Strava, Garmin, relógio… <button class="linkbtn" data-act="gpxhelp" style="font-size:12px">como exportar</button></span></div>
   ${S.gpxHelp?`<div class="muted" style="font-size:12px;display:flex;flex-direction:column;gap:3px;margin-top:-6px"><span><b>Strava:</b> atividade no site → ⋯ → Exportar GPX.</span><span><b>Garmin Connect:</b> atividade → engrenagem → Exportar para GPX.</span><span><b>Polar, Coros, Suunto:</b> na atividade, Exportar → GPX.</span></div>`:''}
   ${MET_GROUPS.map(([gk,gl])=>`<div class="eyebrow" style="margin-top:4px">${gl}</div><div class="chips">${Object.entries(MET).filter(([k,v])=>v[4]===gk).map(([k,v])=>`<button class="chip sm" data-act="atype" data-v="${k}" aria-pressed="${a.type===k}">${v[0]}</button>`).join('')}</div>`).join('')}
+  ${a.type==='outro'?`<label class="field">Qual atividade?<input id="actName" class="wname" value="${esc(a.cname||'')}" placeholder="Ex.: Capoeira, handebol de praia, slackline"></label>`:''}
+  ${(()=>{const t=a.date||todayISO();const L=S.sessions.filter(x=>isoOf(x.date)===t);return L.length?`<div class="muted" style="font-size:13px">Já registrado ${t===todayISO()?'hoje':'nesse dia'}: ${L.map(x=>esc(x.name)).join(' · ')}. Pode somar quantas atividades quiser.</div>`:''})()}
   <h3>Quanto tempo?</h3>
   <div class="row"><input type="number" id="actMin" class="wname" min="1" max="600" value="${a.min}" style="width:100px;font-size:18px;font-weight:700" aria-label="Minutos"><span class="muted">minutos</span></div>
   <div class="chips">${[15,30,45,60,90].map(v=>`<button class="chip sm" data-act="amin" data-v="${v}" aria-pressed="${a.min===v}">${v} min</button>`).join('')}</div>
@@ -2011,7 +2016,7 @@ function gameCard(){const xp=totalXP(),lv=levelOf(xp),st=dayStreak();const pct=M
     <div><div class="progress"><i style="width:${pct}%;background:${lv.color}"></i></div>
       <div class="row muted num" style="justify-content:space-between;font-size:13px;margin-top:5px"><span>${xp.toLocaleString('pt-BR')} XP</span><span>faltam ${(lv.next-xp).toLocaleString('pt-BR')} para o nível ${lv.L+1}</span></div></div>
     <div class="risk ${risk.ok?'ok':risk.lost?'bad':''}">${rust?'Ferrugem: 7+ dias parado. Cada semana sem meta tira XP e pode derrubar sua patente.':risk.msg}</div>
-    <div class="row" style="flex-wrap:wrap"><button class="btn ghost sm" data-act="conq" style="flex:1">Conquistas</button><button class="btn ghost sm" data-act="ativ" style="flex:1">+ Atividade fora</button></div>
+    <div class="row" style="flex-wrap:wrap"><button class="btn ghost sm" data-act="conq" style="flex:1">Conquistas</button><button class="btn ghost sm" data-act="ativ" style="flex:1">+ Outra atividade</button></div>
   </div>`}
 function viewConq(){const xp=totalXP(),lv=levelOf(xp),st=stats();const risk=weekRisk();
   return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow" style="flex:1">Conquistas</div><button class="btn ghost sm" data-act="saga">Saga do mês</button></div>
@@ -2131,8 +2136,7 @@ const DESTR={
  uncheck:()=>({t:'Desfazer o registro de hoje?',m:'O dia deixa de contar na meta e na sequência.',ok:'Desfazer'}),
  suppdel:()=>({t:'Remover suplemento?',m:'Ele sai da sua lista diária.',ok:'Remover'}),
  pzdel:()=>({t:'Apagar essa pausa?',m:'Esses dias voltam a contar como dias sem treino. Pode custar XP e quebrar sequências.',ok:'Apagar'}),
- pastday:b=>{const iso=b.dataset.d,d=new Date(iso+'T12:00:00'),k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);if(!same.length||same.some(x=>!x.checkin&&!x.quick))return null;
-   return {t:'Apagar esse registro?',m:`${(t=>t.charAt(0).toUpperCase()+t.slice(1))(d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))} deixa de contar na meta e na sequência.`,ok:'Apagar'}}};
+};
 function confirmBox(c){return new Promise(res=>{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','alertdialog');o.setAttribute('aria-modal','true');
   o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>${esc(c.t)}</h3></div></div><p>${esc(c.m)}</p><div class="row cbtns"><button class="btn ghost" data-c="0">Cancelar</button><button class="btn dangerfill" data-c="1">${esc(c.ok)}</button></div></div>`;
   const done=v=>{o.remove();document.removeEventListener('keydown',kd);res(v)};const kd=e=>{if(e.key==='Escape')done(false)};document.addEventListener('keydown',kd);
@@ -2212,16 +2216,16 @@ main.addEventListener('click',e=>{
     case 'pastday':case 'pastdate':{const iso=act==='pastday'?b.dataset.d:(document.getElementById('pastDate').value||'');if(!iso){toast('Escolhe a data primeiro.');return}
       if(iso>todayISO()){toast('Treino do futuro? Primeiro você treina, depois registra.');return}
       const d=new Date(iso+'T12:00:00');const k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);const label=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-      if(same.some(x=>!x.checkin&&!x.quick)){toast(label+' já está registrado. Não conto o mesmo dia duas vezes.');return}
-      if(same.length){if(!S.bypass&&S.armed!=='pd'+iso){arm('pd'+iso);render();return}S.armed=null;same.forEach(x=>delSession(x.id));toast('Registro de '+label+' apagado.');render();return}
+      if(same.some(x=>!x.checkin&&!x.quick)){regDay(iso);return}
+      if(same.length){regDay(iso);return}
       regDay(iso);return}
     case 'look':LS.set('ct.look',+b.dataset.v);break;
     case 'ativ':S.act={type:LS.get('ct.lastAct','bike_erg'),min:30,int:1,date:todayISO(),note:''};S.view='ativ';window.scrollTo(0,0);break;
-    case 'atype':S.act.type=b.dataset.v;break;
+    case 'atype':{const n=document.getElementById('actName');if(n)S.act.cname=n.value;S.act.type=b.dataset.v;break}
     case 'amin':S.act.min=+b.dataset.v;break;
     case 'aint':S.act.int=+b.dataset.v;break;
     case 'asave':{const a=S.act;if(!a.min){toast('Quanto tempo? Sem isso eu não calculo nada.');return}const today=a.date===todayISO();const d=today?new Date():new Date(a.date+'T12:00:00');
-      const m=MET[a.type];LS.set('ct.lastAct',a.type);const sess={id:uid(),date:d.toISOString(),activity:a.type,workoutId:'+',name:m[0],minutes:a.min,intensity:a.int,durationSec:a.min*60,note:a.note,ex:[]};sess.kcal=sessionKcal(sess);
+      const m=MET[a.type]||MET.outro;LS.set('ct.lastAct',a.type);const cn=a.type==='outro'?((document.getElementById('actName')||{}).value||'').trim().slice(0,40):'';const sess={id:uid(),date:d.toISOString(),activity:a.type,workoutId:'+',name:cn||m[0],minutes:a.min,intensity:a.int,durationSec:a.min*60,note:a.note,ex:[]};sess.kcal=sessionKcal(sess);
       addSession(sess);S.act=null;S.view='hoje';window.scrollTo(0,0);render();celebrate(`${m[0]} anotada. Guerreiro se move até fora da arena. ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);return}
     case 'conq':S.view='conq';window.scrollTo(0,0);break;
     case 'train':S.picking=true;window.scrollTo(0,0);break;
