@@ -548,8 +548,8 @@ Formato: {"workouts":[{"name":"Peito e tríceps","ex":[{"name":"Supino reto","se
 const SUGS=['Monte um aquecimento para o treino de hoje','Só tenho 40 min hoje, o que eu corto?','Como aumentar as cargas sem me machucar?','Troque um exercício que incomoda meu ombro'];
 function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${full?' class="full"':''}>${title}<select id="${id}" data-f="pf" data-k="${k}">${OPTS[k].map(([v,l])=>`<option value="${v}" ${String(p[k])===String(v)?'selected':''}>${l}</option>`).join('')}</select></label>`;
   return `<div class="stack">
-    <img class="coachportrait" src="driffa-${coachLook()}.jpg" alt="${COACH}, sua treinadora" width="720" height="720">
-    <div class="looks"><span class="eyebrow">Escolha o visual</span>${[1,2,3].map(n=>`<button class="lookbtn" data-act="look" data-v="${n}" aria-pressed="${coachLook()===n}" aria-label="Visual ${n}"><img src="driffa-face-${n}.jpg" alt=""></button>`).join('')}</div>
+    <img class="coachportrait" src="driffa-${coachLook()}.jpg${AV}" alt="${COACH}, sua treinadora" width="720" height="720">
+    <div class="looks"><span class="eyebrow">Escolha o visual</span>${[1,2,3].map(n=>`<button class="lookbtn" data-act="look" data-v="${n}" aria-pressed="${coachLook()===n}" aria-label="Visual ${n}"><img src="driffa-face-${n}.jpg${AV}" alt=""></button>`).join('')}</div>
     <div class="coachhero"><div><div class="eyebrow">Sua treinadora</div><h2>${COACH}</h2><p class="muted" style="margin:4px 0 0">Inspirada na valquíria Sigrdrífa, "a que impulsiona à vitória". Ela monta seu treino, ajusta quando você pedir e respeita os seus limites.</p></div></div>
     <div class="card stack">
       <div class="pf">${sel('goal','pf-goal','Objetivo',1)}${sel('minutes','pf-min','Tempo por treino')}${sel('days','pf-days','Dias por semana')}${sel('level','pf-level','Nível')}${sel('place','pf-place','Onde treina')}
@@ -682,9 +682,9 @@ function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Escolha uma ima
     x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva');render()};img.onerror=()=>toast('Não consegui abrir essa imagem');img.src=r.result};r.readAsDataURL(f)}
 
 /* ---------- Driffa ---------- */
-const COACH='Driffa';
+const COACH='Driffa';const AV='?v=15';
 function coachLook(){const v=LS.get('ct.look',1);return [1,2,3].includes(v)?v:1}
-function coachAv(size){return `<img class="coachav" src="driffa-face-${coachLook()}.jpg" width="${size}" height="${size}" alt="${COACH}">`}
+function coachAv(size){return `<img class="coachav" src="driffa-face-${coachLook()}.jpg${AV}" width="${size}" height="${size}" alt="${COACH}">`}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function daysSinceLast(){if(!S.sessions.length)return null;const d=new Date(S.sessions[0].date);d.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/864e5)}
 function coachLine(){const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinceLast(),name=firstName();const you=name?name+', ':'';
@@ -1053,7 +1053,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active)
 if(apiKey())sampleApi=makeSample();
 render();
 if(apiKey())sampleApi=makeSample();
-if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol==='https:'){const had=!!navigator.serviceWorker.controller;let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded&&!S.active){reloaded=true;location.reload()}});navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})})}).catch(()=>{})}
 })();
 </script>
 
