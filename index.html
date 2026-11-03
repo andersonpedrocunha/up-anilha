@@ -431,6 +431,7 @@ body.nf-agua [data-feat="agua"],body.nf-prot [data-feat="prot"],body.nf-cal [dat
 .feats{display:flex;flex-direction:column;margin-top:8px}.featrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}.featrow:last-child{border-bottom:0}.featrow b{display:block;font-size:14px}.featrow span{font-size:12px;color:var(--muted)}
 .switch{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0}.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgb(0 0 0 / .3)}.switch:checked{background:var(--accent)}.switch:checked::after{transform:translateX(18px)}
 .weigh{width:100%;border-top:1px solid var(--line);padding-top:10px}
+.mslots{display:flex;flex-wrap:wrap;gap:6px}.mslot{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px dashed var(--line);background:none;color:var(--muted);cursor:pointer}.mslot.on{border:1px solid color-mix(in srgb,var(--gold) 60%,transparent);color:var(--ink);background:color-mix(in srgb,var(--gold) 12%,transparent);cursor:default}
 .daynav{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}.daynav b{font-size:14px}.daynav .ic:disabled{opacity:.3}
 .kghint{font-size:12px;color:var(--muted);margin:8px 0 -2px}.kghint b{color:var(--ink)}
 .watch{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin-top:6px}.watch b{color:var(--gold);font-weight:700}
@@ -1714,6 +1715,8 @@ function mealsCard(f,d){const i=kcalIn(f),o=kcalOut(d),b=i-o.total,t=balTarget()
     <div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(balLine(f,d))}</p></div>
     ${weekBalHtml()}
     ${f.meals.length?`<ul class="meals">${f.meals.map(m=>`<li>${m.thumb?`<img src="${m.thumb}" alt="">`:m.photo?`<img data-sbphoto="${esc(m.photo)}" alt="">`:'<span class="mthumb">🍽</span>'}<div style="flex:1;min-width:0">${m.kind?`<div class="mkind">${esc(m.kind)}</div>`:''}<b>${esc(m.name)}</b><div class="muted num" style="font-size:12px">${m.kcal} kcal${m.prot!=null?` · P ${m.prot} g`:''}${m.carb!=null?` · C ${m.carb} g`:''}${m.fat!=null?` · G ${m.fat} g`:''} · ${hhmm(m.t)}</div></div><button class="ic" data-act="mealdel" data-id="${m.id}" aria-label="Remover refeição">✕</button></li>`).join('')}</ul>`:''}
+    ${(()=>{const base=['Café da manhã','Almoço','Café da tarde','Jantar'];const have=new Set(f.meals.map(m=>m.kind).filter(Boolean));const extra=[...have].filter(k=>!base.includes(k));
+      return `<div class="mslots">${[...base,...extra].map(k=>have.has(k)?`<span class="mslot on">✓ ${k}</span>`:`<button class="mslot" data-act="mslot" data-k="${k}">${k}</button>`).join('')}</div>`})()}
     <div class="row" style="flex-wrap:wrap">${sampleApi?`<label class="btn primary" for="mealPhoto" style="flex:2;text-align:center;cursor:pointer">📷 Foto da refeição</label><input type="file" id="mealPhoto" accept="image/*" capture="environment" hidden>`:''}<button class="btn ghost" data-act="mealman" style="flex:1">+ Manual</button></div>
     ${S.mealMan?`<div class="suppform">${mealKindSel('mlKindM')}<input id="mlName" class="wname" placeholder="O que comeu (ex.: PF de frango)"><input id="mlKcal" class="wname" inputmode="numeric" placeholder="kcal"><input id="mlProt" class="wname" inputmode="numeric" placeholder="proteína (g), opcional"><button class="btn primary sm" data-act="mealadd">Salvar refeição</button></div>`:''}
     ${sampleApi?'':'<div class="muted" style="font-size:12px">Para calcular pela foto, ative minha IA na aba '+COACH+'.</div>'}
@@ -1721,7 +1724,7 @@ function mealsCard(f,d){const i=kcalIn(f),o=kcalOut(d),b=i-o.total,t=balTarget()
 const MKINDS=['Café da manhã','Lanche da manhã','Almoço','Café da tarde','Pré-treino','Pós-treino','Jantar','Ceia','Lanche'];
 function mealKindGuess(){const h=new Date().getHours()+new Date().getMinutes()/60;const last=S.sessions.find(x=>!x.activity&&!x.checkin);const end=last?new Date(last.date).getTime()+(last.durationSec||0)*1000:0;
   if(S.active)return 'Pós-treino';if(end&&Date.now()-end<90*60e3)return 'Pós-treino';return h<10?'Café da manhã':h<11.5?'Lanche da manhã':h<14.5?'Almoço':h<17.5?'Café da tarde':h<21.5?'Jantar':'Ceia'}
-function mealKindSel(id){const g=mealKindGuess();return `<select id="${id}" class="sel" aria-label="Qual refeição">${MKINDS.map(k=>`<option ${k===g?'selected':''}>${k}</option>`).join('')}</select>`}
+function mealKindSel(id){const g=S.mealKindPref||mealKindGuess();return `<select id="${id}" class="sel" aria-label="Qual refeição">${MKINDS.map(k=>`<option ${k===g?'selected':''}>${k}</option>`).join('')}</select>`}
 function mealAsk(file){if(!sampleApi){toast('Ative minha IA para eu ler a foto.');return}
   thumbOf(file).then(th=>{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
     o.innerHTML=`<div class="cbox-in"><div class="row">${th?`<img src="${th}" alt="" style="width:56px;height:56px;border-radius:12px;object-fit:cover">`:coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>Sabe quanto pesa?</h3></div><button class="ic cboxx" data-c="x" aria-label="Fechar">✕</button></div>
@@ -1733,7 +1736,7 @@ function mealAsk(file){if(!sampleApi){toast('Ative minha IA para eu ler a foto.'
       <div class="row cbtns"><button class="btn ghost" data-c="est">Não sei, estima</button><button class="btn primary" data-c="go">Calcular</button></div></div>`;
     o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('[data-c]');if(!t)return;const c=t.dataset.c;if(c==='x'){o.remove();return}
       const kind=o.querySelector('#mlKind').value;const w=parseInt((o.querySelector('#mlW').value||'').replace(/\D/g,''))||0,plate=o.querySelector('#mlPlate').checked,note=(o.querySelector('#mlNote').value||'').trim().slice(0,160);
-      if(c==='go'&&!w){toast('Coloca o peso, ou toque em "Não sei, estima".');return}o.remove();mealPhoto(file,c==='go'?w:0,plate,note,th,kind)});
+      if(c==='go'&&!w){toast('Coloca o peso, ou toque em "Não sei, estima".');return}o.remove();S.mealKindPref=null;mealPhoto(file,c==='go'?w:0,plate,note,th,kind)});
     document.body.appendChild(o);setTimeout(()=>{const i=o.querySelector('#mlW');i&&i.focus()},50)})}
 async function mealPhoto(file,grams,plate,note,th0,kind){toast(grams?`${grams} g anotados. Deixa eu ver esse prato…`:'Deixa eu estimar esse prato…');
   try{const b64=await shrinkImage(file);const th=th0||await thumbOf(file);const model=MODELS['claude-sonnet-5-5']?'claude-sonnet-5-5':apiModel();
@@ -2346,7 +2349,8 @@ main.addEventListener('click',e=>{
     case 'vtest':speak(pick([`Oi, ${firstName()||'guerreiro'}. Eu sou a ${COACH}. Série feita. Descanso de noventa segundos.`,`Descanso acabou. Próxima série. Mostra pra barra quem manda.`]),true);return;
     case 'gpxhelp':S.gpxHelp=!S.gpxHelp;break;
     case 'mealman':S.mealMan=!S.mealMan;break;
-    case 'mealadd':{const n=document.getElementById('mlName').value.trim()||'Refeição',k=parseInt(document.getElementById('mlKcal').value),pr=parseInt(document.getElementById('mlProt').value);if(!(k>0)){toast('Quantas calorias, mais ou menos?');return}const f=food(nDate());f.meals.push({id:uid(),t:S.nDay?nDate().getTime():Date.now(),kind:(document.getElementById('mlKindM')||{}).value||'',name:n.slice(0,60),kcal:k,prot:pr>0?pr:null});saveFood(f,nDate());S.mealMan=false;toast(`${k} kcal anotadas.`);break}
+    case 'mslot':{S.mealKindPref=b.dataset.k;if(sampleApi){const i=document.getElementById('mealPhoto');if(i){i.click();return}}S.mealMan=true;break}
+    case 'mealadd':{const n=document.getElementById('mlName').value.trim()||'Refeição',k=parseInt(document.getElementById('mlKcal').value),pr=parseInt(document.getElementById('mlProt').value);if(!(k>0)){toast('Quantas calorias, mais ou menos?');return}const f=food(nDate());f.meals.push({id:uid(),t:S.nDay?nDate().getTime():Date.now(),kind:(document.getElementById('mlKindM')||{}).value||'',name:n.slice(0,60),kcal:k,prot:pr>0?pr:null});saveFood(f,nDate());S.mealMan=false;S.mealKindPref=null;toast(`${k} kcal anotadas.`);break}
     case 'mealdel':{const f=food(nDate());const x=f.meals.find(m=>m.id===b.dataset.id);if(x&&x.photo)sbDelPhoto(x.photo);f.meals=f.meals.filter(m=>m.id!==b.dataset.id);saveFood(f,nDate());break}
     case 'absmin':S.absMin=+b.dataset.v;LS.set('ct.absMin',S.absMin);break;
     case 'skip':{const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');const ae=a.ex[ei];
