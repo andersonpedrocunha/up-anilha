@@ -627,6 +627,8 @@ function todayCheckin(){const k=dayKey(new Date());return S.sessions.find(s=>(s.
 function arm(key){S.armed=key;clearTimeout(armTimer);armTimer=setTimeout(()=>{S.armed=null;render()},3500)}
 
 /* ---------- views ---------- */
+function nextId(){const ws=S.plan.workouts.filter(w=>w.ex.length);if(!ws.length)return (S.plan.workouts[0]||{}).id;const ids=ws.map(w=>w.id);const since=S.plan.since||'';
+  const last=S.sessions.find(x=>!x.custom&&ids.includes(x.workoutId)&&(!since||x.date>=since));return last?ids[(ids.indexOf(last.workoutId)+1)%ids.length]:ids[0]}
 function weekStrip(){const now=new Date();const start=weekStart(now);
   const days=new Set(S.sessions.map(s=>dayKey(s.date)));const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const done=days.has(dayKey(d));if(done)n++;
@@ -636,12 +638,12 @@ function weekStrip(){const now=new Date();const start=weekStart(now);
 
 function viewHoje(){
   if(S.active)return viewSession();
-  const todayW=S.plan.workouts.find(x=>x.day===new Date().getDay());const sel=S.sel||(todayW&&todayW.id)||S.plan.next||S.plan.workouts[0].id;const w=W(sel);const wk=weekStrip();
+  const todayW=S.plan.workouts.find(x=>x.day===new Date().getDay());const sel=S.sel||nextId()||S.plan.workouts[0].id;const w=W(sel);const wk=weekStrip();
   if(!S.picking)return `<div class="stack">
     ${welcomeCard()}
     ${activePause()?'':coachCard()}
     ${pauseCard()}
-    <button class="trainbtn" data-act="train"><span class="trainbtn-t">Treinar</span><span class="trainbtn-s">${(()=>{const dow=new Date().getDay();const t=S.plan.workouts.find(x=>x.day===dow);const n=t||W(S.plan.next);const sc=sched();if(!t&&sc&&!sc.includes(dow))return `Hoje é descanso · se quiser, ${esc(n.id)} · ${esc(n.name)}`;return n?`${t?"Hoje":"Próximo"}: ${esc(n.id)} · ${esc(n.name)}`:"Escolher o treino e começar"})()}</span></button>
+    <button class="trainbtn" data-act="train"><span class="trainbtn-t">Treinar</span><span class="trainbtn-s">${(()=>{const dow=new Date().getDay();const n=W(nextId());const sc=sched();if(sc&&!sc.includes(dow))return `Hoje é descanso · se quiser, ${esc(n.id)} · ${esc(n.name)}`;return n?`${sc?"Hoje":"Próximo"}: ${esc(n.id)} · ${esc(n.name)}`:"Escolher o treino e começar"})()}</span></button>
     ${gameCard()}
     ${freqCard(wk)}
     ${nutriCard()}
@@ -651,10 +653,10 @@ function viewHoje(){
     <div class="row"><button class="ic" data-act="untrain" aria-label="Voltar">←</button><div class="eyebrow" style="flex:1">Treinar</div></div>
     <div class="stack" style="gap:10px">
       <div class="eyebrow">Escolha o treino</div>
-      <div class="chips">${S.plan.workouts.map(x=>`<button class="chip" data-act="pick" data-id="${x.id}" aria-pressed="${x.id===w.id}">${x.day!=null?DAYN[x.day].slice(0,3):esc(x.id)}</button>`).join('')}</div>
+      <div class="chips">${S.plan.workouts.map(x=>`<button class="chip" data-act="pick" data-id="${x.id}" aria-pressed="${x.id===w.id}">${esc(x.id)}${x.id===nextId()?' •':''}</button>`).join('')}</div>
     </div>
     <div class="card stack">
-      <div class="row"><div class="plate">${esc(w.id)}</div><div style="min-width:0"><div class="eyebrow">${w.day!=null?DAYN[w.day]+(w===todayW?' · hoje':''):(w.id===S.plan.next?'Próximo da rotina':'Treino '+esc(w.id))} · ~${estMin(w)} min</div><h2>${esc(w.name)}</h2></div></div>
+      <div class="row"><div class="plate">${esc(w.id)}</div><div style="min-width:0"><div class="eyebrow">${w.id===nextId()?'Próximo da sequência':'Treino '+esc(w.id)+' · fora da ordem'} · ~${estMin(w)} min</div><h2>${esc(w.name)}</h2></div></div>
       <ul class="exlist">${w.ex.map(e=>{const l=lastFor(e.id,e.name);const top=l?Math.max(...l.sets.map(t=>+t.kg||0)):0;
         return `<li><div class="n"><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button>${issues(e.name).length?' <span class="flag">⚠ adaptar</span>':''}${e.orig?' <span class="flag ok">adaptado</span>':''}${top?`<div class="muted num" style="font-size:13px;font-weight:400">Última: ${fmtKg(top)} kg</div>`:''}</div><div class="t">${e.sets} × ${esc(e.reps)}<br>${mmss(e.rest)}</div></li>`}).join('')||'<li class="muted">Sem exercícios. Adicione na aba Rotina.</li>'}</ul>
       ${(()=>{const au=audioFor(w.id);return au&&w.ex.length?`<a class="btn primary big startlisten" href="${esc(au.url)}" target="_blank" rel="noopener" data-act="startlisten" data-id="${w.id}" data-aid="${au.id}" data-w="${w.id}"><span>Começar e ouvir</span><small>${esc(au.label||svcOf(au.url)[1])}</small></a>
@@ -797,7 +799,7 @@ LIMITES
 - Português do Brasil sempre.`
 }
 function ctxData(){const p=profile(),g=goals();
-  const plan=S.plan.workouts.map(w=>`Treino ${w.id}${w.day!=null?' ('+DAYN[w.day]+')':''} – ${w.name} (~${estMin(w)} min): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}, descanso ${e.rest}s${e.bar?' [barra]':''}`).join('; ')).join('\n');
+  const plan=S.plan.workouts.map(w=>`Treino ${w.id} – ${w.name} (~${estMin(w)} min): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}, descanso ${e.rest}s${e.bar?' [barra]':''}`).join('; ')).join('\n');
   const hist=S.sessions.slice(0,12).map(s=>s.checkin?`${s.date.slice(0,10)}: check-in`:s.quick?`${s.date.slice(0,10)}: ${s.name} (registrado depois, sem séries) ${Math.round(s.durationSec/60)} min`:s.activity?`${s.date.slice(0,10)}: ${s.name} ${s.minutes} min${s.distM?' '+(s.distM/1000).toFixed(1)+' km':''}`:`${s.date.slice(0,10)}: treino ${s.workoutId}, ${Math.round(s.durationSec/60)} min – `+s.ex.map(e=>`${e.name} ${e.sets.map(t=>t.kg+'kg×'+t.reps).join(', ')}`).join('; ')).join('\n')||'nenhum ainda';
   return `DADOS DO ALUNO (use só o que for relevante para a conversa; não recite)
 
@@ -805,7 +807,7 @@ Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body(
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} min por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações: ${p.notes||'nenhuma'}.
 Restrições de saúde: ${restrText()}. Nunca sugira exercícios contraindicados para essas condições; prefira variações com apoio e explique o motivo da troca.
-Metas: ${g.week} dias por semana, ${g.month} por mês. Dias com exercício nesta semana (segunda a domingo): ${weekStrip().n}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino sugerido: ${S.plan.next}.
+Metas: ${g.week} dias por semana, ${g.month} por mês. Dias com exercício nesta semana (segunda a domingo): ${weekStrip().n}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched())+(weekInfo().missedAll.length?'; faltou nos dias planejados: '+dayList(weekInfo().missedAll):'')+(weekInfo().comp.length?'; compensação marcada: '+dayList(weekInfo().comp):'')+(weekInfo().debt?'; precisa encaixar '+weekInfo().debt+' dia(s) a mais':''):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino da sequência (o aluno faz A, B, C… em ordem; se faltou um dia, o pendente continua sendo o próximo): ${nextId()}.
 Rotina atual:
 ${plan}
 Últimos registros:
@@ -1234,7 +1236,7 @@ function busyPick(ei){const a=S.active;let seen=[];
 
 /* ---------- registrar treino (sem check-in solto) ---------- */
 function regDay(iso){const today=iso===todayISO();const d=new Date(iso+'T12:00:00');const label=today?'hoje':d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'});
-  const ws=S.plan.workouts.filter(w=>w.ex.length);let wid=(W(S.plan.next)||ws[0]||{}).id||'ABS';let en='normal';
+  const ws=S.plan.workouts.filter(w=>w.ex.length);let wid=(W(nextId())||ws[0]||{}).id||'ABS';let en='normal';
   const pm=+profile().minutes||0;const absMin=absMins(absList(S.absLvl||'medium'));
   const opts=[...ws.map(w=>({id:w.id,name:w.name,min:pm||estMin(w)})),{id:'ABS',name:'Abdômen '+ABS[S.absLvl||'medium'].label,min:absMin}];
   const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
