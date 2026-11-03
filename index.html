@@ -146,7 +146,8 @@ details.goals summary{cursor:pointer;font-weight:600;color:var(--accent);font-si
 .pf .full{grid-column:1/-1}
 .pf select,.pf textarea{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:10px;font-size:15px;font-weight:500;color:var(--ink);text-transform:none;letter-spacing:0;width:100%;min-width:0;resize:vertical;font-family:var(--body)}
 .chatlog{display:flex;flex-direction:column;gap:8px}
-#chatlog{height:min(62vh,560px);overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 10px}
+#chatlog{height:min(48vh,440px);overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 10px}
+.cmore{align-self:center;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;margin-bottom:4px}
 .cday{display:flex;justify-content:center;margin:6px 0 2px}
 .cday span{background:var(--sunk);color:var(--muted);font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;box-shadow:0 1px 2px rgb(0 0 0 / .2)}
 .msg .mt{display:block;text-align:right;font-size:10.5px;opacity:.6;margin-top:3px;line-height:1}
@@ -725,14 +726,18 @@ function chatDay(t){if(!t)return 'Conversas anteriores';const d=new Date(t),n=ne
   if(diff===0)return 'Hoje';if(diff===1)return 'Ontem';if(diff<7)return d.toLocaleDateString('pt-BR',{weekday:'long'}).replace(/^./,c=>c.toUpperCase());return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})}
 function hhmm(t){return t?new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''}
 function chatHtml(){const intro=aiRow(`Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.`,null);
-  let last=null,out='';
-  S.chat.forEach(m=>{const day=chatDay(m.t);if(day!==last){out+=`<div class="cday"><span>${day}</span></div>`;last=day}
+  let last=null,out='';const N=S.chatShow||15;const hidden=Math.max(0,S.chat.length-N);const list=S.chat.slice(hidden);
+  if(hidden)out+=`<button class="cmore" data-more>Ver mensagens anteriores (${hidden})</button>`;
+  list.forEach(m=>{const day=chatDay(m.t);if(day!==last){out+=`<div class="cday"><span>${day}</span></div>`;last=day}
     out+=(m.role==='assistant'&&!m.note&&m.content==='…')?`<div class="cnote warnnote">${coachAv(20)}<span>Essa mudança não entrou. Erro antigo, já corrigido. Me pede de novo.</span></div>`:m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content),m.t):aiRow(fmtMsg(m.content),m.t)});
   if(S.busy==='chat'){if(last!=='Hoje')out+=`<div class="cday"><span>Hoje</span></div>`;out+=aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está digitando…</span>`,null)}
-  return intro+out}
+  return (hidden?'':intro)+out}
 function aiRow(h,t){return `<div class="crow ai">${coachAv(30)}<div class="msg ai">${h}${t?`<span class="mt">${hhmm(t)}</span>`:''}</div></div>`}
 function meRow(h,t){return `<div class="crow me"><div class="msg me">${h}${t?`<span class="mt">${hhmm(t)}</span>`:''}</div><span class="uav">${avatarInner()}</span></div>`}
 function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();el.scrollTop=el.scrollHeight})}
+function loadOlder(el){const h0=el.scrollHeight,t0=el.scrollTop;S.chatShow=(S.chatShow||15)+15;el.innerHTML=chatHtml();el.scrollTop=el.scrollHeight-h0+t0}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-more]');if(!b)return;const el=b.closest('.chatlog');if(el)loadOlder(el)});
+document.addEventListener('scroll',e=>{const el=e.target;if(el.classList&&el.classList.contains('chatlog')&&el.scrollTop<30&&el.querySelector('[data-more]'))loadOlder(el)},true);
 /* ---------- Driffa flutuante ---------- */
 function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);
   const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="${dImg('bust')}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
