@@ -203,6 +203,19 @@ body.noscroll{overflow:hidden}
 .btn.sm{white-space:nowrap}
 a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;justify-content:center}
 .welcome .row{flex-wrap:wrap}
+.wzhead{display:flex;align-items:center;gap:12px}
+.wzbar{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden;margin-top:6px}.wzbar>i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;flex-direction:column;gap:2px;text-align:left;width:100%;border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 16px;color:var(--ink)}
+.opt b{font-size:17px}.opt span{font-size:14px;color:var(--muted)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt.chk2{flex-direction:row;align-items:center;gap:12px;cursor:pointer}.opt.chk2 input{width:22px;height:22px;flex:none;accent-color:var(--accent)}.opt.chk2 b{font-size:15px;font-weight:600}
+.badge{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:var(--hot);color:var(--hot-ink);border-radius:999px;padding:2px 8px;vertical-align:middle}
+.daysel .chip{min-width:52px}
+.wznav{display:flex;justify-content:space-between;gap:10px;position:sticky;bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:10px 4px}
+.wznav .btn{flex:1}
+.wzex{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.wzex .linkbtn{font-size:15px}.wzex>.muted{grid-column:1;font-size:13px}.wzex-t{grid-column:2;grid-row:1/3;display:flex;gap:6px;align-items:center}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -332,7 +345,7 @@ function viewHoje(){
     ${welcomeCard()}
     ${freqCard(wk)}
     <div class="stack" style="gap:10px">
-      <div class="eyebrow">Escolha o treino</div>
+      <div class="row" style="justify-content:space-between"><div class="eyebrow">Escolha o treino</div><button class="btn ghost sm" data-act="wzstart">Montar treino novo</button></div>
       <div class="chips">${S.plan.workouts.map(x=>`<button class="chip" data-act="pick" data-id="${x.id}" aria-pressed="${x.id===w.id}">${x.day!=null?DAYN[x.day].slice(0,3):esc(x.id)}</button>`).join('')}</div>
     </div>
     <div class="card stack">
@@ -374,16 +387,17 @@ const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const RESTR={
  lombar:{label:'Hérnia de disco lombar ou dor lombar',short:'Lombar',
   tips:['Mantenha a coluna neutra e o abdômen firme em todos os exercícios.','Prefira máquinas e exercícios com apoio nas costas ou no peito.','Inclua prancha, ponte e perdigueiro (bird dog) para fortalecer o core.','Dor que desce para a perna, formigamento ou dormência: pare e procure seu médico.'],
-  swaps:[[/agachamento (livre|com barra)|^agachamento$/,'Leg press 45°','A barra nas costas comprime os discos da lombar. No leg press a coluna fica apoiada; não deixe o quadril sair do banco.'],
+  swaps:[[/agachamento (livre|com barra|no smith)|^agachamento$/,'Leg press 45°','A barra nas costas comprime os discos da lombar. No leg press a coluna fica apoiada; não deixe o quadril sair do banco.'],
    [/stiff|levantamento terra|^terra|bom dia|good ?morning/,'Mesa flexora','Inclinar o tronco com carga sobrecarrega os discos lombares.'],
    [/remada curvada/,'Remada apoiada no peito (máquina ou cavalinho com apoio)','O apoio no peito tira a carga da lombar. Outra opção é o serrote, com mão e joelho no banco.'],
    [/desenvolvimento (com barra|militar|em pe)/,'Desenvolvimento sentado na máquina','Sentado e com encosto, a coluna não compensa o movimento.'],
    [/panturrilha em pe/,'Panturrilha sentada','Em pé, a carga desce pela coluna.'],
    [/rosca direta/,'Rosca com halteres sentado','Com encosto você evita balançar o tronco para subir o peso.'],
-   [/abdominal (supra|remador|infra)|sit.?up|crunch/,'Prancha','Flexionar a coluna repetidas vezes aumenta a pressão no disco.']]},
+   [/abdominal (supra|remador|infra)|sit.?up|crunch/,'Prancha','Flexionar a coluna repetidas vezes aumenta a pressão no disco.'],
+   [/elevacao de pernas/,'Dead bug','Elevar as pernas esticadas puxa a lombar e aumenta a pressão no disco.']]},
  cervical:{label:'Hérnia de disco cervical ou dor no pescoço',short:'Cervical',
   tips:['Mantenha o queixo levemente recolhido e o olhar para frente.','Evite carga apoiada no pescoço e no trapézio.','Formigamento no braço ou na mão: pare e procure seu médico.'],
-  swaps:[[/agachamento (livre|com barra)|^agachamento$/,'Leg press 45°','A barra apoiada no trapézio pressiona a coluna cervical.'],
+  swaps:[[/agachamento (livre|com barra|no smith)|^agachamento$/,'Leg press 45°','A barra apoiada no trapézio pressiona a coluna cervical.'],
    [/desenvolvimento/,'Elevação lateral','Empurrar peso acima da cabeça comprime a cervical.'],
    [/encolhimento/,'Face pull na polia','Encolhimento com carga tensiona o pescoço.'],
    [/abdominal (supra|remador)|crunch/,'Prancha','Puxar o pescoço no abdominal irrita a cervical.']]},
@@ -415,7 +429,8 @@ function careCard(){const r=restr().filter(k=>RESTR[k]);if(!r.length)return '';
   return `<div class="card care stack"><div class="eyebrow">Cuidados para você</div>${r.map(k=>`<div><b>${RESTR[k].short}</b><ul>${RESTR[k].tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}<div class="muted" style="font-size:13px">Treine com liberação do seu médico ou fisioterapeuta. Dor diferente do cansaço muscular é sinal para parar.</div></div>`}
 function warnHtml(name,act,attrs){return issues(name).map(i=>`<div class="warn"><b>⚠ ${esc(i.short)}:</b> ${esc(i.why)}${act?` <button class="btn sm swapbtn" data-act="${act}" ${attrs} data-to="${esc(i.to)}">Trocar por ${esc(i.to)}</button>`:''}</div>`).join('')}
 function profile(){if(!S.plan.profile)S.plan.profile={...PROFILE_DEF};return S.plan.profile}
-function estMin(w){return Math.round((300+w.ex.reduce((a,e)=>a+e.sets*(40+(+e.rest||60)),0))/60)}
+function exSec(e){const m=String(e.reps).match(/(\d+)(?:\s*-\s*(\d+))?\s*min/);return m?(+(m[2]||m[1]))*60:e.sets*(40+(+e.rest||0))}
+function estMin(w){return Math.round((300+w.ex.reduce((a,e)=>a+exSec(e),0))/60)}
 const DAYN=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const RESTS=[30,45,60,75,90,120,150,180,240];
 function normWorkouts(ws){if(!Array.isArray(ws))return [];const old=new Map();S.plan.workouts.forEach(w=>w.ex.forEach(e=>old.set(e.name.toLowerCase(),e.id)));
@@ -545,6 +560,7 @@ function viewRotina(){
   const id=S.edit&&S.plan.workouts.some(w=>w.id===S.edit)?S.edit:S.plan.workouts[0].id;S.edit=id;const w=W(id);const wi=S.plan.workouts.indexOf(w);
   return `<div class="stack">
     <div><div class="eyebrow">Sua rotina</div><h2>Divisão ${S.plan.workouts.map(x=>esc(x.id)).join('')}</h2><p class="muted" style="margin:4px 0 0">O app sugere o próximo treino na ordem abaixo. Tudo salva sozinho.</p></div>
+    <button class="btn primary big" data-act="wzstart">Montar treino novo</button>
     <div class="chips">${S.plan.workouts.map(x=>`<button class="chip" data-act="edsel" data-id="${x.id}" aria-pressed="${x.id===id}">${esc(x.id)}</button>`).join('')}
       ${S.plan.workouts.length<7?`<button class="chip" data-act="addw" aria-label="Adicionar treino">+</button>`:''}</div>
     ${(()=>{const n=S.plan.workouts.reduce((a,x)=>a+x.ex.filter(e=>issues(e.name).length).length,0);return n?`<div class="card warnbox stack"><div><b>${n} ${n===1?'exercício pode não ser indicado':'exercícios podem não ser indicados'}</b> para ${restr().map(k=>RESTR[k].short.toLowerCase()).join(', ')}.</div><button class="btn primary" data-act="adaptall">Adaptar todos</button></div>`:''})()}
@@ -654,6 +670,94 @@ document.getElementById('sheet').addEventListener('click',e=>{if(e.target.id==='
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('sheet').hidden)closeGuide()});
 document.getElementById('avatarBtn').addEventListener('click',()=>{S.view='perfil';S.armed=null;window.scrollTo(0,0);render()});
 
+/* ---------- montador de treino ---------- */
+const LIB=[
+['Supino reto com barra','peito','c','as','b'],['Supino reto com halteres','peito','c','asc',''],['Supino inclinado com halteres','peito','c','asc',''],['Supino na máquina (chest press)','peito','c','a','m'],
+['Crucifixo com halteres','peito','i','asc',''],['Crucifixo no crossover','peito','i','a','m'],['Voador (peck deck)','peito','i','a','m'],
+['Puxada alta (frente)','costas','c','as','m'],['Puxada com triângulo','costas','c','a','m'],['Remada baixa','costas','c','as','m'],['Remada apoiada (máquina)','costas','c','a','m'],
+['Remada unilateral (serrote)','costas','c','asc',''],['Remada curvada com halteres','costas','c','asc',''],['Remada curvada com barra','costas','c','as','bx'],['Barra fixa','costas','c','as','x'],
+['Desenvolvimento com halteres','ombro','c','asc',''],['Desenvolvimento na máquina','ombro','c','a','m'],['Elevação lateral','ombro','i','asc',''],['Elevação frontal','ombro','i','asc',''],['Crucifixo inverso','ombro','i','asc',''],['Face pull','ombro','i','as','m'],
+['Rosca direta','biceps','i','as',''],['Rosca martelo','biceps','i','asc',''],['Rosca com halteres sentado','biceps','i','asc',''],
+['Tríceps pulley','triceps','i','as','m'],['Tríceps na polia com corda','triceps','i','as','m'],['Tríceps testa','triceps','i','asc',''],['Tríceps francês','triceps','i','asc',''],['Mergulho nas paralelas','triceps','c','a','x'],
+['Leg press 45°','quad','c','a','m'],['Agachamento livre','quad','c','as','bx'],['Agachamento no smith','quad','c','as','m'],['Agachamento hack','quad','c','a','m'],['Afundo (passada)','quad','c','asc',''],['Cadeira extensora','quad','i','as','m'],
+['Mesa flexora','post','i','as','m'],['Cadeira flexora','post','i','a','m'],['Stiff','post','c','asc','b'],['Levantamento terra','post','c','a','bx'],
+['Elevação pélvica','glut','c','asc',''],['Ponte de glúteo','glut','i','asc',''],['Panturrilha em pé','pant','i','asc',''],['Panturrilha sentada','pant','i','a','m'],
+['Prancha','core','i','asc',''],['Dead bug','core','i','asc',''],['Perdigueiro (bird dog)','core','i','asc',''],['Abdominal supra','core','i','asc',''],['Elevação de pernas','core','i','asc','']
+].map(([n,g,t,eq,f])=>({n,g,t,eq,f}));
+const PLACEQ={academia:'a',academia_simples:'s',casa:'c'};
+const SPLITS={
+ A:{label:'A',sub:'Corpo inteiro em todo treino',w:[['Corpo inteiro',[['quad',1],['peito',1],['costas',1],['post',1],['ombro',1],['core',1],['glut',0],['biceps',0],['triceps',0]]]]},
+ AB:{label:'AB',sub:'A: parte de cima · B: pernas e core',w:[['Parte de cima',[['peito',2],['costas',2],['ombro',1],['biceps',1],['triceps',1]]],['Pernas e core',[['quad',2],['post',1],['glut',1],['pant',1],['core',1]]]]},
+ ABC:{label:'ABC',sub:'Peito e ombro · Costas e bíceps · Pernas',w:[['Peito, ombro e tríceps',[['peito',2],['ombro',2],['triceps',2]]],['Costas e bíceps',[['costas',3],['biceps',2],['core',1]]],['Pernas e core',[['quad',2],['post',1],['glut',1],['pant',1],['core',1]]]]},
+ ABCD:{label:'ABCD',sub:'Peito · Costas · Pernas · Ombros',w:[['Peito e tríceps',[['peito',3],['triceps',2]]],['Costas e bíceps',[['costas',3],['biceps',2]]],['Pernas',[['quad',3],['post',1],['glut',1],['pant',1]]],['Ombros e core',[['ombro',3],['core',2]]]]},
+ ABCDE:{label:'ABCDE',sub:'Um grupo muscular por dia',w:[['Peito',[['peito',4],['core',1]]],['Costas',[['costas',4],['core',1]]],['Pernas',[['quad',3],['post',2],['pant',1]]],['Ombros',[['ombro',4],['core',1]]],['Braços e glúteo',[['biceps',2],['triceps',2],['glut',2]]]]}};
+const RECO={2:'A',3:'ABC',4:'AB',5:'ABCDE',6:'ABC'};
+const GOALP={hipertrofia:{c:[4,'8-10',90],i:[3,'10-12',60]},forca:{c:[5,'4-6',150],i:[3,'8-10',90]},emagrecimento:{c:[3,'12-15',45],i:[3,'15',30],cardio:20},condicionamento:{c:[3,'12-15',45],i:[3,'15',30],cardio:15},saude:{c:[3,'10-12',60],i:[2,'12-15',45],cardio:10}};
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function wzParams(x,z){const P=GOALP[z.goal]||GOALP.hipertrofia;let[sets,reps,rest]=x.g==='core'?[3,/prancha/i.test(x.n)?'30-45 s':/perdigueiro|dead bug/i.test(x.n)?'10 cada lado':'15-20',45]:(P[x.t]||P.i);
+  if(z.level==='iniciante')sets=Math.min(sets,3);if(z.level==='avancado'&&x.t==='c')sets=Math.min(5,sets+1);
+  if(z.restr.includes('pressao')&&x.g!=='core'){const lo=parseInt(reps);if(lo<12)reps='12-15';rest=Math.max(rest,60);sets=Math.min(sets,4)}
+  return {sets,reps,rest}}
+function wzPool(grp,z,exclude){const eq=PLACEQ[z.place]||'a';const saved=S.plan.profile&&S.plan.profile.restr;const prev=S.plan.profile?S.plan.profile.restr:null;
+  profile().restr=z.restr;const out=LIB.filter(x=>x.g===grp&&x.eq.includes(eq)&&!(z.level==='iniciante'&&x.f.includes('x'))&&!issues(x.n).length&&!exclude.has(x.n));profile().restr=prev||[];return out}
+function wzPick(grp,z,inWk,used,rand,first){const pool=wzPool(grp,z,inWk);if(!pool.length)return null;
+  const score=x=>(used.has(x.n)?0:4)+(first&&x.t==='c'?2:0)+(!first&&x.t==='i'?1:0)+(z.level==='iniciante'&&x.f.includes('m')?2:0)+rand();
+  return pool.sort((a,b)=>score(b)-score(a))[0]}
+function wzMake(x,z){const p=wzParams(x,z);return {id:uid(),name:x.n,sets:p.sets,reps:p.reps,rest:p.rest,bar:x.f.includes('b')&&z.place!=='casa',g:x.g,t:x.t}}
+function wzGenerate(z){const rand=rng(z.seed||1);const split=SPLITS[z.split]||SPLITS.ABC;const P=GOALP[z.goal]||GOALP.hipertrofia;const used=new Set();
+  const cardioMin=P.cardio&&z.place!=='casa'?Math.min(P.cardio,Math.round(z.minutes/3)):0;const maxEx=z.level==='iniciante'?6:z.level==='avancado'?9:8;
+  return split.w.map(([name,groups],wi)=>{const ex=[],inWk=new Set();let sec=300+cardioMin*60;const budget=z.minutes*60;
+    const tryAdd=(g,first)=>{if(ex.length>=maxEx)return false;const x=wzPick(g,z,inWk,used,rand,first);if(!x)return false;const e=wzMake(x,z);const t=exSec(e);if(sec+t>budget)return false;ex.push(e);inWk.add(x.n);used.add(x.n);sec+=t;return true};
+    groups.forEach(([g,c])=>{for(let k=0;k<c;k++)tryAdd(g,k===0)});
+    let added=true;while(added){added=false;for(const[g]of groups){if(tryAdd(g,false))added=true}}
+    const ord={c:0,i:1};ex.sort((a,b)=>(a.g==='core')-(b.g==='core')||ord[a.t]-ord[b.t]);
+    if(cardioMin){const bike=z.restr.includes('joelho')||z.restr.includes('lombar');ex.push({id:uid(),name:bike?'Bicicleta ergométrica':'Caminhada na esteira inclinada',sets:1,reps:cardioMin+' min',rest:0,bar:false,g:'cardio',t:'i'})}
+    return {id:'ABCDE'[wi],name,day:null,ex}})}
+const WZ_STEPS=['Tempo','Objetivo','Divisão','Nível','Saúde','Seu treino'];
+function wzInit(){const p=profile();S.wz={step:0,minutes:p.minutes||60,goal:p.goal||'hipertrofia',days:p.days||4,split:RECO[p.days||4]||'ABC',level:p.level||'intermediario',place:p.place||'academia',restr:[...restr()],notes:p.notes||'',seed:Math.floor(Math.random()*1e9)};S.wzPlan=null;S.view='montar';window.scrollTo(0,0)}
+function opt(act,val,cur,title,sub,badge){return `<button class="opt" data-act="${act}" data-v="${val}" aria-pressed="${String(cur)===String(val)}"><b>${title}${badge?` <span class="badge">${badge}</span>`:''}</b>${sub?`<span>${sub}</span>`:''}</button>`}
+function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=z.step;
+  const head=`<div class="wzhead"><button class="ic" data-act="wzexit" aria-label="Sair">✕</button><div style="flex:1;min-width:0"><div class="eyebrow">Montar treino · passo ${st+1} de ${WZ_STEPS.length}</div><div class="wzbar"><i style="width:${(st+1)/WZ_STEPS.length*100}%"></i></div></div></div>`;
+  let body='';
+  if(st===0)body=`<h2>Quanto tempo você tem na academia?</h2><p class="muted">Por treino, contando aquecimento e descanso.</p><div class="opts">${[[30,'30 min','Rápido e direto'],[45,'45 min',''],[60,'1 hora','O mais comum'],[75,'1h15',''],[90,'1h30','Treino completo']].map(([v,t,sb])=>opt('wzmin',v,z.minutes,t,sb)).join('')}</div>`;
+  if(st===1)body=`<h2>Qual é o seu objetivo?</h2><div class="opts">${[['hipertrofia','Ganhar massa muscular','Séries de 8 a 12, descanso médio'],['emagrecimento','Emagrecer e definir','Mais repetições, menos descanso e cardio'],['forca','Ganhar força','Poucas repetições com mais carga'],['condicionamento','Condicionamento','Ritmo alto e cardio no final'],['saude','Saúde e bem-estar','Moderado, com foco em postura e core']].map(([v,t,sb])=>opt('wzgoal',v,z.goal,t,sb)).join('')}</div>`;
+  if(st===2){const rec=RECO[z.days];body=`<h2>Quantos dias por semana?</h2><div class="chips daysel">${[2,3,4,5,6].map(d=>`<button class="chip" data-act="wzdays" data-v="${d}" aria-pressed="${z.days===d}">${d}</button>`).join('')}</div>
+    <h2 style="margin-top:8px">Como quer dividir?</h2><div class="opts">${Object.entries(SPLITS).map(([k,v])=>opt('wzsplit',k,z.split,'Treino '+v.label,v.sub,k===rec?'Recomendado':'')).join('')}</div>
+    <p class="muted" style="font-size:14px">${z.days>SPLITS[z.split].w.length?`Com ${z.days} dias, você repete a sequência ${z.split} ao longo da semana.`:z.days<SPLITS[z.split].w.length?`Com ${z.days} dias, cada treino vai cair menos de uma vez por semana. Se quiser treinar cada grupo toda semana, escolha uma divisão menor.`:'Um treino diferente por dia de academia.'}</p>`}
+  if(st===3)body=`<h2>Seu nível</h2><div class="opts">${[['iniciante','Iniciante','Menos de 6 meses ou voltando agora'],['intermediario','Intermediário','Treina com regularidade'],['avancado','Avançado','Anos de treino e boa técnica']].map(([v,t,sb])=>opt('wzlevel',v,z.level,t,sb)).join('')}</div>
+    <h2 style="margin-top:8px">Onde você treina?</h2><div class="opts">${[['academia','Academia completa','Máquinas, cabos e pesos livres'],['academia_simples','Academia pequena','Poucos aparelhos, de prédio ou condomínio'],['casa','Em casa','Halteres e um banco']].map(([v,t,sb])=>opt('wzplace',v,z.place,t,sb)).join('')}</div>`;
+  if(st===4)body=`<h2>Alguma limitação médica?</h2><p class="muted">O treino evita os exercícios de risco para cada condição marcada.</p>
+    <div class="opts">${Object.entries(RESTR).map(([k,R])=>`<label class="opt chk2"><input type="checkbox" id="wzr-${k}" data-f="wzr" data-k="${k}" ${z.restr.includes(k)?'checked':''}><b>${R.label}</b></label>`).join('')}</div>
+    <label class="field">Outras observações<textarea id="wzNotes" class="wname" rows="2" placeholder="Ex.: cirurgia no ombro em 2024, prefiro máquinas">${esc(z.notes)}</textarea></label>
+    <p class="muted" style="font-size:13px;margin:0">Treine com liberação do seu médico ou fisioterapeuta.</p>`;
+  if(st===5){if(!S.wzPlan)S.wzPlan=wzGenerate(z);const pl=S.wzPlan;
+    body=`<h2>Seu treino ${z.split}</h2><p class="muted">${lbl('goal',z.goal)} · ${z.minutes} min · ${z.days} dias por semana${z.restr.length?' · adaptado para '+z.restr.map(k=>RESTR[k].short.toLowerCase()).join(', '):''}</p>
+    ${pl.map((w,wi)=>{const m=estMin(w);return `<div class="card stack wzw"><div class="row"><div class="plate sm">${w.id}</div><div style="flex:1;min-width:0"><h3>${esc(w.name)}</h3><div class="muted num" style="font-size:13px">~${m} min ${m>z.minutes?'<span class="flag">passa do seu tempo</span>':''}</div></div></div>
+      ${w.ex.map((e,ei)=>`<div class="wzex"><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button><span class="muted num">${e.sets} × ${esc(e.reps)}${e.rest?' · '+mmss(e.rest):''}</span>
+        <span class="wzex-t">${e.g!=='cardio'?`<button class="btn ghost sm" data-act="wzswap" data-w="${wi}" data-x="${ei}">Trocar</button>`:''}<button class="ic" data-act="wzrm" data-w="${wi}" data-x="${ei}" aria-label="Remover">✕</button></span></div>`).join('')}
+      </div>`}).join('')}
+    ${z.notes?`<div class="gtip">Suas observações: ${esc(z.notes)}. Se algum exercício incomodar, toque em Trocar.</div>`:''}
+    <button class="btn primary big ${S.armed==='wzuse'?'armed':''}" data-act="wzuse">${S.armed==='wzuse'?'Toque de novo: substitui sua rotina':'Usar este treino'}</button>
+    <div class="row" style="flex-wrap:wrap"><button class="btn ghost" data-act="wzregen" style="flex:1">Gerar outra opção</button><button class="btn ghost" data-act="wzgo" data-v="0" style="flex:1">Mudar respostas</button></div>
+    ${sampleApi?`<button class="btn ghost" data-act="wzask">Pedir opinião ao personal</button>`:''}`}
+  const nav=st<5?`<div class="wznav">${st>0?`<button class="btn ghost" data-act="wzgo" data-v="${st-1}">Voltar</button>`:'<span></span>'}<button class="btn primary" data-act="wzgo" data-v="${st+1}">${st===4?'Ver meu treino':'Continuar'}</button></div>`:'';
+  return `<div class="stack">${head}${body}${nav}</div>`}
+function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
+  switch(act){case 'wzstart':wzInit();return;case 'wzexit':S.view='rotina';S.wz=null;S.wzPlan=null;return;
+   case 'wzmin':z.minutes=+v;S.wzPlan=null;return;case 'wzgoal':z.goal=v;S.wzPlan=null;return;
+   case 'wzdays':z.days=+v;z.split=RECO[z.days];S.wzPlan=null;return;case 'wzsplit':z.split=v;S.wzPlan=null;return;
+   case 'wzlevel':z.level=v;S.wzPlan=null;return;case 'wzplace':z.place=v;S.wzPlan=null;return;
+   case 'wzgo':z.step=+v;window.scrollTo(0,0);return;
+   case 'wzregen':z.seed=(z.seed||1)+7919;S.wzPlan=null;toast('Nova opção gerada');return;
+   case 'wzrm':{const w=S.wzPlan[+b.dataset.w];w.ex.splice(+b.dataset.x,1);return}
+   case 'wzswap':{const w=S.wzPlan[+b.dataset.w],e=w.ex[+b.dataset.x];const inWk=new Set(w.ex.map(x=>x.name));const pool=wzPool(e.g,z,inWk);
+     if(!pool.length){toast('Não há outra opção segura para esse grupo');return}const x=pool[Math.floor(Math.random()*pool.length)];w.ex[+b.dataset.x]=wzMake(x,z);return}
+   case 'wzask':{const txt=S.wzPlan.map(w=>`Treino ${w.id} (${w.name}): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}`).join('; ')).join('\n');S.view='personal';sendChat(`Montei este treino ${z.split} para ${z.minutes} min, objetivo ${lbl('goal',z.goal)}. O que você ajustaria antes de eu usar?\n${txt}`);return}
+   case 'wzuse':{if(S.armed!=='wzuse'){arm('wzuse');return}S.armed=null;
+     S.plan.workouts=S.wzPlan.map(w=>({id:w.id,name:w.name,day:null,ex:w.ex.filter(Boolean).map(e=>({id:e.id,name:e.name,sets:e.sets,reps:e.reps,rest:e.rest,bar:e.bar}))})).filter(w=>w.ex.length);
+     S.plan.next=S.plan.workouts[0].id;S.sel=null;S.edit=null;const p=profile();Object.assign(p,{minutes:z.minutes,goal:z.goal,days:z.days,level:z.level,place:z.place,notes:z.notes});p.restr=[...z.restr];
+     const g=goals();g.week=z.days;g.month=Math.round(z.days*4.3);savePlan();S.wz=null;S.wzPlan=null;S.view='hoje';window.scrollTo(0,0);toast('Treino salvo! Meta: '+z.days+' idas por semana');return}}}
+
 function backupCard(){return `<div class="card stack"><div class="eyebrow">Backup</div><p class="muted" style="margin:0;font-size:14px">Seus dados ficam só neste celular. Baixe um backup de vez em quando para não perder nada se trocar de aparelho.</p>
   <div class="row"><button class="btn ghost" data-act="backup">Baixar backup</button><label class="btn ghost" for="restoreIn" style="display:inline-flex;align-items:center">Restaurar backup</label><input type="file" id="restoreIn" accept="application/json,.json" hidden></div></div>`}
 function viewHist(){
@@ -678,7 +782,7 @@ function viewHist(){
   </div>`}
 
 function render(){
-  main.innerHTML=S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():viewHist();
+  main.innerHTML=S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():viewHist();
   renderAvatar();
   const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
@@ -729,6 +833,7 @@ main.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act,a=S.active;
   const ei=+b.dataset.e,si=+b.dataset.s,wi=+b.dataset.w,xi=+b.dataset.x;
   const twoStep=key=>{if(S.armed===key){S.armed=null;return true}arm(key);render();return false};
+  if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
     case 'how':openGuide(b.dataset.name);return;
@@ -775,6 +880,8 @@ main.addEventListener('click',e=>{
 main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chatIn'){S.draft=t.value;return}
   if(t.id==='guideQ'){S.gq=t.value;document.getElementById('guideList').innerHTML=guideList();return}
   if(t.id==='welName'){S.draftName=t.value;return}
+  if(t.id==='wzNotes'&&S.wz){S.wz.notes=t.value;S.wzPlan=null;return}
+  if(f==='wzr'&&S.wz){const r=S.wz.restr,k=t.dataset.k;if(t.checked&&!r.includes(k))r.push(k);if(!t.checked&&r.includes(k))r.splice(r.indexOf(k),1);S.wzPlan=null;return}
   if(f==='uname'){S.user.name=t.value;saveUser();return}if(!f)return;
   if(f==='restr'){const r=restr(),k=t.dataset.k;if(t.checked&&!r.includes(k))r.push(k);if(!t.checked)r.splice(r.indexOf(k),1);const n=adaptPlan();savePlan();render();
     toast(n?(t.checked?`Rotina adaptada: ${n} ${n===1?'exercício trocado':'exercícios ajustados'} para ${RESTR[k].short.toLowerCase()}`:`Rotina atualizada: ${n} ${n===1?'exercício voltou':'exercícios voltaram'} ao original`):(t.checked?'Sua rotina já é segura para '+RESTR[k].short.toLowerCase():'Restrição removida'));return}
