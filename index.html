@@ -405,7 +405,7 @@ const DEFAULT_PLAN={v:2,next:'A',goals:{week:5,month:20},workouts:[
 ]};
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(SYNCK.has(k)&&!cloudApplying)cloudTouch(k)}};
 /* ---------- nuvem (Supabase) ---------- */
-const SB_URL='',SB_KEY='';
+const SB_URL='https://htzpfwdbhlwroqhgftnj.supabase.co',SB_KEY='sb_publishable_o2fCcwJnCK_lTT16I_QmkA_jkJ3eDkY';
 const SYNCK=new Set(['ct.user','ct.plan','ct.plans','ct.sessions','ct.deleted','ct.chat','ct.food','ct.pauses','ct.weekplan','ct.ai','ct.key','ct.model','ct.look','ct.voice','ct.voiceName','ct.voiceRate','ct.absLvl','ct.absMin','ct.swaps','ct.audios','ct.lastAct']);
 var cloudApplying=false,cloudDirtySet=new Set(),cloudTimer=null,cloudBusy=false,cloudLast=0,cloudErr='';
 function cloudOn(){return !!(SB_URL&&SB_KEY)}
