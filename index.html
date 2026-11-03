@@ -323,6 +323,9 @@ a.btn .coachav{margin-right:8px}
 .pausebadge{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);color:var(--muted);font-weight:800;letter-spacing:-2px;flex:none}.pausebadge.sm{width:30px;height:30px;font-size:12px}
 .pausebtn{align-self:flex-start}
 .week .wd.paused{background:repeating-linear-gradient(45deg,var(--sunk),var(--sunk) 4px,transparent 4px,transparent 8px);border-style:dotted;opacity:1}
+.abslist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.abslist li{display:flex;justify-content:space-between;gap:10px;font-size:14px}.abslist li span{white-space:nowrap}
+.busyopt{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.favtag{font-size:11px;font-weight:600;color:var(--good);white-space:nowrap}
 .exbtns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.exbtns .howbtn{margin:0;cursor:pointer}.howbtn.alt{color:var(--muted)}
 .sugg{display:flex;gap:8px;align-items:center;font-size:13px;border-radius:10px;padding:7px 10px;margin-top:6px}.sugg.up{background:var(--good-soft)}.sugg.hold{background:color-mix(in srgb,var(--hot) 18%,var(--surface))}
 .voicebtn{font-size:18px}
@@ -531,6 +534,7 @@ function viewHoje(){
       <button class="btn ghost" data-act="start" data-id="${w.id}">Começar sem ouvir nada</button>`:`<button class="btn primary big" data-act="start" data-id="${w.id}" ${w.ex.length?'':'disabled'}>Começar treino ${esc(w.id)}</button>`})()}
       ${audioBar(w)}
     </div>
+    ${absCard(false)}
     ${stretchCard(w.ex,false)}
   </div>`}
 
@@ -841,7 +845,7 @@ function viewSession(){
         </div>
         <div class="ex-foot"><button class="btn ghost sm" data-act="addset" data-e="${ei}">+ Série</button>${e.sets.length>1?`<button class="btn ghost sm" data-act="rmset" data-e="${ei}">− Série</button>`:''}</div>
       </div>`}).join('')}
-    ${stretchCard(a.ex,true)}
+    ${a.abs||a.absLvl?'':absCard(true)}${stretchCard(a.ex,true)}
     <button class="btn primary big ${S.armed==='finish'?'armed':''}" data-act="finish">${S.armed==='finish'?'Toque de novo para salvar':'Concluir treino'}</button>
     <button class="btn ghost danger ${S.armed==='discard'?'armed':''}" data-act="discard">${S.armed==='discard'?'Toque de novo para descartar':'Descartar treino'}</button>
   </div>`}
@@ -1041,6 +1045,56 @@ function suggestFor(exId,name,target){const rr=repRange(target.reps);if(!rr)retu
   if(L.length===2&&ok(L[0])&&ok(L[1])){const inc=k0>=30?2.5:k0>=10?2:1;return {kind:'up',kg:Math.round((k0+inc)*10)/10,msg:`Você fez ${rr.hi} repetições com ${fmtKg(k0)} kg duas vezes. Hoje é ${fmtKg(k0+inc)} kg.`}}
   if(L[0].sets.some(t=>(+t.reps||0)<rr.lo))return {kind:'hold',kg:k0,msg:`Na última vez faltaram repetições com ${fmtKg(k0)} kg. Mantenha até completar todas.`};
   return null}
+
+
+/* ---------- abdômen ---------- */
+const ABSX=(n,sets,reps,rest)=>({id:'abs-'+norm(n).replace(/[^a-z0-9]+/g,'-'),name:n,sets,reps,rest,bar:false});
+const ABS={
+ easy:{label:'Easy',sub:'Base: aprender a travar o core',std:[ABSX('Prancha',3,'20-30 s',30),ABSX('Abdominal supra',3,'12-15',30),ABSX('Dead bug',3,'8 cada lado',30),ABSX('Perdigueiro (bird dog)',2,'8 cada lado',30)],
+   safe:[ABSX('Prancha',3,'20-30 s',30),ABSX('Dead bug',3,'8 cada lado',30),ABSX('Perdigueiro (bird dog)',3,'8 cada lado',30),ABSX('Prancha lateral (joelhos apoiados)',2,'20 s cada lado',30)]},
+ medium:{label:'Medium',sub:'Mais tempo sob tensão e oblíquos',std:[ABSX('Prancha',3,'40-60 s',30),ABSX('Prancha lateral',3,'30 s cada lado',30),ABSX('Abdominal bicicleta',3,'20',30),ABSX('Elevação de pernas',3,'12',40),ABSX('Dead bug',3,'12 cada lado',30)],
+   safe:[ABSX('Prancha',3,'40-60 s',30),ABSX('Prancha lateral',3,'30 s cada lado',30),ABSX('Dead bug',3,'12 cada lado',30),ABSX('Pallof press',3,'10 cada lado',30),ABSX('Perdigueiro (bird dog)',3,'12 cada lado',30)]},
+ hard:{label:'Hard',sub:'Para quem já domina a prancha',std:[ABSX('Elevação de pernas na barra',4,'10-12',45),ABSX('Roda abdominal',3,'8-10',60),ABSX('Canivete (V-up)',3,'12-15',40),ABSX('Prancha lateral com elevação de quadril',3,'12 cada lado',30),ABSX('Hollow hold',3,'30-40 s',30),ABSX('Prancha com toque no ombro',3,'20',30)],
+   safe:[ABSX('Prancha com toque no ombro',3,'20',30),ABSX('Prancha lateral com elevação de quadril',3,'12 cada lado',30),ABSX('Pallof press com pausa',3,'12 cada lado',30),ABSX('Dead bug com halter',3,'10 cada lado',30),ABSX('Perdigueiro com pausa',3,'10 cada lado',30)]}};
+S.absLvl=LS.get('ct.absLvl','medium');
+function absSafe(){const r=restr(),p=(S.active&&S.active.body&&S.active.body.pains)||[];return ['lombar','cervical'].some(k=>r.includes(k)||p.includes(k))}
+function absList(lv){const L=ABS[lv]||ABS.medium;return (absSafe()?L.safe:L.std).map(e=>({...e}))}
+function absCard(live){const lv=S.absLvl||'medium',L=absList(lv),min=Math.round(L.reduce((t,e)=>t+e.sets*(35+e.rest),0)/60);
+  return `<div class="card stack abscard"><div><div class="eyebrow">${live?'Fechar com abdômen? · opcional':'Abdômen'}</div><h3>${live?'Adicionar abdômen ao treino':'Treino de abdômen'}</h3></div>
+    <div class="chips">${Object.entries(ABS).map(([k,v])=>`<button class="chip sm" data-act="abslvl" data-lv="${k}" aria-pressed="${k===lv}">${v.label}</button>`).join('')}</div>
+    <div class="muted" style="font-size:13px">${esc(ABS[lv].sub)} · ${L.length} exercícios · ~${min} min${absSafe()?' · versão segura para a coluna':''}</div>
+    <ul class="abslist">${L.map(e=>`<li><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button><span class="muted num">${e.sets} × ${esc(e.reps)}</span></li>`).join('')}</ul>
+    <button class="btn ${live?'ghost':'primary'}" data-act="${live?'absadd':'absgo'}">${live?'Adicionar '+ABS[lv].label+' ao treino':'Começar abdômen '+ABS[lv].label}</button></div>`}
+function exFromDef(e){const l=lastFor(e.id,e.name);const sg=suggestFor(e.id,e.name,{reps:e.reps});
+  return{exId:e.id,name:e.name,sugg:sg,target:{sets:e.sets,reps:e.reps,rest:e.rest,bar:e.bar},sets:Array.from({length:e.sets},(_,i)=>{const p=l&&(l.sets[i]||l.sets[l.sets.length-1]);return{kg:sg&&sg.kind==='up'?String(sg.kg):p&&p.kg?String(p.kg):'',reps:'',done:false}})}}
+
+/* ---------- aparelho ocupado: opções e preferência ---------- */
+function swapPrefs(){return LS.get('ct.swaps',{})}
+function busyOptions(a,ei,skip){const ae=a.ex[ei];const grp=exGroups(ae.name)[0];if(!grp)return [];const eq=PLACEQ[profile().place]||'a';const pains=(a.body&&a.body.pains)||[];
+  const bad=n=>pains.some(k=>RESTR[k]&&RESTR[k].swaps.some(z=>z[0].test(n)&&norm(z[1])!==n));
+  const pool=LIB.filter(x=>{const n=norm(x.n);return x.g===grp&&x.eq.includes(eq)&&!issues(x.n).length&&!bad(n)&&!a.ex.some(y=>norm(y.name)===n||norm(y.swappedFrom||'')===n)&&!(skip||[]).includes(x.n)}).map(x=>x.n);
+  const pref=swapPrefs()[norm(ae.swappedFrom||ae.name)]||{};
+  const fav=pool.filter(n=>pref[n]).sort((x,y)=>pref[y]-pref[x]);const rest=pool.filter(n=>!pref[n]).sort(()=>Math.random()-.5);
+  return [...fav.slice(0,2),...rest].slice(0,3).map(n=>({n,fav:!!pref[n],cnt:pref[n]||0}))}
+function busyPick(ei){const a=S.active;let seen=[];
+  const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
+  const draw=()=>{const opts=busyOptions(a,ei,seen);const ae=a.ex[ei];
+    if(!opts.length&&!seen.length){toast('Não achei outro exercício seguro para esse músculo. Espera liberar ou me pergunta no chat.');o.remove();return}
+    if(!opts.length){seen=[];return draw()}
+    seen.push(...opts.map(x=>x.n));
+    o.innerHTML=`<div class="cbox-in"><div class="row">${coachAv(44)}<div style="min-width:0"><div class="eyebrow">${COACH}</div><h3>Ocupado? Escolha o que está livre</h3></div></div>
+      <p style="font-size:13px;margin:0">No lugar de <b>${esc(ae.name)}</b>, mesmo músculo:</p>
+      <div class="stack" style="gap:8px">${opts.map(x=>`<button class="busyopt" data-n="${esc(x.n)}"><span>${esc(x.n)}</span>${x.fav?`<span class="favtag">sua escolha ${x.cnt}×</span>`:''}</button>`).join('')}</div>
+      <div class="row cbtns"><button class="btn ghost" data-c="cancel">Esperar</button><button class="btn ghost" data-c="more">Outras opções</button></div></div>`};
+  draw();if(!o.isConnected&&!o.innerHTML)return;
+  o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.c==='cancel'){o.remove();return}if(t.dataset.c==='more'){draw();return}
+    if(t.dataset.n){const n=t.dataset.n,x=LIB.find(z=>z.n===n),ae=a.ex[ei];const key=norm(ae.swappedFrom||ae.name);
+      const P=swapPrefs();P[key]=P[key]||{};P[key][n]=(P[key][n]||0)+1;LS.set('ct.swaps',P);
+      ae.swappedFrom=ae.swappedFrom||ae.name;if(norm(ae.swappedFrom)===norm(n))ae.swappedFrom=null;ae.name=n;ae.target.bar=!!(x&&x.f.includes('b'));ae.sugg=null;
+      const l=lastFor(null,n);ae.sets.forEach(s2=>{if(!s2.done)s2.kg=l&&l.sets[0]?String(l.sets[0].kg||''):''});
+      saveActive();o.remove();render();toast(P[key][n]>1?`${n} de novo. Já virou seu plano B.`:`Fechado: ${n}. Mesmo músculo, mesma luta.`)}});
+  document.body.appendChild(o)}
 
 /* ---------- check-in de corpo ---------- */
 const PAIN=[['lombar','Lombar'],['joelho','Joelho'],['ombro','Ombro'],['cervical','Pescoço']];
@@ -1470,7 +1524,7 @@ function render(){
 
 /* ---------- session actions ---------- */
 function startSession(id){S.picking=false;
-  const w=W(id);
+  const w=typeof id==='object'?id:W(id);
   S.active={id:uid(),workoutId:w.id,name:w.name,start:Date.now(),ex:w.ex.map(e=>{const l=lastFor(e.id,e.name);
     const sg=suggestFor(e.id,e.name,{reps:e.reps});
     return{exId:e.id,name:e.name,sugg:sg,target:{sets:e.sets,reps:e.reps,rest:e.rest,bar:e.bar},sets:Array.from({length:e.sets},(_,i)=>{const p=l&&(l.sets[i]||l.sets[l.sets.length-1]);return{kg:sg&&sg.kind==='up'?String(sg.kg):p?String(p.kg):'',reps:'',done:false}})}})};
@@ -1482,7 +1536,7 @@ function finishSession(){
   const a=S.active;const ex=a.ex.map(e=>({exId:e.exId,name:e.name,sets:e.sets.filter(s=>s.done).map(s=>({kg:+String(s.kg).replace(',','.')||0,reps:+s.reps||0}))})).filter(e=>e.sets.length);
   if(!ex.length){toast('Nenhuma série marcada? Não salvo treino que não aconteceu.');return}
   const durS=Math.round((Date.now()-a.start)/1000);const sess={id:a.id,date:new Date(a.start).toISOString(),workoutId:a.workoutId,name:a.name,durationSec:durS,ex};sess.kcal=sessionKcal(sess);addSession(sess);
-  const ws=S.plan.workouts,i=ws.findIndex(w=>w.id===a.workoutId);S.plan.next=ws[(i+1)%ws.length].id;S.sel=null;savePlan();
+  const ws=S.plan.workouts,i=ws.findIndex(w=>w.id===a.workoutId);if(i>=0&&!a.custom)S.plan.next=ws[(i+1)%ws.length].id;S.sel=null;savePlan();
   S.active=null;saveActive();S.rest=null;try{wake&&wake.release()}catch(e){}
   speak('Treino concluído. Vitória registrada.');celebrate(`${pick(['Vitória registrada.','Mais um capítulo da sua saga.','Isso é força de valquíria.','A barra respeita quem volta.'])} ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);
 }
@@ -1540,9 +1594,11 @@ main.addEventListener('click',e=>{
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
     case 'voice':LS.set('ct.voice',!voiceOn());if(voiceOn()){try{speechSynthesis.getVoices()}catch(_){}speak('Voz ligada. Eu aviso quando o descanso acabar.')}else toast('Fico quieta. Mas continuo de olho.');break;
-    case 'busy':{const ae=a.ex[ei];const grp=exGroups(ae.name)[0];if(!grp){toast('Esse eu não sei trocar sozinha. Me pergunta no chat que eu acho outro.');return}const eq=PLACEQ[profile().place]||'a';const pool=LIB.filter(x=>x.g===grp&&x.eq.includes(eq)&&!issues(x.n).length&&!((a.body&&a.body.pains)||[]).some(k=>RESTR[k]&&RESTR[k].swaps.some(z=>z[0].test(norm(x.n))&&norm(z[1])!==norm(x.n)))&&!a.ex.some(y=>norm(y.name)===norm(x.n)||norm(y.swappedFrom||'')===norm(x.n)));
-      if(!pool.length){toast('Não achei outro exercício seguro para esse músculo. Espera liberar ou pergunta pra mim.');return}const x=pool[Math.floor(Math.random()*pool.length)];ae.swappedFrom=ae.swappedFrom||ae.name;ae.name=x.n;ae.target.bar=x.f.includes('b');ae.sugg=null;ae.sets.forEach(t=>{if(!t.done)t.kg=''});saveActive();toast(`Ocupado? Sem drama. Faz ${x.n}: mesmo músculo, mesma luta.`);break}
+    case 'busy':busyPick(ei);return;
     case 'saga':openSaga();return;
+    case 'abslvl':S.absLvl=b.dataset.lv;LS.set('ct.absLvl',S.absLvl);break;
+    case 'absgo':{const lv=S.absLvl||'medium';bodyCheck().then(r=>{startSession({id:'ABS',name:'Abdômen · '+ABS[lv].label,ex:[]});S.active.custom=true;S.active.absLvl=lv;S.active.body=r||null;S.active.ex=absList(lv).map(exFromDef);saveActive();adaptSession(r);render();speak('Abdômen '+ABS[lv].label+'. Trava o core.')});return}
+    case 'absadd':{const lv=S.absLvl||'medium';const have=new Set(a.ex.map(e=>norm(e.name)));const add=absList(lv).filter(e=>!have.has(norm(e.name))).map(exFromDef);a.ex.push(...add);a.abs=lv;saveActive();toast(`Abdômen ${ABS[lv].label} no fim do treino: ${add.length} exercícios. Não pula.`);break}
     case 'nutri':S.view='nutri';window.scrollTo(0,0);break;
     case 'water':{const f=food();f.water=Math.max(0,f.water+(+b.dataset.d));saveFood(f);if(+b.dataset.d>0&&f.water===waterGoal())toast('Meta de água batida. Hidratada como um fiorde.');break}
     case 'prot':{const f=food();f.prot+=+b.dataset.g;f.log.push({n:b.dataset.n,g:+b.dataset.g});saveFood(f);if(f.prot>=protGoal()&&f.prot-(+b.dataset.g)<protGoal())toast('Proteína do dia batida. A forja agradece.');break}
