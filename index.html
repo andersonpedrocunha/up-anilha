@@ -1271,7 +1271,7 @@ function protT(f){return Math.round((f.prot||0)+(f.meals||[]).reduce((t,m)=>t+(+
 function kcalIn(f){return Math.round((f.meals||[]).reduce((t,m)=>t+(+m.kcal||0),0))}
 function kcalOut(d){const k=dayKey(d||new Date());const ex=S.sessions.filter(s=>dayKey(s.date)===k).reduce((t,s)=>t+sessionKcal(s),0);const base=Math.round(bmrDay()*1.2);return {base,ex,total:base+ex}}
 function balTarget(){const g=profile().goal;return g==='emagrecimento'?-400:g==='hipertrofia'||g==='forca'?250:0}
-function saveFood(f){const a=foodAll();const k0=isoOf(new Date());a[k0]=f;const keys=Object.keys(a).sort();while(keys.length>60)delete a[keys.shift()];const lim=isoOf(new Date(Date.now()-2*864e5));Object.keys(a).forEach(k=>{if(k<lim&&a[k].meals)a[k].meals.forEach(m=>{delete m.thumb})});try{LS.set('ct.food',a)}catch(e){Object.values(a).forEach(x=>(x.meals||[]).forEach(m=>{if(x!==f)delete m.thumb}));LS.set('ct.food',a)}}
+function saveFood(f){const a=foodAll();const k0=isoOf(new Date());a[k0]=f;const lim=isoOf(new Date(Date.now()-2*864e5));Object.keys(a).forEach(k=>{if(k<lim&&a[k].meals)a[k].meals.forEach(m=>{delete m.thumb})});try{LS.set('ct.food',a)}catch(e){Object.values(a).forEach(x=>(x.meals||[]).forEach(m=>{if(x!==f)delete m.thumb}));LS.set('ct.food',a)}}
 function waterGoal(){return Math.max(6,Math.round((+body().weight||70)*35/250))}
 function protGoal(){const g=profile().goal;const f=g==='hipertrofia'||g==='forca'?1.8:g==='emagrecimento'?1.6:1.2;return Math.round((+body().weight||70)*f)}
 function supps(){if(!Array.isArray(S.user.supps))S.user.supps=[];return S.user.supps}
