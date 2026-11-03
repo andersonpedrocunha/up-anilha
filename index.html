@@ -813,8 +813,8 @@ function firstName(){return (S.user.name||'').trim().split(/\s+/)[0]||''}
 function avatarInner(){return S.user.photo?`<img src="${S.user.photo}" alt="">`:(S.user.name?`<span>${esc(firstName().charAt(0).toUpperCase())}</span>`:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>`)}
 function renderAvatar(){const b=document.getElementById('avatarBtn');if(b){b.innerHTML=avatarInner();b.classList.toggle('on',S.view==='perfil')}}
 function saveUser(){LS.set('ct.user',S.user);renderAvatar()}
-function greet(){const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
-function welcomeCard(){if(S.user.name)return `<div class="hello"><span class="av sm">${avatarInner()}</span><div><div class="eyebrow">${greet()}</div><div class="hello-n">${esc(firstName())}</div></div></div>`;
+function greet(){const h=new Date().getHours();return h<5?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
+function welcomeCard(){if(S.user.name)return '';
   if(S.user.skip)return '';
   return `<div class="card stack welcome"><div class="row"><span class="av md">${avatarInner()}</span><div style="min-width:0"><h3>Bem-vindo ao Up Anilha</h3><div class="muted" style="font-size:14px">Como você quer ser chamado? A foto é opcional.</div></div></div>
     <input id="welName" class="wname" placeholder="Seu nome" autocomplete="given-name" aria-label="Seu nome" value="${esc(S.draftName||'')}">
@@ -860,7 +860,11 @@ function coachLine(){const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinc
   if(st>=3)return `${st} dias seguidos, ${name||'guerreiro'}. É assim que se constrói força de verdade.`;
   if(ds>=4)return `${ds} dias longe da barra. Sem culpa: volte hoje, nem que seja um treino leve.`;
   if(ds>=2)return `${you}faz ${ds} dias. A barra não vai se levantar sozinha.`;
-  return `${you}faltam ${Math.max(0,g.week-wk)} ${g.week-wk===1?'dia':'dias'} para a sua meta da semana. Eu sei que você consegue.`}
+  const h=new Date().getHours(),need=Math.max(0,g.week-wk),N=name||'guerreiro';
+  if(h<5)return `${N}, acordado a essa hora? Dorme. Músculo cresce no descanso, não na tela.`;
+  if(h<9)return pick([`${N}. Cedo assim, a barra está livre e a academia é sua.`,`Bom dia não, ${N}: dia bom é o que tem treino.`]);
+  if(h>=21)return pick([`${N}, ainda dá tempo de um treino curto. Ou descansa e amanhã vem com tudo.`,`Noite, ${N}. Amanhã a gente cobra. ${need?`Faltam ${need} para a meta.`:''}`]);
+  return pick([`${N}, faltam ${need} ${need===1?'dia':'dias'} para a meta da semana. Vai deixar para depois?`,`${N}. A barra não se levanta sozinha. Faltam ${need} esta semana.`])}
 function coachCard(){return `<div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${esc((l=>l.charAt(0).toUpperCase()+l.slice(1))(coachLine()))}</p></div></div>`}
 
 /* ---------- guia ---------- */
