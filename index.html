@@ -408,7 +408,7 @@ const DEFAULT_PLAN={v:2,next:'A',goals:{week:5,month:20},workouts:[
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(SYNCK.has(k)&&!cloudApplying)cloudTouch(k)}};
 /* ---------- nuvem (Supabase) ---------- */
 const SB_URL='https://htzpfwdbhlwroqhgftnj.supabase.co',SB_KEY='sb_publishable_o2fCcwJnCK_lTT16I_QmkA_jkJ3eDkY';
-const SYNCK=new Set(['ct.user','ct.plan','ct.plans','ct.sessions','ct.deleted','ct.chat','ct.food','ct.pauses','ct.weekplan','ct.ai','ct.key','ct.model','ct.look','ct.voice','ct.voiceName','ct.voiceRate','ct.absLvl','ct.absMin','ct.swaps','ct.audios','ct.lastAct']);
+const SYNCK=new Set(['ct.active','ct.user','ct.plan','ct.plans','ct.sessions','ct.deleted','ct.chat','ct.food','ct.pauses','ct.weekplan','ct.ai','ct.key','ct.model','ct.look','ct.voice','ct.voiceName','ct.voiceRate','ct.absLvl','ct.absMin','ct.swaps','ct.audios','ct.lastAct']);
 var cloudApplying=false,cloudDirtySet=new Set(),cloudTimer=null,cloudBusy=false,cloudLast=0,cloudErr='';
 function cloudOn(){return !!(SB_URL&&SB_KEY)}
 function sbSess(){try{return JSON.parse(localStorage.getItem('ct.sb')||'null')}catch(e){return null}}
@@ -449,11 +449,17 @@ async function cloudPull(first){if(!cloudOn()||!sbSess())return false;let rows;t
     else if(k==='ct.chat')val=mergeChat(local,r&&r.data);
     else if(r&&(local===null||(mt[k]||0)<=cut))val=r.data;
     const sv=JSON.stringify(val),sl=JSON.stringify(local),sc=r?JSON.stringify(r.data):null;
-    if(sv!==sl&&val!==null){LS.set(k,val);changed=true}
+    if(sv!==sl&&(val!==null||k==='ct.active')){LS.set(k,val);changed=true}
     if(val!==null&&sv!==sc)push.add(k)})}finally{cloudApplying=false}
-  if(changed){S.user=LS.get('ct.user',S.user);S.plan=LS.get('ct.plan',null)||S.plan;S.sessions=LS.get('ct.sessions',[]);S.chat=LS.get('ct.chat',[]);S.absLvl=LS.get('ct.absLvl','medium');S.absMin=LS.get('ct.absMin',0);if(apiKey()&&!sampleApi)sampleApi=makeSample();try{pickVoice()}catch(_){}}
+  if(changed){S.active=LS.get('ct.active',null);S.user=LS.get('ct.user',S.user);S.plan=LS.get('ct.plan',null)||S.plan;S.sessions=LS.get('ct.sessions',[]);S.chat=LS.get('ct.chat',[]);S.absLvl=LS.get('ct.absLvl','medium');S.absMin=LS.get('ct.absMin',0);if(apiKey()&&!sampleApi)sampleApi=makeSample();try{pickVoice()}catch(_){}}
   push.forEach(k=>cloudDirtySet.add(k));cloudLast=Date.now();LS.set('ct.cloudLast',cloudLast);cloudErr='';if(cloudDirtySet.size)cloudPush();
   if(changed&&!first)render();return changed}
+const photoCache=new Map();
+async function sbUpload(path,blob){const t=await sbToken();if(!t)throw new Error('nosess');const r=await fetch(SB_URL+'/storage/v1/object/fotos/'+path,{method:'POST',headers:{apikey:SB_KEY,authorization:'Bearer '+t,'content-type':blob.type||'image/jpeg','x-upsert':'true'},body:blob});if(!r.ok)throw new Error('up '+r.status);return path}
+async function sbPhoto(path){if(photoCache.has(path))return photoCache.get(path);const t=await sbToken();if(!t)return '';const r=await fetch(SB_URL+'/storage/v1/object/authenticated/fotos/'+path,{headers:{apikey:SB_KEY,authorization:'Bearer '+t}});if(!r.ok)return '';const u=URL.createObjectURL(await r.blob());photoCache.set(path,u);return u}
+function sbDelPhoto(path){sbToken().then(t=>{if(t)fetch(SB_URL+'/storage/v1/object/fotos/'+path,{method:'DELETE',headers:{apikey:SB_KEY,authorization:'Bearer '+t}}).catch(()=>{})})}
+function hydratePhotos(){document.querySelectorAll('img[data-sbphoto]:not([src])').forEach(im=>{sbPhoto(im.dataset.sbphoto).then(u=>{if(u)im.src=u})})}
+function imgBlob(file,max){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',.8)};im.onerror=()=>res(null);im.src=r.result};r.onerror=()=>res(null);r.readAsDataURL(file)})}
 async function cloudLogin(mode,email,pass,name){let j;
   if(mode==='signup'){j=await sbAuth('signup',{email,password:pass,data:{name}});if(!j.access_token){return 'confirm'}}
   else j=await sbAuth('token?grant_type=password',{email,password:pass});
@@ -475,7 +481,7 @@ function viewConta(){const m=S.acc||'login';const busy=S.accBusy;
     </form>
     ${m==='login'?`<button class="linkbtn" data-act="accmode" data-v="forgot" style="align-self:center">Esqueci minha senha</button>`:m==='forgot'?`<button class="linkbtn" data-act="accmode" data-v="login" style="align-self:center">Voltar para entrar</button>`:''}
     ${S.accMsg?`<div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(S.accMsg)}</p></div>`:''}
-    <button class="btn ghost" data-act="accskip">Agora não, usar só neste celular</button></div>`}
+    <p class="muted" style="font-size:12px;text-align:center;margin:0">Sua conta guarda treinos, alimentação, fotos e a ${COACH} ativa em qualquer aparelho.</p></div>`}
 function accountCard(){if(!cloudOn())return '';const x=sbSess();
   if(!x)return `<div class="card stack"><div class="row">${coachAv(36)}<div style="min-width:0"><h3>Salvar na nuvem</h3><div class="muted" style="font-size:13px">Crie uma conta para não perder nada e usar em qualquer aparelho.</div></div></div><button class="btn primary" data-act="accopen">Entrar ou criar conta</button></div>`;
   const last=LS.get('ct.cloudLast',0);
@@ -1073,7 +1079,7 @@ function viewPerfil(){const u=S.user;
     <div class="muted" style="font-size:13px;align-self:flex-start">Gasto diário em repouso: ~${Math.round(bmrDay())} kcal${hasBody()?'':' (estimado com 70 kg; preencha para ficar preciso)'}</div>
   </div>
   ${accountCard()}
-  ${cloudOn()&&sbSess()?'':'<p class="muted" style="margin:0;font-size:14px">Sem conta, seu perfil e seus treinos ficam salvos só neste celular.</p>'}
+
   <button class="btn ghost" data-act="audioedit">O que ouvir no treino (${audios().length})</button>
   ${backupCard()}
   <button class="btn primary" data-act="go" data-v="hoje">Voltar ao treino</button></div>`}
@@ -1430,7 +1436,7 @@ function mealsCard(f){const i=kcalIn(f),o=kcalOut(),b=i-o.total,t=balTarget();
     <div class="muted" style="font-size:12px">Gasto = corpo em repouso e rotina leve (${o.base} kcal) + exercícios registrados hoje (${o.ex} kcal).</div>
     <div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(balLine(f))}</p></div>
     ${weekBalHtml()}
-    ${f.meals.length?`<ul class="meals">${f.meals.map(m=>`<li>${m.thumb?`<img src="${m.thumb}" alt="">`:'<span class="mthumb">🍽</span>'}<div style="flex:1;min-width:0"><b>${esc(m.name)}</b><div class="muted num" style="font-size:12px">${m.kcal} kcal${m.prot!=null?` · P ${m.prot} g`:''}${m.carb!=null?` · C ${m.carb} g`:''}${m.fat!=null?` · G ${m.fat} g`:''} · ${hhmm(m.t)}</div></div><button class="ic" data-act="mealdel" data-id="${m.id}" aria-label="Remover refeição">✕</button></li>`).join('')}</ul>`:''}
+    ${f.meals.length?`<ul class="meals">${f.meals.map(m=>`<li>${m.thumb?`<img src="${m.thumb}" alt="">`:m.photo?`<img data-sbphoto="${esc(m.photo)}" alt="">`:'<span class="mthumb">🍽</span>'}<div style="flex:1;min-width:0"><b>${esc(m.name)}</b><div class="muted num" style="font-size:12px">${m.kcal} kcal${m.prot!=null?` · P ${m.prot} g`:''}${m.carb!=null?` · C ${m.carb} g`:''}${m.fat!=null?` · G ${m.fat} g`:''} · ${hhmm(m.t)}</div></div><button class="ic" data-act="mealdel" data-id="${m.id}" aria-label="Remover refeição">✕</button></li>`).join('')}</ul>`:''}
     <div class="row" style="flex-wrap:wrap">${sampleApi?`<label class="btn primary" for="mealPhoto" style="flex:2;text-align:center;cursor:pointer">📷 Foto da refeição</label><input type="file" id="mealPhoto" accept="image/*" capture="environment" hidden>`:''}<button class="btn ghost" data-act="mealman" style="flex:1">+ Manual</button></div>
     ${S.mealMan?`<div class="suppform"><input id="mlName" class="wname" placeholder="O que comeu (ex.: almoço, PF de frango)"><input id="mlKcal" class="wname" inputmode="numeric" placeholder="kcal"><input id="mlProt" class="wname" inputmode="numeric" placeholder="proteína (g), opcional"><button class="btn primary sm" data-act="mealadd">Salvar refeição</button></div>`:''}
     ${sampleApi?'':'<div class="muted" style="font-size:12px">Para calcular pela foto, ative minha IA na aba '+COACH+'.</div>'}
@@ -1453,7 +1459,7 @@ async function mealPhoto(file,grams,plate,note,th0){toast(grams?`${grams} g anot
       messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:(grams?`PESO INFORMADO: ${grams} g ${plate?'INCLUINDO o prato (estime o peso do prato pela foto, normalmente 300 a 600 g para prato de louça, e desconte)':'só de comida'}. Use esse peso como verdade e distribua entre os alimentos pela proporção visível. `:'Sem peso informado: estime as porções pelo tamanho do prato, talheres e referências da foto. ')+(note?`Informação do aluno: ${note}. `:'')+'Identifique a refeição e estime as porções em gramas. Responda só este JSON: {"nome":"nome curto da refeição","itens":[{"alimento":"","porcao":"ex.: 120 g (4 col. sopa)","kcal":0}],"kcal":0,"prot":0,"carb":0,"gord":0,"comentario":"uma frase curta sua sobre o prato pensando no treino"}. Se não for comida, devolva {"erro":"motivo"}.'}]}]});
     trackUsage(model,j.usage);creditWarn();const txt=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');const m=txt.match(/\{[\s\S]*\}/);const r=m?JSON.parse(m[0]):null;
     if(!r||r.erro){toast(r&&r.erro?r.erro:'Não consegui ler esse prato. Tenta uma foto de cima, com boa luz.');return}
-    mealConfirm({weighed:!!grams,name:String(r.nome||'Refeição').slice(0,60),kcal:Math.round(+r.kcal||0),prot:Math.round(+r.prot||0),carb:Math.round(+r.carb||0),fat:Math.round(+r.gord||0),items:(r.itens||[]).slice(0,8),note:r.comentario||'',thumb:th})}
+    mealConfirm({file,weighed:!!grams,name:String(r.nome||'Refeição').slice(0,60),kcal:Math.round(+r.kcal||0),prot:Math.round(+r.prot||0),carb:Math.round(+r.carb||0),fat:Math.round(+r.gord||0),items:(r.itens||[]).slice(0,8),note:r.comentario||'',thumb:th})}
   catch(e){toast(errMsg(e))}}
 function thumbOf(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),z=96;c.width=z;c.height=z;const k=Math.max(z/im.width,z/im.height);const w=im.width*k,h=im.height*k;c.getContext('2d').drawImage(im,(z-w)/2,(z-h)/2,w,h);res(c.toDataURL('image/jpeg',.6))};im.onerror=()=>res('');im.src=r.result};r.onerror=()=>res('');r.readAsDataURL(file)})}
 function mealConfirm(m){let k=1;const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
@@ -1464,7 +1470,7 @@ function mealConfirm(m){let k=1;const o=document.createElement('div');o.classNam
     ${m.note?`<div class="coachsay sm">${coachAv(24)}<p style="margin:0;font-size:13px">${esc(m.note)}</p></div>`:''}
     <div class="row cbtns"><button class="btn ghost" data-c="no">Descartar</button><button class="btn primary" data-c="ok">Salvar refeição</button></div></div>`};
   draw();o.addEventListener('click',e=>{if(e.target===o){o.remove();return}const t=e.target.closest('button');if(!t)return;if(t.dataset.k){k=+t.dataset.k;draw();return}
-    if(t.dataset.c){o.remove();if(t.dataset.c==='ok'){const f=food();f.meals.push({id:uid(),t:Date.now(),name:m.name,kcal:Math.round(m.kcal*k),prot:Math.round(m.prot*k),carb:Math.round(m.carb*k),fat:Math.round(m.fat*k),thumb:m.thumb,ai:true});saveFood(f);render();toast(`${Math.round(m.kcal*k)} kcal anotadas. Saldo do dia: ${kcalIn(f)-kcalOut().total>0?'+':''}${kcalIn(f)-kcalOut().total} kcal.`)}}});
+    if(t.dataset.c){o.remove();if(t.dataset.c==='ok'){const f=food();const mid=uid();if(m.file&&cloudOn()&&sbSess()){const path=sbSess().user.id+'/refeicao-'+mid+'.jpg';imgBlob(m.file,800).then(bl=>bl&&sbUpload(path,bl)).then(()=>{const f2=food();const x=f2.meals.find(q=>q.id===mid);if(x){x.photo=path;delete x.thumb;saveFood(f2)}}).catch(()=>{})}f.meals.push({id:mid,t:Date.now(),name:m.name,kcal:Math.round(m.kcal*k),prot:Math.round(m.prot*k),carb:Math.round(m.carb*k),fat:Math.round(m.fat*k),thumb:m.thumb,ai:true});saveFood(f);render();toast(`${Math.round(m.kcal*k)} kcal anotadas. Saldo do dia: ${kcalIn(f)-kcalOut().total>0?'+':''}${kcalIn(f)-kcalOut().total} kcal.`)}}});
   document.body.appendChild(o)}
 function viewNutri(){const f=food(),wg=waterGoal(),pg=protGoal(),L=supps();
   return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Alimentação e suplementação</div></div>
@@ -1783,7 +1789,7 @@ function viewConq(){const xp=totalXP(),lv=levelOf(xp),st=stats();const risk=week
     return `<div class="badge2 ${s.tier?'on':''}"><div class="medal">${s.tier?s.tier:'?'}</div><b>${f[1]}${s.tier?' '+(ROMAN[s.tier-1]||s.tier):''}</b><span>${f[2]}</span><div class="progress mini"><i style="width:${pct}%"></i></div><span class="num">Próximo: ${f[5](s.next)}</span></div>`}).join('')}</div>
   </div>`}
 
-function backupCard(){return `<div class="card stack"><div class="eyebrow">Backup</div><p class="muted" style="margin:0;font-size:14px">Seus dados ficam só neste celular. Baixe um backup de vez em quando para não perder nada se trocar de aparelho.</p>
+function backupCard(){return `<div class="card stack"><div class="eyebrow">Backup</div><p class="muted" style="margin:0;font-size:14px">${cloudOn()&&sbSess()?'Tudo já está salvo na nuvem. Se quiser uma cópia extra, baixe o arquivo.':'Baixe um backup de vez em quando para não perder nada.'}</p>
   <div class="row"><button class="btn ghost" data-act="backup">Baixar backup</button><label class="btn ghost" for="restoreIn" style="display:inline-flex;align-items:center">Restaurar backup</label><input type="file" id="restoreIn" accept="application/json,.json" hidden></div></div>`}
 function prsInDays(days){const lim=Date.now()-days*864e5;const best={},out=[];S.sessions.filter(x=>!x.checkin&&!x.activity).slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>x.ex.forEach(e=>{const m=Math.max(0,...e.sets.map(t=>+t.kg||0));if(!m)return;
   if(best[e.name]!==undefined&&m>best[e.name]&&new Date(x.date)>=lim){const o=out.find(r=>r.name===e.name);if(o)o.kg=m;else out.push({name:e.name,kg:m})}best[e.name]=Math.max(best[e.name]||0,m)}));return out}
@@ -1817,7 +1823,7 @@ function viewHist(){
 
 function render(){
   main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():S.view==='pausa'?viewPausa():S.view==='nutri'?viewNutri():S.view==='conta'?viewConta():viewHist());
-  renderAvatar();renderFab();if(typeof syncNav==='function')setTimeout(syncNav,0);document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
+  renderAvatar();renderFab();if(typeof syncNav==='function')setTimeout(syncNav,0);if(cloudOn()&&sbSess())setTimeout(hydratePhotos,0);document.querySelectorAll('details.stretch').forEach(d=>d.addEventListener('toggle',()=>{S.stretchOpen=d.open;const sp=d.querySelector('summary>span');if(sp)sp.textContent=d.open?'Fechar':'Ver'}));{const n=document.querySelector('.navav');if(n)n.src=`${dImg('face')}`}
   const cl=document.getElementById('chatlog');if(cl)cl.scrollTop=cl.scrollHeight;
   if(!S.openD)S.openD={};main.querySelectorAll('details[data-k]').forEach(d=>{d.open=!!S.openD[d.dataset.k];d.addEventListener('toggle',()=>{S.openD[d.dataset.k]=d.open})});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===S.view?'page':'false'));
@@ -1912,7 +1918,7 @@ main.addEventListener('click',e=>{
     case 'gpxhelp':S.gpxHelp=!S.gpxHelp;break;
     case 'mealman':S.mealMan=!S.mealMan;break;
     case 'mealadd':{const n=document.getElementById('mlName').value.trim()||'Refeição',k=parseInt(document.getElementById('mlKcal').value),pr=parseInt(document.getElementById('mlProt').value);if(!(k>0)){toast('Quantas calorias, mais ou menos?');return}const f=food();f.meals.push({id:uid(),t:Date.now(),name:n.slice(0,60),kcal:k,prot:pr>0?pr:null});saveFood(f);S.mealMan=false;toast(`${k} kcal anotadas.`);break}
-    case 'mealdel':{const f=food();f.meals=f.meals.filter(m=>m.id!==b.dataset.id);saveFood(f);break}
+    case 'mealdel':{const f=food();const x=f.meals.find(m=>m.id===b.dataset.id);if(x&&x.photo)sbDelPhoto(x.photo);f.meals=f.meals.filter(m=>m.id!==b.dataset.id);saveFood(f);break}
     case 'absmin':S.absMin=+b.dataset.v;LS.set('ct.absMin',S.absMin);break;
     case 'abslvl':S.absLvl=b.dataset.lv;LS.set('ct.absLvl',S.absLvl);break;
     case 'absgo':{const lv=S.absLvl||'medium';bodyCheck().then(r=>{if(r===false)return;startSession({id:'ABS',name:'Abdômen · '+ABS[lv].label+(S.absMin?' · '+S.absMin+' min':''),ex:[]});S.active.custom=true;S.active.absLvl=lv;S.active.body=r||null;S.active.ex=absList(lv).map(exFromDef);saveActive();adaptSession(r);render();speak('Abdômen '+ABS[lv].label+'. Trava o core.')});return}
@@ -2069,7 +2075,7 @@ if(cloudOn()){try{const h=location.hash||'';if(/access_token=/.test(h)){const q=
     const j={access_token:q.get('access_token'),refresh_token:q.get('refresh_token'),expires_in:+q.get('expires_in')||3600,user:{}};
     try{const pl=JSON.parse(atob(j.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));j.user={id:pl.sub,email:pl.email}}catch(_){}
     sbSetSess(sbFromToken(j));if(q.get('type')==='recovery'){S.view='conta';S.acc='newpass'}}}catch(_){}
-  if(sbSess()){cloudPull(true).then(c=>{if(c)render()})}else if(!LS.get('ct.cloudSkip',false)&&S.view!=='conta'){S.view='conta';S.acc=S.sessions.length?'login':'signup'}
+  if(sbSess()){cloudPull(true).then(c=>{if(c)render()})}else if(S.view!=='conta'){S.view='conta';S.acc=S.sessions.length?'login':'signup'}
   document.addEventListener('visibilitychange',()=>{if(!sbSess())return;if(document.hidden){if(cloudDirtySet.size)cloudPush()}else cloudPull()});
   window.addEventListener('online',()=>{if(sbSess()){cloudPull();cloudPush()}})}
 if(apiKey())sampleApi=makeSample();
@@ -2090,7 +2096,7 @@ document.getElementById('fab').addEventListener('submit',e=>{if(e.target.id==='f
 document.getElementById('fab').addEventListener('keydown',e=>{if(e.target.id==='fabIn'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.target.form.requestSubmit()}});
 /* ---------- voltar (botão/gesto do celular) ---------- */
 let navUp=false,popSkip=false;
-function nonRoot(){return S.view!=='hoje'||!!S.picking||!!S.fabOpen||!!document.querySelector('.cbox')||!document.getElementById('sheet').hidden}
+function nonRoot(){if(S.view==='conta'&&cloudOn()&&!sbSess())return false;return S.view!=='hoje'||!!S.picking||!!S.fabOpen||!!document.querySelector('.cbox')||!document.getElementById('sheet').hidden}
 function syncNav(){try{const nr=nonRoot();if(nr&&!navUp){history.pushState({up:1},'');navUp=true}else if(!nr&&navUp){navUp=false;popSkip=true;history.back()}}catch(_){}}
 function goBack(){const boxes=document.querySelectorAll('.cbox');if(boxes.length){boxes[boxes.length-1].dispatchEvent(new MouseEvent('click',{bubbles:true}));return}
   if(!document.getElementById('sheet').hidden){closeGuide();return}
@@ -2098,6 +2104,7 @@ function goBack(){const boxes=document.querySelectorAll('.cbox');if(boxes.length
   if(S.view==='montar'&&S.wz&&S.wz.step>0){S.wz.step--;render();return}
   if(S.view==='montar'){S.view='rotina';S.wz=null;S.wzPlan=null;render();return}
   if(S.picking){S.picking=false;window.scrollTo(0,0);render();return}
+  if(S.view==='conta'&&cloudOn()&&!sbSess())return;
   if(S.view!=='hoje'){S.view='hoje';window.scrollTo(0,0);render();return}}
 window.addEventListener('popstate',()=>{if(popSkip){popSkip=false;return}navUp=false;goBack();setTimeout(syncNav,0)});
 new MutationObserver(()=>syncNav()).observe(document.body,{childList:true});
