@@ -240,6 +240,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .coachsay b{font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
 .coachsay p{margin:2px 0 0;font-size:15px;line-height:1.4}
 .coachav{flex:none;display:block;border-radius:50%;object-fit:cover;background:#141a2e}
+.looks.seasons{flex-wrap:wrap;gap:6px}
 .looks{display:flex;align-items:center;gap:10px;justify-content:center}
 .lookbtn{width:52px;height:52px;border-radius:50%;padding:0;border:3px solid transparent;background:none;overflow:hidden}
 .lookbtn img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
@@ -766,6 +767,7 @@ const SUGS=['Monte um aquecimento para o treino de hoje','Só tenho 40 min hoje,
 function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${full?' class="full"':''}>${title}<select id="${id}" data-f="pf" data-k="${k}">${OPTS[k].map(([v,l])=>`<option value="${v}" ${String(p[k])===String(v)?'selected':''}>${l}</option>`).join('')}</select></label>`;
   return `<div class="stack">
     <img class="coachportrait" src="${dImg('')}" alt="${COACH}, sua treinadora" width="720" height="720">
+    <div class="looks seasons"><span class="eyebrow">Estação</span>${['',...Object.keys(SEASONS)].map(k=>`<button class="chip sm" data-act="skinprev" data-v="${k}" aria-pressed="${(S.skinPrev||'')===k}">${k?SEASONS[k]+((SKINS[coachLook()]||[]).includes(k)?'':' ·'):'Agora ('+SEASONS[season()]+')'}</button>`).join('')}</div>
     <div class="looks"><span class="eyebrow">Escolha o visual</span>${[1,2,3].map(n=>`<button class="lookbtn" data-act="look" data-v="${n}" aria-pressed="${coachLook()===n}" aria-label="Visual ${n}"><img src="${dImg('face',n)}" alt=""></button>`).join('')}</div>
     <div class="coachhero"><div><div class="eyebrow">Sua treinadora</div><h2>${COACH}</h2><p class="muted" style="margin:4px 0 0">Inspirada na valquíria Sigrdrífa, "a que impulsiona à vitória". Ela monta seu treino, ajusta quando você pedir e respeita os seus limites.</p></div></div>
     <div class="card stack">
@@ -1010,8 +1012,8 @@ const COACH='Driffa';
 /* estações (hemisfério sul) e skins */
 function season(d){d=d||new Date();const m=d.getMonth()+1,day=d.getDate(),v=m*100+day;return v>=1221||v<320?'verao':v<621?'outono':v<923?'inverno':'primavera'}
 const SEASONS={verao:'Verão',outono:'Outono',inverno:'Inverno',primavera:'Primavera'};
-const SKINS={1:[],2:[],3:[]};/* estações com arte pronta, por visual */
-function dImg(kind,n){n=n||coachLook();const se=season();const has=(SKINS[n]||[]).includes(se);return `driffa-${kind?kind+'-':''}${n}${has?'-'+se:''}.jpg${AV}`}const AV='?v=18';
+const SKINS={1:['inverno'],2:[],3:[]};/* estações com arte pronta, por visual */
+function dImg(kind,n){n=n||coachLook();const se=S.skinPrev||season();const has=(SKINS[n]||[]).includes(se);return `driffa-${kind?kind+'-':''}${n}${has?'-'+se:''}.jpg${AV}`}const AV='?v=19';
 function coachLook(){const v=LS.get('ct.look',1);return [1,2,3].includes(v)?v:1}
 function coachAv(size){return `<img class="coachav" src="${dImg('face')}" width="${size}" height="${size}" alt="${COACH}">`}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
@@ -1398,6 +1400,7 @@ main.addEventListener('click',e=>{
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
+    case 'skinprev':S.skinPrev=b.dataset.v||null;if(S.skinPrev&&!(SKINS[coachLook()]||[]).includes(S.skinPrev))toast('Esse visual ainda não tem roupa de '+SEASONS[S.skinPrev].toLowerCase()+'. Uso a de sempre.');break;
     case 'pausego':S.pz=null;S.view='pausa';window.scrollTo(0,0);break;
     case 'pzr':S.pz.reason=b.dataset.v;S.pz.start=document.getElementById('pzStart').value||S.pz.start;S.pz.end=document.getElementById('pzEnd').value;break;
     case 'pzsave':{const st=document.getElementById('pzStart').value,en=document.getElementById('pzEnd').value;if(!st){toast('Me diz quando a pausa começa.');return}if(en&&en<st){toast('O fim vem depois do começo, guerreiro.');return}
