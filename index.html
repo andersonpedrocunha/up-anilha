@@ -285,6 +285,10 @@ a.btn .coachav{margin-right:8px}
 .toast.dt{display:flex;align-items:center;gap:8px;text-align:left}.toast .coachav{width:26px;height:26px}
 .cnote{display:flex;align-items:center;gap:8px}
 .cnote.warnnote{background:color-mix(in srgb,var(--hot) 20%,var(--surface));color:var(--ink)}
+.daychips .chip{min-width:0;padding:6px 10px}
+.presets{flex-wrap:wrap;gap:6px;margin-top:6px}
+.week .wd.plan{border-style:dashed;border-color:var(--accent)}
+.week .wd.off:not(.done){opacity:.4}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -394,7 +398,19 @@ function dayKey(d){const x=new Date(d);return x.getFullYear()+'-'+x.getMonth()+'
 function vol(s){return s.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+(+t.kg||0)*(+t.reps||0),0),0)}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace('.','')}
 function visitSet(){return new Set(S.sessions.map(s=>dayKey(s.date)))}
-function weekStart(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-x.getDay());return x}
+function weekStart(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+const WD=[1,2,3,4,5,6,0],WDS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function avail(){const p=profile();return Array.isArray(p.avail)&&p.avail.length?p.avail:[0,1,2,3,4,5,6]}
+function sched(){const p=profile();return Array.isArray(p.sched)&&p.sched.length?p.sched:null}
+function spreadDays(av,n){const order=WD.filter(d=>av.includes(d));if(n>=order.length)return order;const out=[];for(let i=0;i<n;i++)out.push(order[Math.round(i*(order.length-1)/Math.max(1,n-1))]);
+  if(n===1)return [order.includes(6)?6:order[0]];return [...new Set(out)]}
+function daysLeftWeek(){const now=new Date(),ds=visitSet(),out=[];const d=new Date(now);d.setHours(12,0,0,0);
+  while(true){if(!ds.has(dayKey(d))&&avail().includes(d.getDay()))out.push(d.getDay());if(d.getDay()===0)break;d.setDate(d.getDate()+1)}return out}
+function dayList(arr){const n=arr.map(d=>WDS[d].toLowerCase());return n.length<=1?n.join(''):n.slice(0,-1).join(', ')+' e '+n[n.length-1]}
+function dayChips(act,sel){return `<div class="chips daychips">${WD.map(d=>`<button class="chip sm" data-act="${act}" data-v="${d}" aria-pressed="${sel.includes(d)}">${WDS[d]}</button>`).join('')}</div>
+  <div class="row presets"><button class="btn ghost sm" data-act="${act}" data-v="all">Todos</button><button class="btn ghost sm" data-act="${act}" data-v="week">Seg a sex</button><button class="btn ghost sm" data-act="${act}" data-v="wknd">Só fim de semana</button><button class="btn ghost sm" data-act="${act}" data-v="mix">Noites + fim de semana</button></div>`}
+function toggleDays(arr,v){if(v==='all')return [0,1,2,3,4,5,6];if(v==='week')return [1,2,3,4,5];if(v==='wknd')return [6,0];if(v==='mix')return [2,4,6,0];
+  const d=+v,a=arr.slice();const i=a.indexOf(d);if(i>=0){if(a.length>1)a.splice(i,1)}else a.push(d);return a}
 function visitsBetween(a,b){const days=new Set();S.sessions.forEach(s=>{const t=new Date(s.date);if(t>=a&&t<b)days.add(dayKey(t))});return days.size}
 function streak(){const g=goals().week;let ws=weekStart(new Date()),n=0;const cur=visitsBetween(ws,new Date(ws.getTime()+7*864e5));if(cur>=g)n++;
   for(let i=0;i<104;i++){const b=ws;ws=new Date(ws);ws.setDate(ws.getDate()-7);if(visitsBetween(ws,b)>=g)n++;else break}return n}
@@ -402,11 +418,11 @@ function todayCheckin(){const k=dayKey(new Date());return S.sessions.find(s=>s.c
 function arm(key){S.armed=key;clearTimeout(armTimer);armTimer=setTimeout(()=>{S.armed=null;render()},3500)}
 
 /* ---------- views ---------- */
-function weekStrip(){const now=new Date();const start=new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-start.getDay());
-  const days=new Set(S.sessions.map(s=>dayKey(s.date)));const L=['D','S','T','Q','Q','S','S'];let h='',n=0;
+function weekStrip(){const now=new Date();const start=weekStart(now);
+  const days=new Set(S.sessions.map(s=>dayKey(s.date)));const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const done=days.has(dayKey(d));if(done)n++;
     const fut=d>now&&dayKey(d)!==dayKey(now);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${S.armed==='pd'+iso?'armed':''}" data-act="pastday" data-d="${iso}" ${fut?'disabled':''} aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':''}">${done?'✓':''}</button></div>`}
+    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!avail().includes(d.getDay())?'off':''} ${S.armed==='pd'+iso?'armed':''}" data-act="pastday" data-d="${iso}" ${fut?'disabled':''} aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':''}">${done?'✓':''}</button></div>`}
   return {html:`<div class="week">${h}</div>`,n}}
 
 function viewHoje(){
@@ -415,7 +431,7 @@ function viewHoje(){
   if(!S.picking)return `<div class="stack">
     ${welcomeCard()}
     ${coachCard()}
-    <button class="trainbtn" data-act="train"><span class="trainbtn-t">Treinar</span><span class="trainbtn-s">${(()=>{const t=S.plan.workouts.find(x=>x.day===new Date().getDay());const n=t||W(S.plan.next);return n?`${t?"Hoje":"Próximo"}: ${esc(n.id)} · ${esc(n.name)}`:"Escolher o treino e começar"})()}</span></button>
+    <button class="trainbtn" data-act="train"><span class="trainbtn-t">Treinar</span><span class="trainbtn-s">${(()=>{const dow=new Date().getDay();const t=S.plan.workouts.find(x=>x.day===dow);const n=t||W(S.plan.next);const sc=sched();if(!t&&sc&&!sc.includes(dow))return `Hoje é descanso · se quiser, ${esc(n.id)} · ${esc(n.name)}`;return n?`${t?"Hoje":"Próximo"}: ${esc(n.id)} · ${esc(n.name)}`:"Escolher o treino e começar"})()}</span></button>
     ${gameCard()}
     ${freqCard(wk)}
     <button class="btn ghost" data-act="wzstart">Montar treino novo</button>
@@ -453,6 +469,11 @@ function freqCard(wk){const g=goals(),now=new Date(),m0=new Date(now.getFullYear
     <details class="goals pastform"><summary>Registrar um dia mais antigo</summary>
       <div class="row" style="margin-top:10px;flex-wrap:wrap"><input type="date" id="pastDate" class="wname" style="flex:1;min-width:150px" max="${todayISO()}" min="${(()=>{const d=new Date();d.setDate(d.getDate()-60);return d.toISOString().slice(0,10)})()}" aria-label="Data do exercício"><button class="btn primary sm" data-act="pastdate">Registrar check-in</button></div>
       <div class="muted" style="font-size:12px;margin-top:6px">Para registrar uma atividade com duração e calorias, use "+ Atividade fora", que também aceita data passada.</div>
+    </details>
+    <details class="goals"><summary>Dias que posso treinar</summary>
+      <p class="muted" style="font-size:13px;margin:8px 0">Marque os dias que você realmente consegue ir. Se a semana é corrida, compense no fim de semana.</p>
+      ${dayChips('avday',avail())}
+      ${sched()?`<p class="muted" style="font-size:13px;margin:8px 0 0">Sua semana planejada: ${dayList(sched())}.</p>`:''}
     </details>
     <details class="goals"><summary>Ajustar metas</summary>
       <div class="row" style="justify-content:space-between;margin-top:10px"><span>Dias por semana</span><span class="stepper"><button class="ic" data-act="goal" data-g="week" data-d="-1" aria-label="Diminuir meta semanal">−</button><b class="num">${g.week}</b><button class="ic" data-act="goal" data-g="week" data-d="1" aria-label="Aumentar meta semanal">+</button></span></div>
@@ -571,7 +592,7 @@ Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body(
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} min por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações: ${p.notes||'nenhuma'}.
 Restrições de saúde: ${restrText()}. Nunca sugira exercícios contraindicados para essas condições; prefira variações com apoio e explique o motivo da troca.
-Metas: ${g.week} idas por semana, ${g.month} por mês. Idas nesta semana: ${weekStrip().n}. Próximo treino sugerido: ${S.plan.next}.
+Metas: ${g.week} dias por semana, ${g.month} por mês. Dias com exercício nesta semana (segunda a domingo): ${weekStrip().n}. Dias que o aluno consegue treinar: ${dayList(avail())}${sched()?'; semana planejada: '+dayList(sched()):''}. Dias que ainda restam nesta semana: ${dayList(daysLeftWeek())||'nenhum'}. Se ele trabalha durante a semana, ajude a compensar no fim de semana. Próximo treino sugerido: ${S.plan.next}.
 Rotina atual:
 ${plan}
 Últimos registros:
@@ -832,6 +853,10 @@ function coachLine(){const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinc
   if(ds===null)return `${you}toda saga começa com um primeiro treino. Hoje é um ótimo dia para escrever a sua.`;
   if(ds===0&&wk>=g.week)return `Meta da semana cumprida. Isso é disciplina de valquíria. Descanse bem.`;
   if(ds===0)return pick([`Hoje você já venceu. Água, comida boa e sono: a força cresce no descanso.`,`Treino de hoje feito. Amanhã a gente vai um pouco mais longe.`]);
+  {const need=g.week-wk,left=daysLeftWeek(),dow=new Date().getDay();
+   if(need>0&&(dow===5||dow===6)&&left.some(d=>d===6||d===0))return pick([`Semana corrida, eu sei. O fim de semana existe para isso: faltam ${need}.`,`${you}trabalho venceu a semana. O fim de semana é nosso. Faltam ${need}.`]);
+   if(need>0&&dow===0&&left.includes(0))return `Último dia da semana, ${name||'guerreiro'}. Hoje decide se a meta fica de pé.`;
+   if(sched()&&!sched().includes(dow)&&ds!==0&&need>0&&need<left.length)return `Hoje é dia de descanso na sua semana. Seu próximo treino é ${dayList([sched().find(d=>WD.indexOf(d)>WD.indexOf(dow))??sched()[0]])}.`;}
   if(st>=3)return `${st} dias seguidos, ${name||'guerreiro'}. É assim que se constrói força de verdade.`;
   if(ds>=4)return `${ds} dias longe da barra. Sem culpa: volte hoje, nem que seja um treino leve.`;
   if(ds>=2)return `${you}faz ${ds} dias. A barra não vai se levantar sozinha.`;
@@ -894,7 +919,7 @@ const SPLITS={
  ABC:{label:'ABC',sub:'Peito e ombro · Costas e bíceps · Pernas',w:[['Peito, ombro e tríceps',[['peito',2],['ombro',2],['triceps',2]]],['Costas e bíceps',[['costas',3],['biceps',2],['core',1]]],['Pernas e core',[['quad',2],['post',1],['glut',1],['pant',1],['core',1]]]]},
  ABCD:{label:'ABCD',sub:'Peito · Costas · Pernas · Ombros',w:[['Peito e tríceps',[['peito',3],['triceps',2]]],['Costas e bíceps',[['costas',3],['biceps',2]]],['Pernas',[['quad',3],['post',1],['glut',1],['pant',1]]],['Ombros e core',[['ombro',3],['core',2]]]]},
  ABCDE:{label:'ABCDE',sub:'Um grupo muscular por dia',w:[['Peito',[['peito',4],['core',1]]],['Costas',[['costas',4],['core',1]]],['Pernas',[['quad',3],['post',2],['pant',1]]],['Ombros',[['ombro',4],['core',1]]],['Braços e glúteo',[['biceps',2],['triceps',2],['glut',2]]]]}};
-const RECO={2:'A',3:'ABC',4:'AB',5:'ABCDE',6:'ABC'};
+const RECO={1:'A',2:'A',3:'ABC',4:'AB',5:'ABCDE',6:'ABC',7:'ABC'};
 const GOALP={hipertrofia:{c:[4,'8-10',90],i:[3,'10-12',60]},forca:{c:[5,'4-6',150],i:[3,'8-10',90]},emagrecimento:{c:[3,'12-15',45],i:[3,'15',30],cardio:20},condicionamento:{c:[3,'12-15',45],i:[3,'15',30],cardio:15},saude:{c:[3,'10-12',60],i:[2,'12-15',45],cardio:10}};
 function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function wzParams(x,z){const P=GOALP[z.goal]||GOALP.hipertrofia;let[sets,reps,rest]=x.g==='core'?[3,/prancha/i.test(x.n)?'30-45 s':/perdigueiro|dead bug/i.test(x.n)?'10 cada lado':'15-20',45]:(P[x.t]||P.i);
@@ -917,14 +942,16 @@ function wzGenerate(z){const rand=rng(z.seed||1);const split=SPLITS[z.split]||SP
     if(cardioMin){const bike=z.restr.includes('joelho')||z.restr.includes('lombar');ex.push({id:uid(),name:bike?'Bicicleta ergométrica':'Caminhada na esteira inclinada',sets:1,reps:cardioMin+' min',rest:0,bar:false,g:'cardio',t:'i'})}
     return {id:'ABCDE'[wi],name,day:null,ex}})}
 const WZ_STEPS=['Tempo','Objetivo','Divisão','Nível','Saúde','Seu treino'];
-function wzInit(){const p=profile();S.wz={step:0,minutes:p.minutes||60,goal:p.goal||'hipertrofia',days:p.days||4,split:RECO[p.days||4]||'ABC',level:p.level||'intermediario',place:p.place||'academia',restr:[...restr()],notes:p.notes||'',seed:Math.floor(Math.random()*1e9)};S.wzPlan=null;S.view='montar';window.scrollTo(0,0)}
+function wzInit(){const p=profile();S.wz={avail:[...avail()],step:0,minutes:p.minutes||60,goal:p.goal||'hipertrofia',days:p.days||4,split:RECO[p.days||4]||'ABC',level:p.level||'intermediario',place:p.place||'academia',restr:[...restr()],notes:p.notes||'',seed:Math.floor(Math.random()*1e9)};S.wzPlan=null;S.view='montar';window.scrollTo(0,0)}
 function opt(act,val,cur,title,sub,badge){return `<button class="opt" data-act="${act}" data-v="${val}" aria-pressed="${String(cur)===String(val)}"><b>${title}${badge?` <span class="badge">${badge}</span>`:''}</b>${sub?`<span>${sub}</span>`:''}</button>`}
 function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=z.step;
   const head=`<div class="wzhead"><button class="ic" data-act="wzexit" aria-label="Sair">✕</button><div style="flex:1;min-width:0"><div class="eyebrow">Montar treino · passo ${st+1} de ${WZ_STEPS.length}</div><div class="wzbar"><i style="width:${(st+1)/WZ_STEPS.length*100}%"></i></div></div></div>`;
   let body='';
   if(st===0)body=`<h2>Quanto tempo você tem na academia?</h2><p class="muted">Por treino, contando aquecimento e descanso.</p><div class="opts">${[[30,'30 min','Rápido e direto'],[45,'45 min',''],[60,'1 hora','O mais comum'],[75,'1h15',''],[90,'1h30','Treino completo']].map(([v,t,sb])=>opt('wzmin',v,z.minutes,t,sb)).join('')}</div>`;
   if(st===1)body=`<h2>Qual é o seu objetivo?</h2><div class="opts">${[['hipertrofia','Ganhar massa muscular','Séries de 8 a 12, descanso médio'],['emagrecimento','Emagrecer e definir','Mais repetições, menos descanso e cardio'],['forca','Ganhar força','Poucas repetições com mais carga'],['condicionamento','Condicionamento','Ritmo alto e cardio no final'],['saude','Saúde e bem-estar','Moderado, com foco em postura e core']].map(([v,t,sb])=>opt('wzgoal',v,z.goal,t,sb)).join('')}</div>`;
-  if(st===2){const rec=RECO[z.days];body=`<h2>Quantos dias por semana?</h2><div class="chips daysel">${[2,3,4,5,6].map(d=>`<button class="chip" data-act="wzdays" data-v="${d}" aria-pressed="${z.days===d}">${d}</button>`).join('')}</div>
+  if(st===2){const rec=RECO[z.days];const maxd=z.avail.length;const sd=spreadDays(z.avail,z.days);body=`<h2>Em quais dias você consegue ir?</h2><p class="muted">Muita gente só consegue no fim de semana por causa do trabalho. Sem problema, a gente compensa.</p>${dayChips('wzav',z.avail)}
+    <h2 style="margin-top:8px">Quantos dias por semana?</h2><div class="chips daysel">${[1,2,3,4,5,6,7].filter(d=>d<=maxd).map(d=>`<button class="chip" data-act="wzdays" data-v="${d}" aria-pressed="${z.days===d}">${d}</button>`).join('')}</div>
+    <p class="muted" style="font-size:14px;margin:0">Sua semana: <b style="color:var(--ink)">${dayList(sd)}</b>.${sd.includes(6)||sd.includes(0)?' Fim de semana incluído.':''}</p>
     <h2 style="margin-top:8px">Como quer dividir?</h2><div class="opts">${Object.entries(SPLITS).map(([k,v])=>opt('wzsplit',k,z.split,'Treino '+v.label,v.sub,k===rec?'Recomendado':'')).join('')}</div>
     <p class="muted" style="font-size:14px">${z.days>SPLITS[z.split].w.length?`Com ${z.days} dias, você repete a sequência ${z.split} ao longo da semana.`:z.days<SPLITS[z.split].w.length?`Com ${z.days} dias, cada treino vai cair menos de uma vez por semana. Se quiser treinar cada grupo toda semana, escolha uma divisão menor.`:'Um treino diferente por dia de academia.'}</p>`}
   if(st===3)body=`<h2>Seu nível</h2><div class="opts">${[['iniciante','Iniciante','Menos de 6 meses ou voltando agora'],['intermediario','Intermediário','Treina com regularidade'],['avancado','Avançado','Anos de treino e boa técnica']].map(([v,t,sb])=>opt('wzlevel',v,z.level,t,sb)).join('')}</div>
@@ -934,7 +961,7 @@ function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=
     <label class="field">Outras observações<textarea id="wzNotes" class="wname" rows="2" placeholder="Ex.: cirurgia no ombro em 2024, prefiro máquinas">${esc(z.notes)}</textarea></label>
     <p class="muted" style="font-size:13px;margin:0">Treine com liberação do seu médico ou fisioterapeuta.</p>`;
   if(st===5){if(!S.wzPlan)S.wzPlan=wzGenerate(z);const pl=S.wzPlan;
-    body=`<h2>Seu treino ${z.split}</h2><p class="muted">${lbl('goal',z.goal)} · ${z.minutes} min · ${z.days} dias por semana${z.restr.length?' · adaptado para '+z.restr.map(k=>RESTR[k].short.toLowerCase()).join(', '):''}</p>
+    body=`<h2>Seu treino ${z.split}</h2><p class="muted">${lbl('goal',z.goal)} · ${z.minutes} min · ${dayList(spreadDays(z.avail,z.days))}${z.restr.length?' · adaptado para '+z.restr.map(k=>RESTR[k].short.toLowerCase()).join(', '):''}</p>
     ${pl.map((w,wi)=>{const m=estMin(w);return `<div class="card stack wzw"><div class="row"><div class="plate sm">${w.id}</div><div style="flex:1;min-width:0"><h3>${esc(w.name)}</h3><div class="muted num" style="font-size:13px">~${m} min ${m>z.minutes?'<span class="flag">passa do seu tempo</span>':''}</div></div></div>
       ${w.ex.map((e,ei)=>`<div class="wzex"><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button><span class="muted num">${e.sets} × ${esc(e.reps)}${e.rest?' · '+mmss(e.rest):''}</span>
         <span class="wzex-t">${e.g!=='cardio'?`<button class="btn ghost sm" data-act="wzswap" data-w="${wi}" data-x="${ei}">Trocar</button>`:''}<button class="ic" data-act="wzrm" data-w="${wi}" data-x="${ei}" aria-label="Remover">✕</button></span></div>`).join('')}
@@ -948,7 +975,7 @@ function viewMontar(){const z=S.wz;if(!z){wzInit();return viewMontar()}const st=
 function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
   switch(act){case 'wzstart':wzInit();return;case 'wzexit':S.view='rotina';S.wz=null;S.wzPlan=null;return;
    case 'wzmin':z.minutes=+v;S.wzPlan=null;return;case 'wzgoal':z.goal=v;S.wzPlan=null;return;
-   case 'wzdays':z.days=+v;z.split=RECO[z.days];S.wzPlan=null;return;case 'wzsplit':z.split=v;S.wzPlan=null;return;
+   case 'wzdays':z.days=+v;z.split=RECO[z.days];S.wzPlan=null;return;case 'wzav':z.avail=toggleDays(z.avail,v);if(z.days>z.avail.length){z.days=z.avail.length;z.split=RECO[z.days]}S.wzPlan=null;return;case 'wzsplit':z.split=v;S.wzPlan=null;return;
    case 'wzlevel':z.level=v;S.wzPlan=null;return;case 'wzplace':z.place=v;S.wzPlan=null;return;
    case 'wzgo':z.step=+v;window.scrollTo(0,0);return;
    case 'wzregen':z.seed=(z.seed||1)+7919;S.wzPlan=null;toast('Nova opção gerada');return;
@@ -959,7 +986,7 @@ function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
    case 'wzuse':{if(S.armed!=='wzuse'){arm('wzuse');return}S.armed=null;
      archivePlan('Substituída pelo Montar treino');S.plan.since=new Date().toISOString();S.plan.label=z.split+' · '+lbl('goal',z.goal)+' · '+z.minutes+' min';
      S.plan.workouts=S.wzPlan.map(w=>({id:w.id,name:w.name,day:null,ex:w.ex.filter(Boolean).map(e=>({id:e.id,name:e.name,sets:e.sets,reps:e.reps,rest:e.rest,bar:e.bar}))})).filter(w=>w.ex.length);
-     S.plan.next=S.plan.workouts[0].id;S.sel=null;S.edit=null;const p=profile();Object.assign(p,{minutes:z.minutes,goal:z.goal,days:z.days,level:z.level,place:z.place,notes:z.notes});p.restr=[...z.restr];
+     S.plan.next=S.plan.workouts[0].id;S.sel=null;S.edit=null;const p=profile();p.avail=[...z.avail];p.sched=spreadDays(z.avail,z.days);Object.assign(p,{minutes:z.minutes,goal:z.goal,days:z.days,level:z.level,place:z.place,notes:z.notes});p.restr=[...z.restr];
      const g=goals();g.week=z.days;g.month=Math.round(z.days*4.3);savePlan();S.wz=null;S.wzPlan=null;S.view='hoje';window.scrollTo(0,0);toast('Treino salvo! Meta: '+z.days+' idas por semana');return}}}
 
 /* ---------- calorias ---------- */
@@ -1036,8 +1063,10 @@ function statusList(){const st=dayStreak(),ws=metStreakWeeks(),ds=daysSinceLast(
  {id:'inabalavel',name:'Inabalável',desc:'4 semanas seguidas batendo a meta',on:ws>=4,hint:`${ws} de 4 semanas seguidas`},
  {id:'ferrugem',name:'Ferrugem',desc:'7 dias ou mais sem exercício',bad:true,on:ds!==null&&ds>=7,hint:ds!==null&&ds>=7?`${ds} dias parado. Volte para tirar a ferrugem.`:'você está em dia'}]}
 function weekRisk(){const g=goals().week,wk=weekStrip().n;if(wk>=g)return {ok:true,msg:'Meta da semana garantida: +'+WEEK_BONUS+' XP no domingo.'};
-  const now=new Date(),left=7-now.getDay();const need=g-wk;
-  return {ok:false,lost:need>left,msg:need>left?`Não dá mais para bater a meta desta semana. Você vai perder ${WEEK_PENALTY} XP no domingo.`:`Faltam ${need} ${need===1?'dia':'dias'} de exercício até domingo. Se não bater a meta, você perde ${WEEK_PENALTY} XP.`}}
+  const left=daysLeftWeek(),need=g-wk;const wknd=left.filter(d=>d===6||d===0);
+  if(need>left.length)return {ok:false,lost:true,msg:`Não dá mais para bater a meta desta semana. Você vai perder ${WEEK_PENALTY} XP no domingo.`};
+  const tight=need===left.length;
+  return {ok:false,lost:false,msg:`Faltam ${need} ${need===1?'dia':'dias'} de exercício. Ainda dá: ${dayList(left)}.${tight?' Sem folga: precisa ir em todos.':wknd.length&&need>=left.length-wknd.length?' O fim de semana vai salvar sua semana.':''} Se não bater, perde ${WEEK_PENALTY} XP.`}}
 function snapshot(){return {L:levelOf(totalXP()).L,tiers:allTiers(),status:statusList().filter(x=>x.on&&!x.bad).map(x=>x.id)}}
 (function(){if(LS.get('ct.g2',null)===null)LS.set('ct.g2',snapshot())})();
 function celebrate(msg){const old=LS.get('ct.g2',snapshot()),now=snapshot();LS.set('ct.g2',now);let extra='';
@@ -1156,6 +1185,7 @@ main.addEventListener('click',e=>{
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
+    case 'avday':{const p=profile();p.avail=toggleDays(avail(),b.dataset.v);const g=goals();if(g.week>p.avail.length){g.week=p.avail.length;toast('Meta ajustada para '+g.week+' dias, o máximo que cabe')}p.sched=spreadDays(p.avail,Math.min(g.week,p.avail.length));S.goalsOpen=false;savePlan();break}
     case 'model':LS.set('ct.model',b.dataset.v);{const a=aiState();a.avg=0;LS.set('ct.ai',a)}toast('Modo '+MODELS[b.dataset.v].name.toLowerCase()+' ativado');break;
     case 'credset':case 'credadd':case 'credfix':{const v=parseFloat(String(document.getElementById('credIn').value||'').replace(',','.'));if(!(v>0)){toast('Digite um valor em dólares');return}const a=aiState();
       if(act==='credset'){a.credit=v+a.spent}else if(act==='credadd'){a.credit=(a.credit||a.spent)+v}else{a.credit=a.spent+v}a.warned=0;LS.set('ct.ai',a);toast('Crédito atualizado');break}
