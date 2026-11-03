@@ -267,7 +267,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .uav img{width:100%;height:100%;object-fit:cover}.uav svg{width:60%;height:60%}
 .fab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
 .fab>*{pointer-events:auto}.fab.up{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
-.fabbtn{position:relative;width:60px;height:60px;border-radius:50%;padding:2px;border:2px solid #f2c230;background:#141a2e;box-shadow:0 8px 24px rgb(0 0 0 / .35);transition:transform .2s}
+.fabbtn{position:relative;width:68px;height:68px;border-radius:50%;padding:2px;border:2px solid #f2c230;background:#141a2e;box-shadow:0 8px 24px rgb(0 0 0 / .35);transition:transform .2s}
 .fabbtn:active{transform:scale(.94)}.fabbtn .coachav{width:100%;height:100%}
 .fabdot{position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:50%;background:var(--danger);border:2px solid var(--bg)}
 .fabtip{max-width:min(260px,calc(100vw - 100px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px 14px 4px 14px;padding:10px 12px;font-size:14px;box-shadow:0 8px 24px rgb(0 0 0 / .25);cursor:pointer}
@@ -718,7 +718,7 @@ function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><sp
 function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
 /* ---------- Driffa flutuante ---------- */
 function renderFab(){const f=document.getElementById('fab');if(!f)return;const hide=S.view==='personal'||S.view==='montar';f.hidden=hide;f.classList.toggle('up',!!S.rest);
-  const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="driffa-head-${coachLook()}.jpg${AV}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
+  const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="driffa-bust-${coachLook()}.jpg${AV}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
   panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
   if(panel.hidden)return;
   panel.innerHTML=`<div class="fabhead">${coachAv(36)}<div style="flex:1;min-width:0"><b>${COACH}</b><span>${sampleApi?(S.busy==='chat'?'digitando…':'Sua treinadora'):'IA desativada'}</span></div>
