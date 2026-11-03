@@ -1100,7 +1100,7 @@ function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${
 function viewSession(){
   const a=S.active;const total=a.ex.reduce((n,e)=>n+e.sets.length,0),done=a.ex.reduce((n,e)=>n+e.sets.filter(s=>s.done).length,0);
   return `<div class="stack">
-    <div class="row"><div class="plate">${esc(a.workoutId)}</div><div style="min-width:0;flex:1"><div class="eyebrow">Em andamento · <span id="elapsed" class="num">0:00</span> · <span id="kcalLive" class="num">0</span> kcal</div><h2>${esc(a.name)}</h2></div><button class="ic voicebtn" data-act="voice" aria-pressed="${voiceOn()}" aria-label="${voiceOn()?'Desligar voz da '+COACH:'Ligar voz da '+COACH}">${voiceOn()?'🔊':'🔈'}</button></div>
+    <div class="row"><span class="wletter">${esc(a.workoutId==='ABS'?'ᚢ':a.workoutId)}</span><div style="min-width:0;flex:1"><div class="eyebrow">Em andamento · <span id="elapsed" class="num">0:00</span> · <span id="kcalLive" class="num">0</span> kcal</div><h2>${esc(a.name)}</h2></div><button class="ic voicebtn" data-act="voice" aria-pressed="${voiceOn()}" aria-label="${voiceOn()?'Desligar voz da '+COACH:'Ligar voz da '+COACH}">${voiceOn()?'🔊':'🔈'}</button></div>
     ${audioBar(W(a.workoutId)||{id:a.workoutId,name:a.name})}
     ${careCard()}
     <div class="row"><div class="progress" style="flex:1"><i style="width:${total?done/total*100:0}%"></i></div><span class="muted num" style="font-size:13px">${done}/${total} séries</span></div>
@@ -1833,7 +1833,12 @@ const MET={
 const MET_GROUPS=[['casa','Em casa'],['rua','Ao ar livre'],['esporte','Esportes e outros']];
 const INTN=['leve','moderada','intensa'];
 function sessionKcal(s){if(s.checkin)return 0;if(s.activity){const m=MET[s.activity]||MET.outro;return kcalFor(m[1+(s.intensity??1)],s.minutes||0)}
-  let min=Math.min(180,(s.durationSec||0)/60);if(min<5)min=s.ex.reduce((n,e)=>n+e.sets.length,0)*2.5;return kcalFor(MET_GYM,min)}
+  let min=Math.min(180,(s.durationSec||0)/60);if(min<5)min=s.ex.reduce((n,e)=>n+e.sets.length,0)*2.5;return gymKcal(s.ex.map(e=>({name:e.name,sets:e.sets})),min)}
+const CARDIO_RX=/bicicleta|bike|esteira|el[ií]ptico|cardio|corrida|caminhada|remo erg|escada|transport/i;
+function gymMet(ex,min){const bw=+body().weight||70;let vol=0,cardio=0,sets=0;
+  (ex||[]).forEach(e=>{const isC=CARDIO_RX.test(e.name||'');(e.sets||[]).forEach(t=>{if(t.done===false)return;const kg=+String(t.kg||0).replace(',','.')||0,r=+t.reps||0;if(isC){cardio+=r>0&&r<=90?r:0;return}sets++;vol+=(kg>0?kg:bw*.6)*(r||10)})});
+  const liftMin=Math.max(1,min-cardio);if(!sets)return {met:MET_GYM,cardio,liftMin};const dens=vol/liftMin/bw;return {met:3.5+Math.min(1,dens/2)*2.5,cardio,liftMin}}
+function gymKcal(ex,min){if(!ex||!ex.length)return kcalFor(MET_GYM,min);const g=gymMet(ex,min);return kcalFor(g.met,Math.max(0,min-g.cardio))+kcalFor(6.8,Math.min(g.cardio,min))}
 function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 
 /* ---------- atividades ---------- */
@@ -2009,7 +2014,7 @@ function beep(){try{if(!audio)return;[0,.25,.5].forEach(t=>{const o=audio.create
 const restEl=document.getElementById('rest');
 function tick(){
   const e2=document.getElementById('elapsed2');if(e2&&S.active)e2.textContent=mmss((Date.now()-S.active.start)/1000);
-  const el=document.getElementById('elapsed');if(el&&S.active){el.textContent=mmss((Date.now()-S.active.start)/1000);const kl=document.getElementById('kcalLive');if(kl)kl.textContent=kcalFor(MET_GYM,Math.min(180,(Date.now()-S.active.start)/60000))}
+  const el=document.getElementById('elapsed');if(el&&S.active){el.textContent=mmss((Date.now()-S.active.start)/1000);const kl=document.getElementById('kcalLive');if(kl)kl.textContent=gymKcal(S.active.ex.filter(e=>!e.skip).map(e=>({name:e.name,sets:e.sets.filter(t=>t.done)})),Math.min(180,(Date.now()-S.active.start)/60000))}
   if(S.rest){const left=(S.rest.end-Date.now())/1000;restEl.hidden=false;
     if(left<=10.2&&left>9&&!S.rest.ten&&S.rest.kind!=='stretch'){S.rest.ten=true;speak('Dez segundos.')}
     if(left<=0&&!S.rest.fired){S.rest.fired=true;beep();speak(S.rest.kind==='stretch'?'Pode trocar.':'Descanso acabou. Próxima série.')}
