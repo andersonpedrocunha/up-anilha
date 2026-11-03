@@ -289,6 +289,12 @@ a.btn .coachav{margin-right:8px}
 .presets{flex-wrap:wrap;gap:6px;margin-top:6px}
 .week .wd.plan{border-style:dashed;border-color:var(--accent)}
 .week .wd.off:not(.done){opacity:.4}
+.audio{display:flex;flex-direction:column;gap:10px}
+.svcs{display:flex;flex-wrap:wrap;gap:8px}
+.svc{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;background:var(--surface)}
+.svc i,.aurow i{width:10px;height:10px;border-radius:50%;flex:none}
+.svc.big{border-radius:12px;padding:8px 12px;flex:1 1 140px;min-width:0}.svc.big span{display:flex;flex-direction:column;min-width:0}.svc.big b{color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.svc.big small{font-size:11px;color:var(--muted);font-weight:500}
+.aurow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.aurow:first-of-type{border-top:0}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);background:#141a2e;color:#f4f1ea;border:1px solid #f2c23066;padding:10px 16px 10px 10px;border-radius:16px;font-weight:600;z-index:40;font-size:14px;line-height:1.35;width:max-content;max-width:min(440px,calc(100% - 32px));box-shadow:0 10px 30px rgb(0 0 0 / .35)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -438,6 +444,7 @@ function viewHoje(){
   </div>`;
   return `<div class="stack">
     <div class="row"><button class="ic" data-act="untrain" aria-label="Voltar">←</button><div class="eyebrow" style="flex:1">Treinar</div></div>
+    ${audioBar()}
     <div class="stack" style="gap:10px">
       <div class="eyebrow">Escolha o treino</div>
       <div class="chips">${S.plan.workouts.map(x=>`<button class="chip" data-act="pick" data-id="${x.id}" aria-pressed="${x.id===w.id}">${x.day!=null?DAYN[x.day].slice(0,3):esc(x.id)}</button>`).join('')}</div>
@@ -726,6 +733,7 @@ function viewSession(){
   const a=S.active;const total=a.ex.reduce((n,e)=>n+e.sets.length,0),done=a.ex.reduce((n,e)=>n+e.sets.filter(s=>s.done).length,0);
   return `<div class="stack">
     <div class="row"><div class="plate">${esc(a.workoutId)}</div><div style="min-width:0;flex:1"><div class="eyebrow">Em andamento · <span id="elapsed" class="num">0:00</span> · <span id="kcalLive" class="num">0</span> kcal</div><h2>${esc(a.name)}</h2></div></div>
+    ${audioBar()}
     ${careCard()}
     <div class="row"><div class="progress" style="flex:1"><i style="width:${total?done/total*100:0}%"></i></div><span class="muted num" style="font-size:13px">${done}/${total} séries</span></div>
     ${a.ex.map((e,ei)=>{const l=lastFor(e.exId,e.name);
@@ -837,8 +845,36 @@ function viewPerfil(){const u=S.user;
     <div class="muted" style="font-size:13px;align-self:flex-start">Gasto diário em repouso: ~${Math.round(bmrDay())} kcal${hasBody()?'':' (estimado com 70 kg; preencha para ficar preciso)'}</div>
   </div>
   <p class="muted" style="margin:0;font-size:14px">Seu perfil, sua foto e seus treinos ficam salvos só neste celular. Não tem senha nem conta: ninguém mais vê esses dados.</p>
+  <button class="btn ghost" data-act="audioedit">O que ouvir no treino (${audios().length})</button>
   ${backupCard()}
   <button class="btn primary" data-act="go" data-v="hoje">Voltar ao treino</button></div>`}
+/* ---------- o que ouvir ---------- */
+const SERVICES=[['spotify','Spotify',/spotify\./,'https://open.spotify.com','#1db954'],['ytmusic','YouTube Music',/music\.youtube\./,'https://music.youtube.com','#ff0033'],['youtube','YouTube',/youtu\.?be/,'https://www.youtube.com','#ff0033'],
+ ['audible','Audible',/audible\./,'https://www.audible.com.br','#f29a1f'],['amazon','Amazon Music',/music\.amazon|amazon\.[a-z.]+\/music/,'https://music.amazon.com.br','#25d1da'],['apple','Apple Podcasts',/podcasts\.apple/,'https://podcasts.apple.com','#9b5de5'],
+ ['applemusic','Apple Music',/music\.apple/,'https://music.apple.com','#fa2d48'],['deezer','Deezer',/deezer\./,'https://www.deezer.com','#a238ff'],['kindle','Kindle',/kindle|read\.amazon/,'https://read.amazon.com','#ff9900']];
+const KINDS={musica:'Música',podcast:'Podcast',audiobook:'Audiobook'};
+function svcOf(url){const u=String(url||'').toLowerCase();return SERVICES.find(x=>x[2].test(u))||['link','Link',null,url,'var(--muted)']}
+function audios(){if(!Array.isArray(S.user.audio))S.user.audio=[];return S.user.audio}
+function safeUrl(u){u=String(u||'').trim();if(!/^https?:\/\//i.test(u))u='https://'+u;try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:''}catch(e){return ''}}
+function audioBar(){const A=audios().slice().sort((a,b)=>(b.used||0)-(a.used||0));
+  if(!A.length)return `<div class="card audio"><div class="row" style="justify-content:space-between"><b>O que vai ouvir?</b><button class="btn ghost sm" data-act="audioedit">Salvar link</button></div>
+    <div class="svcs">${SERVICES.filter(x=>['spotify','ytmusic','audible','amazon','apple'].includes(x[0])).map(x=>`<a class="svc" href="${x[3]}" target="_blank" rel="noopener" data-svc="${x[0]}"><i style="background:${x[4]}"></i>${x[1]}</a>`).join('')}</div>
+    <div class="muted" style="font-size:12px">Música, podcast ou audiobook. Salve o link da sua playlist ou do livro e abra com um toque.</div></div>`;
+  return `<div class="card audio"><div class="row" style="justify-content:space-between"><b>Ouvir agora</b><button class="btn ghost sm" data-act="audioedit">Editar</button></div>
+    <div class="svcs">${A.slice(0,6).map(a=>{const v=svcOf(a.url);return `<a class="svc big" href="${esc(a.url)}" target="_blank" rel="noopener" data-aid="${a.id}"><i style="background:${v[4]}"></i><span><b>${esc(a.label||v[1])}</b><small>${KINDS[a.kind]||''}${KINDS[a.kind]?' · ':''}${v[1]}</small></span></a>`}).join('')}</div></div>`}
+function viewAudio(){const A=audios();
+  return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="${S.audioBack||'hoje'}" aria-label="Voltar">←</button><div class="eyebrow">O que ouvir no treino</div></div>
+  <div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>Música para levantar, podcast para pensar, audiobook para crescer por dentro também. Salve aqui e eu deixo a um toque no seu treino.</p></div></div>
+  <div class="card stack"><h3>Adicionar</h3>
+    <label class="field">Link<input id="auUrl" class="wname" inputmode="url" placeholder="Cole o link do Spotify, YouTube, Audible, Amazon Music…" value="${esc(S.auDraft&&S.auDraft.url||'')}"></label>
+    <label class="field">Nome (opcional)<input id="auLabel" class="wname" placeholder="Ex.: Playlist pesada, Hábitos Atômicos" value="${esc(S.auDraft&&S.auDraft.label||'')}"></label>
+    <div class="chips">${Object.entries(KINDS).map(([k,v])=>`<button class="chip sm" data-act="aukind" data-v="${k}" aria-pressed="${(S.auDraft&&S.auDraft.kind||'musica')===k}">${v}</button>`).join('')}</div>
+    <button class="btn primary" data-act="ausave">Salvar</button>
+    <p class="muted" style="font-size:12px;margin:0">Como pegar o link: no app de música, podcast ou audiobook, toque em Compartilhar e depois em Copiar link.</p></div>
+  ${A.length?`<div class="card stack"><h3>Salvos</h3>${A.map(a=>{const v=svcOf(a.url);return `<div class="aurow"><i style="background:${v[4]}"></i><div style="flex:1;min-width:0"><b>${esc(a.label||v[1])}</b><div class="muted" style="font-size:12px">${KINDS[a.kind]||''} · ${v[1]}</div></div><button class="ic" data-act="audel" data-id="${a.id}" aria-label="Remover">✕</button></div>`}).join('')}</div>`:''}
+  </div>`}
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-aid]');if(!a)return;const it=audios().find(x=>x.id===a.dataset.aid);if(it){it.used=Date.now();saveUser()}});
+
 function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Isso não é uma imagem. Escolhe uma foto.');return}const r=new FileReader();
   r.onload=()=>{const img=new Image();img.onload=()=>{const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');const m=Math.min(img.width,img.height);
     x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva. Agora eu sei com quem estou falando.');render()};img.onerror=()=>toast('Não consegui abrir essa foto. Tenta outra.');img.src=r.result};r.readAsDataURL(f)}
@@ -1134,7 +1170,7 @@ function viewHist(){
   </div>`}
 
 function render(){
-  main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():viewHist());
+  main.innerHTML=activeBanner()+(S.view==='hoje'?viewHoje():S.view==='rotina'?viewRotina():S.view==='personal'?viewPersonal():S.view==='guia'?viewGuia():S.view==='perfil'?viewPerfil():S.view==='montar'?viewMontar():S.view==='ativ'?viewAtiv():S.view==='conq'?viewConq():S.view==='audio'?viewAudio():viewHist());
   renderAvatar();renderFab();{const n=document.querySelector('.navav');if(n)n.src=`driffa-face-${coachLook()}.jpg${AV}`}
   const cl=document.getElementById('chatlog');if(cl&&S.busy==='chat')cl.lastElementChild&&cl.lastElementChild.scrollIntoView({block:'nearest'});
   const gd=main.querySelector('details.goals');if(gd){gd.open=!!S.goalsOpen;gd.addEventListener('toggle',()=>S.goalsOpen=gd.open)}
@@ -1189,6 +1225,12 @@ main.addEventListener('click',e=>{
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
+    case 'audioedit':S.audioBack=S.view==='audio'?'hoje':S.view;S.view='audio';window.scrollTo(0,0);break;
+    case 'aukind':S.auDraft=Object.assign(S.auDraft||{},{url:document.getElementById('auUrl').value,label:document.getElementById('auLabel').value,kind:b.dataset.v});break;
+    case 'ausave':{const url=safeUrl(document.getElementById('auUrl').value);if(!url){toast('Cola um link válido. Compartilhar, copiar link.');return}
+      const label=document.getElementById('auLabel').value.trim().slice(0,40);const kind=(S.auDraft&&S.auDraft.kind)||'musica';audios().push({id:uid(),url,label,kind,used:Date.now()});S.auDraft=null;saveUser();
+      toast(kind==='audiobook'?'Audiobook salvo. Músculo e cabeça crescendo juntos.':kind==='podcast'?'Podcast salvo. Ouve e levanta.':'Salvo. Agora aumenta o volume e a carga.');break}
+    case 'audel':S.user.audio=audios().filter(x=>x.id!==b.dataset.id);saveUser();break;
     case 'avday':{const p=profile();p.avail=toggleDays(avail(),b.dataset.v);const g=goals();if(g.week>p.avail.length){g.week=p.avail.length;toast('Ajustei sua meta para '+g.week+' dias. É o que cabe na sua semana.')}p.sched=spreadDays(p.avail,Math.min(g.week,p.avail.length));S.goalsOpen=false;savePlan();break}
     case 'model':LS.set('ct.model',b.dataset.v);{const a=aiState();a.avg=0;LS.set('ct.ai',a)}toast(b.dataset.v==='claude-haiku-5-5'?'Modo econômico. Falo menos, gasto menos.':'Modo inteligente. Agora eu penso com calma.');break;
     case 'credset':case 'credadd':case 'credfix':{const v=parseFloat(String(document.getElementById('credIn').value||'').replace(',','.'));if(!(v>0)){toast('Me diz o valor em dólares.');return}const a=aiState();
