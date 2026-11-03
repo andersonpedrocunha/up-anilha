@@ -299,6 +299,12 @@ a.btn .coachav{margin-right:8px}
 .cgrows{display:flex;flex-direction:column;gap:8px}.cgrow{display:flex;flex-direction:column;gap:4px}
 .actdot{width:8px;height:8px;border-radius:50%;background:#4aa3ff}
 .week .wd.comp{border-style:dashed;border-color:var(--hot)}
+.week .wd{background:radial-gradient(circle,color-mix(in srgb,var(--muted) 45%,transparent) 0 3px,transparent 3.6px),repeating-linear-gradient(90deg,transparent 0 7px,color-mix(in srgb,var(--line) 70%,transparent) 7px 8px);box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--surface) 80%,transparent)}
+.week .wd.plan,.week .wd.comp{background:radial-gradient(circle,currentColor 0 3px,transparent 3.6px),repeating-linear-gradient(90deg,transparent 0 7px,color-mix(in srgb,var(--line) 70%,transparent) 7px 8px)}
+.week .wd.plan{color:var(--accent)}.week .wd.comp{color:var(--gold);border-color:var(--gold)}
+.week .wd.done{background:radial-gradient(circle,color-mix(in srgb,#000 22%,var(--accent)) 0 5px,transparent 5.6px),repeating-linear-gradient(90deg,var(--accent) 0 7px,color-mix(in srgb,#000 12%,var(--accent)) 7px 8px);border-color:var(--gold);box-shadow:inset 0 0 0 2px color-mix(in srgb,#fff 18%,transparent);font-family:"Noto Sans Runic",var(--display);font-size:13px}
+.week .wd.miss{background:radial-gradient(circle,color-mix(in srgb,var(--danger) 55%,transparent) 0 3px,transparent 3.6px)}
+.week .wd.today:not(.done){border-width:2.5px}
 .week .wd.miss{border-style:solid;border-color:var(--danger);opacity:1;position:relative}.week .wd.miss::after{content:"";position:absolute;width:60%;height:2px;background:var(--danger);transform:rotate(-45deg)}
 .compbox{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--sunk)}.compbox.warn{border-color:color-mix(in srgb,var(--hot) 60%,var(--line))}.compbox.good{border-color:color-mix(in srgb,var(--good) 60%,var(--line))}
 .seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}.seg button{flex:1;padding:9px 6px;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:13px;cursor:pointer}.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -359,6 +365,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 .trainbtn::after{content:"ᚢ";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:"Noto Sans Runic",serif;font-size:96px;line-height:1;color:var(--accent-ink);opacity:.12;pointer-events:none}
 .card{position:relative}
 .card::before{content:"";position:absolute;top:-1px;left:22px;right:22px;height:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 55%,transparent),transparent);border-radius:2px;pointer-events:none}
+.shieldkey{display:block;font-size:11px;opacity:.85;margin-bottom:2px}
 .trainrune{order:3;font-family:"Noto Sans Runic",serif;font-size:11px;letter-spacing:.35em;opacity:.45;margin-top:6px}
 .runediv{display:flex;align-items:center;gap:10px;color:var(--gold);opacity:.6;font-family:"Noto Sans Runic",serif;font-size:12px;letter-spacing:.4em;margin:6px 0}
 .runediv::before,.runediv::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent)}
@@ -723,7 +730,7 @@ function weekStrip(){const now=new Date();const start=weekStart(now);
   const days=visitSet(),acts=actSet();const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const done=days.has(dayKey(d));if(done)n++;
     const fut=d>now&&dayKey(d)!==dayKey(now);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${fut?'fut':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="${fut?'planday':'pastday'}" data-d="${iso}" data-v="${d.getDay()}" aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':fut?(sc.includes(d.getDay())?', planejado. Toque para tirar':'. Toque para planejar'):''}">${done?'✓':acts.has(dayKey(d))?'<span class="actdot" title="Atividade fora (não conta na meta)"></span>':''}</button></div>`}
+    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${fut?'fut':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="${fut?'planday':'pastday'}" data-d="${iso}" data-v="${d.getDay()}" aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':fut?(sc.includes(d.getDay())?', planejado. Toque para tirar':'. Toque para planejar'):''}">${done?'ᚢ':acts.has(dayKey(d))?'<span class="actdot" title="Atividade fora (não conta na meta)"></span>':''}</button></div>`}
   return {html:`<div class="week">${h}</div>`,n}}
 
 function viewHoje(){
@@ -767,7 +774,7 @@ function freqCard(wk){const g=Object.assign({},goals()),now=new Date(),gw0=g.wee
       <div style="text-align:right"><div class="eyebrow">Sequência</div><div class="num" style="font-family:var(--display);font-weight:700;font-size:22px">${st} ${st===1?'semana':'semanas'}</div></div>
     </div>
     ${wk.html}
-    <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">Toque num dia que passou para registrar, ou num dia que vem para planejar.${!goalAll()&&weekInfo().n<visitsWeekAll()?'<br><span class="actdot" style="display:inline-block;vertical-align:middle"></span> atividade fora: dá XP e calorias, mas não conta como ida à academia.':''}</div>
+    <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px"><span class="shieldkey">ᚢ escudo erguido: treinou · pontilhado: planejado · rachado: faltou</span>Toque num dia que passou para registrar, ou num dia que vem para planejar.${!goalAll()&&weekInfo().n<visitsWeekAll()?'<br><span class="actdot" style="display:inline-block;vertical-align:middle"></span> atividade fora: dá XP e calorias, mas não conta como ida à academia.':''}</div>
     ${compCard()}
     <div class="progress"><i style="width:${pctW}%;background:${wk.n>=g.week?'var(--good)':'var(--accent)'}"></i></div>
     ${goalRows((freqGoal()||{}).id)}
