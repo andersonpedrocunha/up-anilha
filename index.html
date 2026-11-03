@@ -687,7 +687,7 @@ function coachLine(){const g=goals(),wk=weekStrip().n,st=dayStreak(),ds=daysSinc
   if(ds>=4)return `${ds} dias longe da barra. Sem culpa: volte hoje, nem que seja um treino leve.`;
   if(ds>=2)return `${you}faz ${ds} dias. A barra não vai se levantar sozinha.`;
   return `${you}faltam ${Math.max(0,g.week-wk)} ${g.week-wk===1?'dia':'dias'} para a sua meta da semana. Eu sei que você consegue.`}
-function coachCard(){return `<div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${esc(coachLine())}</p></div></div>`}
+function coachCard(){return `<div class="coachsay">${coachAv(40)}<div><b>${COACH}</b><p>${esc((l=>l.charAt(0).toUpperCase()+l.slice(1))(coachLine()))}</p></div></div>`}
 
 /* ---------- guia ---------- */
 const GIDX=(window.GUIDE||[]).map(g=>({...g,rx:new RegExp(g.re)}));
