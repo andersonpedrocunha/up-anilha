@@ -861,6 +861,7 @@ function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${
       <div id="chatlog" class="chatlog" aria-live="polite">${chatHtml()}</div>
       ${!S.chat.length&&sampleApi?`<div class="sugs">${SUGS.map(t=>`<button class="chip sug" data-act="sug" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
       ${sampleApi?`<form id="chatForm" class="chatform"><textarea id="chatIn" rows="2" placeholder="Pergunte ou peça uma mudança…" aria-label="Mensagem para a ${COACH}">${esc(S.draft)}</textarea><button class="btn primary" ${S.busy?'disabled':''}>Enviar</button></form>`:''}
+      ${sampleApi?`<button class="btn ghost sm" data-act="keylink" style="align-self:flex-start">Ativar em outro celular</button>`:''}
       ${sampleApi?`<button class="btn ghost sm ${S.armed==='rmkey'?'armed':''}" data-act="rmkey" style="align-self:flex-start">${S.armed==='rmkey'?'Toque de novo para remover a chave':'Remover chave da API'}</button>`:''}
       ${sampleApi?`<div class="eyebrow" style="margin-top:4px">Modo da IA</div>${modelPicker()}${creditCard()}`:''}
       ${S.chat.length?`<button class="btn ghost sm ${S.armed==='clearchat'?'armed':''}" data-act="clearchat" style="align-self:flex-start">${S.armed==='clearchat'?'Toque de novo para limpar':'Limpar conversa'}</button>`:''}
@@ -1830,6 +1831,10 @@ main.addEventListener('click',e=>{
     case 'gen':if(!twoStep('gen'))return;S.armed=null;generate();return;
     case 'sug':sendChat(b.dataset.t);return;
     case 'savekey':{const v=(document.getElementById('keyIn').value||'').trim();if(!/^sk-/.test(v)){toast('Essa chave está errada. Ela começa com sk-ant-.');return}LS.set('ct.key',v);{const c=parseFloat(String((document.getElementById('credIn')||{}).value||'').replace(',','.'));if(c>0){const a=aiState();a.credit=c;a.spent=0;a.warned=0;LS.set('ct.ai',a)}}sampleApi=makeSample();toast('Agora eu falo de verdade. Prepare-se.');break}
+    case 'keylink':{const a=aiState();const url=location.origin+location.pathname+'#ativar='+encodeURIComponent(apiKey())+(a.credit?'&c='+a.credit+'&s='+(+a.spent||0).toFixed(4):'');
+      const done=()=>toast('Link copiado. Mande só para você mesmo e abra no outro celular. Quem tiver esse link usa sua IA.');
+      if(navigator.share){navigator.share({title:'Ativar a '+COACH,text:'Abra no seu outro celular para ativar a '+COACH+'. Não compartilhe com ninguém.',url}).catch(()=>{})}
+      else if(navigator.clipboard){navigator.clipboard.writeText(url).then(done).catch(()=>toast('Não consegui copiar. Cole a chave direto no outro celular.'))}return}
     case 'rmkey':if(!twoStep('rmkey'))return;try{localStorage.removeItem('ct.key')}catch(_){}sampleApi=null;break;
     case 'backup':{const blob=new Blob([JSON.stringify({app:'up-anilha',v:5,user:S.user,plan:S.plan,plans:plans(),pauses:pauses(),food:foodAll(),weekplan:wkPlans(),sessions:S.sessions,chat:S.chat},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='up-anilha-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return}
     case 'clearchat':if(!twoStep('clearchat'))return;S.chat=[];saveChat();break;
@@ -1897,6 +1902,7 @@ main.addEventListener('change',e=>{if(e.target.id==='gpxIn'){const f=e.target.fi
     S.plan=d.plan;S.sessions=d.sessions;S.chat=Array.isArray(d.chat)?d.chat:[];if(d.user&&typeof d.user==='object'){S.user=d.user;LS.set('ct.user',S.user)}if(Array.isArray(d.plans))LS.set('ct.plans',d.plans);if(Array.isArray(d.pauses))LS.set('ct.pauses',d.pauses);if(d.food&&typeof d.food==='object')LS.set('ct.food',d.food);if(d.weekplan&&typeof d.weekplan==='object')LS.set('ct.weekplan',d.weekplan);LS.set('ct.plan',S.plan);LS.set('ct.sessions',S.sessions);LS.set('ct.chat',S.chat);toast('Backup restaurado. Sua saga está de volta.');render()}catch(_){toast('Esse arquivo não é um backup meu.')}};r.readAsText(f);return}if(e.target.dataset.f==='histEx'){S.histEx=e.target.value;render()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active){try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>wake=l).catch(()=>{})}catch(e){}}});
 
+try{const h=location.hash||'';const m=h.match(/^#ativar=([^&]+)(?:&c=([\d.]+))?(?:&s=([\d.]+))?/);if(m){const k=decodeURIComponent(m[1]);history.replaceState(null,'',location.pathname+location.search);if(/^sk-ant-/.test(k)){LS.set('ct.key',k);if(m[2]){const a=aiState();a.credit=+m[2];a.spent=+(m[3]||0);a.warned=0;LS.set('ct.ai',a)}setTimeout(()=>toast('Ativada neste celular também. Agora eu falo de verdade aqui.'),600)}}}catch(_){}
 if(apiKey())sampleApi=makeSample();
 document.getElementById('fab').addEventListener('click',e=>{const t=e.target;
   if(t.closest('#fabBtn')||t.closest('#fabTip')){S.fabOpen=!S.fabOpen;S.chatUnread=false;document.getElementById('fabTip').hidden=true;renderFab();if(S.fabOpen){const i=document.getElementById('fabIn');i&&i.focus()}return}
