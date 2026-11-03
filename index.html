@@ -408,7 +408,7 @@ const DEFAULT_PLAN={v:2,next:'A',goals:{week:5,month:20},workouts:[
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(SYNCK.has(k)&&!cloudApplying)cloudTouch(k)}};
 /* ---------- nuvem (Supabase) ---------- */
 const SB_URL='https://htzpfwdbhlwroqhgftnj.supabase.co',SB_KEY='sb_publishable_o2fCcwJnCK_lTT16I_QmkA_jkJ3eDkY';
-const SYNCK=new Set(['ct.active','ct.user','ct.plan','ct.plans','ct.sessions','ct.deleted','ct.chat','ct.food','ct.pauses','ct.weekplan','ct.ai','ct.key','ct.model','ct.look','ct.voice','ct.voiceName','ct.voiceRate','ct.absLvl','ct.absMin','ct.swaps','ct.audios','ct.lastAct']);
+const SYNCK=new Set(['ct.active','ct.user','ct.plan','ct.plans','ct.sessions','ct.deleted','ct.chat','ct.food','ct.pauses','ct.weekplan','ct.ai','ct.model','ct.look','ct.voice','ct.voiceName','ct.voiceRate','ct.absLvl','ct.absMin','ct.swaps','ct.audios','ct.lastAct']);
 var cloudApplying=false,cloudDirtySet=new Set(),cloudTimer=null,cloudBusy=false,cloudLast=0,cloudErr='';
 function cloudOn(){return !!(SB_URL&&SB_KEY)}
 function sbSess(){try{return JSON.parse(localStorage.getItem('ct.sb')||'null')}catch(e){return null}}
@@ -854,7 +854,7 @@ function modelPicker(){const cur=apiModel();return `<div class="row modelpick">$
 function apiKey(){return LS.get('ct.key','')}
 async function callApi(body){
   if(cloudOn()&&sbSess()){let r2;const t=await sbToken();if(t){try{r2=await fetch(SB_URL+'/functions/v1/driffa',{method:'POST',headers:{'content-type':'application/json',apikey:SB_KEY,authorization:'Bearer '+t},body:JSON.stringify(body)})}catch(e){throw {code:'offline'}}
-    const j2=await r2.json().catch(()=>({}));if(r2.ok)return j2;const m2=(j2.error&&j2.error.message)||'';
+    const j2=await r2.json().catch(()=>({}));if(r2.ok){if(apiKey()){try{localStorage.removeItem('ct.key')}catch(_){}}return j2}const m2=(j2.error&&j2.error.message)||'';
     if(!(r2.status===503&&apiKey()))throw {code:r2.status===503?'no_server':r2.status===429?'rate_limited':/credit|billing/i.test(m2)?'no_credit':'api',message:m2}}}
   let r;try{r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':apiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)})}catch(e){throw {code:'offline'}}
   const j=await r.json().catch(()=>({}));const m=(j.error&&j.error.message)||'';
@@ -955,8 +955,8 @@ function viewPersonal(){const p=profile();const sel=(k,id,title,full)=>`<label${
       <div id="chatlog" class="chatlog" aria-live="polite">${chatHtml()}</div>
       ${!S.chat.length&&sampleApi?`<div class="sugs">${SUGS.map(t=>`<button class="chip sug" data-act="sug" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
       ${sampleApi?`<form id="chatForm" class="chatform"><textarea id="chatIn" rows="2" placeholder="Pergunte ou peça uma mudança…" aria-label="Mensagem para a ${COACH}">${esc(S.draft)}</textarea><button class="btn primary" ${S.busy?'disabled':''}>Enviar</button></form>`:''}
-      ${sampleApi?`<button class="btn ghost sm" data-act="keylink" style="align-self:flex-start">Ativar em outro celular</button>`:''}
-      ${sampleApi?`<button class="btn ghost sm ${S.armed==='rmkey'?'armed':''}" data-act="rmkey" style="align-self:flex-start">${S.armed==='rmkey'?'Toque de novo para remover a chave':'Remover chave da API'}</button>`:''}
+      ${sampleApi&&apiKey()&&!(cloudOn()&&sbSess())?`<button class="btn ghost sm" data-act="keylink" style="align-self:flex-start">Ativar em outro celular</button>`:''}
+ ${sampleApi&&apiKey()&&!(cloudOn()&&sbSess())?`<button class="btn ghost sm ${S.armed==='rmkey'?'armed':''}" data-act="rmkey" style="align-self:flex-start">${S.armed==='rmkey'?'Toque de novo para remover a chave':'Remover chave da API'}</button>`:''}
       ${sampleApi?`<div class="eyebrow" style="margin-top:4px">Modo da IA</div>${modelPicker()}${creditCard()}`:''}
     </div>
     ${voiceCard()}
