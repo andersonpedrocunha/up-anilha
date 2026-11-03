@@ -430,6 +430,7 @@ body.nf-agua [data-feat="agua"],body.nf-prot [data-feat="prot"],body.nf-cal [dat
 .featcard summary{font-family:var(--display);font-weight:700;font-size:18px;text-transform:uppercase;cursor:pointer}
 .feats{display:flex;flex-direction:column;margin-top:8px}.featrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}.featrow:last-child{border-bottom:0}.featrow b{display:block;font-size:14px}.featrow span{font-size:12px;color:var(--muted)}
 .switch{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0}.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgb(0 0 0 / .3)}.switch:checked{background:var(--accent)}.switch:checked::after{transform:translateX(18px)}
+.kghint{font-size:12px;color:var(--muted);margin:8px 0 -2px}.kghint b{color:var(--ink)}
 .watch{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin-top:6px}.watch b{color:var(--gold);font-weight:700}
 .memlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}.memlist li{display:flex;gap:10px;align-items:flex-start;font-size:14px}.memlist li>span{flex:none;width:20px;text-align:center;color:var(--gold)}
 .memlist.habits li{background:var(--sunk);border-radius:12px;padding:8px 10px;border-left:3px solid var(--hot)}.memlist.habits li.sev2{border-left-color:var(--ember)}
@@ -637,7 +638,13 @@ function plates(kg){if(!(kg>20))return '';let side=(kg-20)/2;const out=[];for(co
   return 'Barra 20 + 2×('+out.map(fmtKg).join(' + ')+')'+(side>0.01?' ≈':'')}
 function repsLow(r){const m=String(r).match(/\d+/);return m?m[0]:''}
 function dayKey(d){const x=new Date(d);return x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate()}
-function vol(s){return s.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+(+t.kg||0)*(+t.reps||0),0),0)}
+function kgKind(name,bar){const n=norm(name||'');
+  if(/halter|dumbbell/.test(n))return {k:'halter',h:'kg por halter',tip:'Peso de cada halter (um lado).',mul:/unilateral|serrote|um braco|alternad/.test(n)&&!/alternad/.test(n)?1:2};
+  if(/leg press|hack|articulad|panturrilha sentada/.test(n))return {k:'anilha',h:'kg de anilhas',tip:'Some as anilhas dos dois lados (sem o carrinho).',mul:1};
+  if(bar||/barra|smith|terra|stiff|agachamento livre/.test(n))return {k:'barra',h:'kg total',tip:'Barra + anilhas dos dois lados. Embaixo eu mostro quanto vai em cada lado.',mul:1};
+  if(/prancha|dead bug|perdigueiro|abdominal|elevacao de pernas|barra fixa|mergulho|flexao/.test(n))return {k:'corpo',h:'kg extra',tip:'Só se usar peso extra. Sem peso, deixe vazio.',mul:1};
+  return {k:'maquina',h:'kg na máquina',tip:'O número da placa/pino da máquina ou da polia.',mul:1}}
+function vol(s){return s.ex.reduce((a,e)=>{const m=kgKind(e.name).mul;return a+e.sets.reduce((b,t)=>b+(+t.kg||0)*m*(+t.reps||0),0)},0)}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace('.','')}
 /* ---------- metas 100% configuráveis ---------- */
 const GT={gym:{n:'Ir à academia',u:'×',min:1,max:7,st:1,d:4,ic:'🏋'},act:{n:'Atividade específica',u:'×',min:1,max:7,st:1,d:3,ic:'🚴'},any:{n:'Qualquer exercício',u:'dias',min:1,max:7,st:1,d:5,ic:'⚡'},
@@ -1172,7 +1179,7 @@ function viewSession(){
         ${(()=>{const g=guideFor(e.name);const er=g&&g.e&&g.e.length?g.e[(ei+new Date().getDate())%g.e.length]:'';return er?`<div class="watch">${coachAv(20)}<span><b>De olho:</b> ${esc(er.replace(/\.$/,'').replace(/^./,c=>c.toLowerCase()))}. Se pegar isso, corrige na hora.</span></div>`:''})()}
         ${warnHtml(e.name,'swapA',`data-e="${ei}"`)}
         ${l?`<div class="last num">Última vez: ${l.sets.map(t=>`${fmtKg(+t.kg||0)}×${t.reps}`).join(' · ')}</div>`:'<div class="last">Primeira vez neste exercício</div>'}</div></div>
-        <div class="sets"><span class="h"></span><span class="h">kg</span><span class="h">Reps</span><span class="h"></span>
+        <div class="kghint">${(()=>{const K=kgKind(e.name,e.target.bar);return K.tip})()}</div><div class="sets"><span class="h"></span><span class="h">${kgKind(e.name,e.target.bar).h}</span><span class="h">Reps</span><span class="h"></span>
         ${e.sets.map((s,si)=>`<span class="i">${si+1}</span>
           <input inputmode="decimal" id="kg-${ei}-${si}" data-e="${ei}" data-s="${si}" data-f="kg" value="${esc(s.kg)}" placeholder="kg" aria-label="Carga série ${si+1}" class="${s.done?'d':''}">
           <input inputmode="numeric" id="rp-${ei}-${si}" data-e="${ei}" data-s="${si}" data-f="reps" value="${esc(s.reps)}" placeholder="${esc(repsLow(e.target.reps))}" aria-label="Repetições série ${si+1}">
@@ -2036,7 +2043,7 @@ function sessionKcal(s){if(s.checkin)return 0;if(s.activity){const m=MET[s.activ
   let min=Math.min(180,(s.durationSec||0)/60);if(min<5)min=s.ex.reduce((n,e)=>n+e.sets.length,0)*2.5;return gymKcal(s.ex.map(e=>({name:e.name,sets:e.sets})),min)}
 const CARDIO_RX=/bicicleta|bike|esteira|el[ií]ptico|cardio|corrida|caminhada|remo erg|escada|transport/i;
 function gymMet(ex,min){const bw=+body().weight||70;let vol=0,cardio=0,sets=0;
-  (ex||[]).forEach(e=>{const isC=CARDIO_RX.test(e.name||'');(e.sets||[]).forEach(t=>{if(t.done===false)return;const kg=+String(t.kg||0).replace(',','.')||0,r=+t.reps||0;if(isC){cardio+=r>0&&r<=90?r:0;return}sets++;vol+=(kg>0?kg:bw*.6)*(r||10)})});
+  (ex||[]).forEach(e=>{const isC=CARDIO_RX.test(e.name||'');(e.sets||[]).forEach(t=>{if(t.done===false)return;const kg=+String(t.kg||0).replace(',','.')||0,r=+t.reps||0;if(isC){cardio+=r>0&&r<=90?r:0;return}sets++;vol+=(kg>0?kg*kgKind(e.name).mul:bw*.6)*(r||10)})});
   const liftMin=Math.max(1,min-cardio);if(!sets)return {met:MET_GYM,cardio,liftMin};const dens=vol/liftMin/bw;return {met:3.5+Math.min(1,dens/2)*2.5,cardio,liftMin}}
 function gymKcal(ex,min){if(!ex||!ex.length)return kcalFor(MET_GYM,min);const g=gymMet(ex,min);return kcalFor(g.met,Math.max(0,min-g.cardio))+kcalFor(6.8,Math.min(g.cardio,min))}
 function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
