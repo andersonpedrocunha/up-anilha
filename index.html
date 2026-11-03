@@ -335,6 +335,10 @@ a.btn .coachav{margin-right:8px}
 .coachsay.sm{display:flex;gap:8px;align-items:center;padding:8px 10px}
 .meals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}.meals li{display:flex;gap:10px;align-items:center}.meals img,.mthumb{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none;display:grid;place-items:center;background:var(--sunk)}
 .route{display:block;background:var(--sunk);border-radius:12px}
+.wbal{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.wbars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.wb{display:flex;flex-direction:column;align-items:center;gap:3px}.wb span{font-size:10px;color:var(--muted);font-weight:600}.wb.today span{color:var(--ink)}
+.wbc{position:relative;width:100%;max-width:26px;height:72px;border-radius:6px;background:var(--sunk)}.wbc::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
+.wbc i{position:absolute;left:3px;right:3px;border-radius:3px}.wbc i.neg{background:#4aa3ff}.wbc i.pos{background:var(--hot)}.wb.today .wbc i{opacity:.55}
 .exbtns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.exbtns .howbtn{margin:0;cursor:pointer}.howbtn.alt{color:var(--muted)}
 .sugg{display:flex;gap:8px;align-items:center;font-size:13px;border-radius:10px;padding:7px 10px;margin-top:6px}.sugg.up{background:var(--good-soft)}.sugg.hold{background:color-mix(in srgb,var(--hot) 18%,var(--surface))}
 .voicebtn{font-size:18px}
@@ -1289,11 +1293,20 @@ function balLine(f){const i=kcalIn(f),o=kcalOut(),b=i-o.total,t=balTarget(),h=ne
   if(t<0)return b<=-700?'Déficit grande demais. Fome assim derruba treino e músculo. Come algo com proteína.':b<=-200?'Déficit no ponto. É assim que a balança anda sem perder força.':b<=150?'Quase empatado. Para emagrecer, precisa de um pouco mais de déficit.':'Hoje passou do gasto. Um dia não define nada, a semana sim.';
   if(t>0)return b<100?'Comeu menos do que gastou. Músculo novo precisa de sobra. Reforça uma refeição.':b<=500?'Superávit na medida. Combustível para crescer.':'Superávit alto. Cresce, mas leva gordura junto.';
   return Math.abs(b)<=250?'Equilíbrio. Manutenção feita.':b<0?'Déficit hoje. Se não é a intenção, come mais.':'Acima do gasto hoje. Equilibra amanhã.'}
+function weekBal(){const out=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const f=food(d);const has=f.meals.length>0;const b=has?kcalIn(f)-kcalOut(d).total:null;out.push({d,b,has,today:i===0})}return out}
+function weekBalHtml(){const W7=weekBal();const done=W7.filter(x=>x.has&&!x.today);const all=W7.filter(x=>x.has);if(!all.length)return '';
+  const mx=Math.max(300,...all.map(x=>Math.abs(x.b)));const L=['D','S','T','Q','Q','S','S'];
+  const bars=W7.map(x=>{const h=x.has?Math.max(3,Math.round(Math.abs(x.b)/mx*34)):0;return `<div class="wb${x.today?' today':''}" title="${x.has?(x.b>0?'+':'')+x.b+' kcal':'sem registro'}"><div class="wbc">${x.has?`<i class="${x.b<0?'neg':'pos'}" style="height:${h}px;${x.b<0?'top:50%':'bottom:50%'}"></i>`:'<i class="none"></i>'}</div><span>${L[x.d.getDay()]}</span></div>`}).join('');
+  let sum='';if(done.length){const tot=done.reduce((t,x)=>t+x.b,0),avg=Math.round(tot/done.length),kg=tot/7700;
+    sum=`<div class="muted num" style="font-size:12px">${done.length} ${done.length===1?'dia completo':'dias completos'}: ${tot>0?'+':''}${tot.toLocaleString('pt-BR')} kcal · média ${avg>0?'+':''}${avg}/dia · ≈ ${kg>0?'+':'−'}${Math.abs(kg).toFixed(2).replace('.',',')} kg</div>`}
+  else sum='<div class="muted" style="font-size:12px">A conta da semana começa quando fechar o primeiro dia completo.</div>';
+  return `<div class="wbal"><div class="eyebrow">Últimos 7 dias</div><div class="wbars">${bars}</div>${sum}</div>`}
 function mealsCard(f){const i=kcalIn(f),o=kcalOut(),b=i-o.total,t=balTarget();
   return `<div class="card stack"><div class="row" style="justify-content:space-between"><h3>Calorias do dia</h3>${t?`<span class="muted" style="font-size:12px">alvo ${t>0?'+':''}${t} kcal</span>`:''}</div>
     <div class="balgrid"><div><b class="num">${i}</b><span>consumidas</span></div><div><b class="num">${o.total}</b><span>gastas</span></div><div class="${!f.meals.length?'':b<0?'neg':'pos'}"><b class="num">${f.meals.length?(b>0?'+':'')+b:'–'}</b><span>${!f.meals.length?'saldo':b<0?'déficit':'superávit'}</span></div></div>
     <div class="muted" style="font-size:12px">Gasto = corpo em repouso e rotina leve (${o.base} kcal) + exercícios registrados hoje (${o.ex} kcal).</div>
     <div class="coachsay sm">${coachAv(28)}<p style="margin:0;font-size:14px">${esc(balLine(f))}</p></div>
+    ${weekBalHtml()}
     ${f.meals.length?`<ul class="meals">${f.meals.map(m=>`<li>${m.thumb?`<img src="${m.thumb}" alt="">`:'<span class="mthumb">🍽</span>'}<div style="flex:1;min-width:0"><b>${esc(m.name)}</b><div class="muted num" style="font-size:12px">${m.kcal} kcal${m.prot!=null?` · P ${m.prot} g`:''}${m.carb!=null?` · C ${m.carb} g`:''}${m.fat!=null?` · G ${m.fat} g`:''} · ${hhmm(m.t)}</div></div><button class="ic" data-act="mealdel" data-id="${m.id}" aria-label="Remover refeição">✕</button></li>`).join('')}</ul>`:''}
     <div class="row" style="flex-wrap:wrap">${sampleApi?`<label class="btn primary" for="mealPhoto" style="flex:2;text-align:center;cursor:pointer">📷 Foto da refeição</label><input type="file" id="mealPhoto" accept="image/*" capture="environment" hidden>`:''}<button class="btn ghost" data-act="mealman" style="flex:1">+ Manual</button></div>
     ${S.mealMan?`<div class="suppform"><input id="mlName" class="wname" placeholder="O que comeu (ex.: almoço, PF de frango)"><input id="mlKcal" class="wname" inputmode="numeric" placeholder="kcal"><input id="mlProt" class="wname" inputmode="numeric" placeholder="proteína (g), opcional"><button class="btn primary sm" data-act="mealadd">Salvar refeição</button></div>`:''}
