@@ -1101,12 +1101,18 @@ const ABS={
    safe:[ABSX('Prancha',3,'40-60 s',30),ABSX('Prancha lateral',3,'30 s cada lado',30),ABSX('Dead bug',3,'12 cada lado',30),ABSX('Pallof press',3,'10 cada lado',30),ABSX('Perdigueiro (bird dog)',3,'12 cada lado',30)]},
  hard:{label:'Hard',sub:'Para quem já domina a prancha',std:[ABSX('Elevação de pernas na barra',4,'10-12',45),ABSX('Roda abdominal',3,'8-10',60),ABSX('Canivete (V-up)',3,'12-15',40),ABSX('Prancha lateral com elevação de quadril',3,'12 cada lado',30),ABSX('Hollow hold',3,'30-40 s',30),ABSX('Prancha com toque no ombro',3,'20',30)],
    safe:[ABSX('Prancha com toque no ombro',3,'20',30),ABSX('Prancha lateral com elevação de quadril',3,'12 cada lado',30),ABSX('Pallof press com pausa',3,'12 cada lado',30),ABSX('Dead bug com halter',3,'10 cada lado',30),ABSX('Perdigueiro com pausa',3,'10 cada lado',30)]}};
-S.absLvl=LS.get('ct.absLvl','medium');
+S.absLvl=LS.get('ct.absLvl','medium');S.absMin=LS.get('ct.absMin',0);
 function absSafe(){const r=restr(),p=(S.active&&S.active.body&&S.active.body.pains)||[];return ['lombar','cervical'].some(k=>r.includes(k)||p.includes(k))}
-function absList(lv){const L=ABS[lv]||ABS.medium;return (absSafe()?L.safe:L.std).map(e=>({...e}))}
-function absCard(live){const lv=S.absLvl||'medium',L=absList(lv),min=Math.round(L.reduce((t,e)=>t+e.sets*(35+e.rest),0)/60);
+function absSec(L){return L.reduce((t,e)=>t+e.sets*(35+e.rest),0)}
+function absList(lv,mins){const L=ABS[lv]||ABS.medium;let x=(absSafe()?L.safe:L.std).map(e=>({...e}));const m=mins===undefined?(S.absMin||0):mins;if(!m)return x;const T=m*60;
+  if(m<=5)x.forEach(e=>e.rest=Math.min(e.rest,20));else if(m<=10)x.forEach(e=>e.rest=Math.min(e.rest,30));
+  let guard=60;while(absSec(x)>T&&guard--){const big=x.reduce((a,e)=>e.sets>a.sets?e:a,x[0]);if(big.sets>2)big.sets--;else if(x.length>(m<=5?2:3))x.pop();else if(big.sets>1)big.sets--;else break}
+  return x}
+function absMins(L){return Math.max(1,Math.round(absSec(L)/60))}
+function absCard(live){const lv=S.absLvl||'medium',L=absList(lv),min=absMins(L),full=absMins(absList(lv,0));
   return `<div class="card stack abscard"><div><div class="eyebrow">${live?'Fechar com abdômen? · opcional':'Abdômen'}</div><h3>${live?'Adicionar abdômen ao treino':'Treino de abdômen'}</h3></div>
     <div class="chips">${Object.entries(ABS).map(([k,v])=>`<button class="chip sm" data-act="abslvl" data-lv="${k}" aria-pressed="${k===lv}">${v.label}</button>`).join('')}</div>
+    <div class="chips">${[[5,'5 min'],[10,'10 min'],[15,'15 min'],[0,'Completo ~'+full+' min']].filter(([v])=>!v||v<full).map(([v,l])=>`<button class="chip sm" data-act="absmin" data-v="${v}" aria-pressed="${(S.absMin||0)===v||(!v&&S.absMin>=full)}">${l}</button>`).join('')}</div>
     <div class="muted" style="font-size:13px">${esc(ABS[lv].sub)} · ${L.length} exercícios · ~${min} min${absSafe()?' · versão segura para a coluna':''}</div>
     <ul class="abslist">${L.map(e=>`<li><button class="linkbtn" data-act="how" data-name="${esc(e.name)}">${esc(e.name)}</button><span class="muted num">${e.sets} × ${esc(e.reps)}</span></li>`).join('')}</ul>
     <button class="btn ${live?'ghost':'primary'}" data-act="${live?'absadd':'absgo'}">${live?'Adicionar '+ABS[lv].label+' ao treino':'Começar abdômen '+ABS[lv].label}</button></div>`}
@@ -1145,7 +1151,7 @@ function busyPick(ei){const a=S.active;let seen=[];
 /* ---------- registrar treino (sem check-in solto) ---------- */
 function regDay(iso){const today=iso===todayISO();const d=new Date(iso+'T12:00:00');const label=today?'hoje':d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'});
   const ws=S.plan.workouts.filter(w=>w.ex.length);let wid=(W(S.plan.next)||ws[0]||{}).id||'ABS';let en='normal';
-  const pm=+profile().minutes||0;const absMin=Math.round(absList(S.absLvl||'medium').reduce((t,e)=>t+e.sets*(35+e.rest),0)/60);
+  const pm=+profile().minutes||0;const absMin=absMins(absList(S.absLvl||'medium'));
   const opts=[...ws.map(w=>({id:w.id,name:w.name,min:pm||estMin(w)})),{id:'ABS',name:'Abdômen '+ABS[S.absLvl||'medium'].label,min:absMin}];
   const o=document.createElement('div');o.className='cbox';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');
   const draw=()=>{const cur=opts.find(x=>x.id===wid)||opts[0];const m=en==='baixa'?Math.round(cur.min*.8/5)*5:cur.min;
@@ -1764,9 +1770,10 @@ main.addEventListener('click',e=>{
     case 'mealman':S.mealMan=!S.mealMan;break;
     case 'mealadd':{const n=document.getElementById('mlName').value.trim()||'Refeição',k=parseInt(document.getElementById('mlKcal').value),pr=parseInt(document.getElementById('mlProt').value);if(!(k>0)){toast('Quantas calorias, mais ou menos?');return}const f=food();f.meals.push({id:uid(),t:Date.now(),name:n.slice(0,60),kcal:k,prot:pr>0?pr:null});saveFood(f);S.mealMan=false;toast(`${k} kcal anotadas.`);break}
     case 'mealdel':{const f=food();f.meals=f.meals.filter(m=>m.id!==b.dataset.id);saveFood(f);break}
+    case 'absmin':S.absMin=+b.dataset.v;LS.set('ct.absMin',S.absMin);break;
     case 'abslvl':S.absLvl=b.dataset.lv;LS.set('ct.absLvl',S.absLvl);break;
-    case 'absgo':{const lv=S.absLvl||'medium';bodyCheck().then(r=>{startSession({id:'ABS',name:'Abdômen · '+ABS[lv].label,ex:[]});S.active.custom=true;S.active.absLvl=lv;S.active.body=r||null;S.active.ex=absList(lv).map(exFromDef);saveActive();adaptSession(r);render();speak('Abdômen '+ABS[lv].label+'. Trava o core.')});return}
-    case 'absadd':{const lv=S.absLvl||'medium';const have=new Set(a.ex.map(e=>norm(e.name)));const add=absList(lv).filter(e=>!have.has(norm(e.name))).map(exFromDef);a.ex.push(...add);a.abs=lv;saveActive();toast(`Abdômen ${ABS[lv].label} no fim do treino: ${add.length} exercícios. Não pula.`);break}
+    case 'absgo':{const lv=S.absLvl||'medium';bodyCheck().then(r=>{startSession({id:'ABS',name:'Abdômen · '+ABS[lv].label+(S.absMin?' · '+S.absMin+' min':''),ex:[]});S.active.custom=true;S.active.absLvl=lv;S.active.body=r||null;S.active.ex=absList(lv).map(exFromDef);saveActive();adaptSession(r);render();speak('Abdômen '+ABS[lv].label+'. Trava o core.')});return}
+    case 'absadd':{const lv=S.absLvl||'medium';const have=new Set(a.ex.map(e=>norm(e.name)));const add=absList(lv).filter(e=>!have.has(norm(e.name))).map(exFromDef);a.ex.push(...add);a.abs=lv;saveActive();toast(`Abdômen ${ABS[lv].label}${S.absMin?' de '+S.absMin+' min':''} no fim do treino: ${add.length} exercícios. Não pula.`);break}
     case 'nutri':S.view='nutri';window.scrollTo(0,0);break;
     case 'water':{const f=food();f.water=Math.max(0,f.water+(+b.dataset.d));saveFood(f);if(+b.dataset.d>0&&f.water===waterGoal())toast('Meta de água batida. Hidratada como um fiorde.');break}
     case 'prot':{const f=food();f.prot+=+b.dataset.g;f.log.push({n:b.dataset.n,g:+b.dataset.g});saveFood(f);if(protT(f)>=protGoal()&&protT(f)-(+b.dataset.g)<protGoal())toast('Proteína do dia batida. A forja agradece.');break}
