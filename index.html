@@ -245,6 +245,11 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .coachportrait{width:100%;max-width:340px;aspect-ratio:1;height:auto;border-radius:20px;align-self:center;display:block}
 .coachhero{display:flex;gap:14px;align-items:center}
 .coachname{font-size:13px}
+.risk{font-size:14px;border-radius:12px;padding:10px 12px;background:color-mix(in srgb,var(--hot) 18%,var(--surface));color:var(--ink)}
+.risk.ok{background:var(--good-soft)}.risk.bad{background:color-mix(in srgb,var(--danger) 18%,var(--surface))}
+.xplist li.lose b{color:var(--danger)}
+.badge2.bad{opacity:1;border-color:var(--danger)}.badge2.bad .medal{background:var(--danger);color:#fff}
+.progress.mini{height:4px;margin-top:6px}.progress.mini>i{background:var(--hot)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -480,7 +485,7 @@ function ctx(){const p=profile(),g=goals();
 Você pode mudar a rotina com a ferramenta atualizar_rotina (sempre mande a rotina completa, todos os treinos) e as metas de frequência com atualizar_metas. Só use quando o aluno pedir ou concordar, e depois diga o que mudou. Mantenha cada treino dentro do tempo do aluno.
 Se ele relatar dor forte, lesão ou sintoma estranho, oriente procurar médico ou fisioterapeuta. Não prescreva dieta detalhada nem doses de suplemento.
 
-Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body().weight?', '+body().weight+' kg':''}${body().height?', '+body().height+' cm':''}. Nível no app: ${levelOf(totalXP()).name}.
+Aluno: ${S.user.name||'sem nome'}${body().age?', '+body().age+' anos':''}${body().weight?', '+body().weight+' kg':''}${body().height?', '+body().height+' cm':''}. Nível no app: ${levelOf(totalXP()).name}. Metas perdidas recentes custam XP no app.
 Hoje: ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 Perfil: objetivo ${lbl('goal',p.goal)}; ${p.minutes} min por treino; ${p.days} dias por semana; nível ${lbl('level',p.level)}; local: ${lbl('place',p.place)}. Observações: ${p.notes||'nenhuma'}.
 Restrições de saúde: ${restrText()}. Nunca sugira exercícios contraindicados para essas condições; prefira variações com apoio e explique o motivo da troca.
@@ -853,45 +858,87 @@ function viewAtiv(){if(!S.act)S.act={type:'bike',min:30,int:1,date:todayISO(),no
   <button class="btn primary big" data-act="asave">Salvar atividade</button></div>`}
 
 /* ---------- gamificação ---------- */
-const LEVELS=[[0,'Barra vazia','var(--muted)'],[300,'Anilha verde','#2e9e5b'],[800,'Anilha amarela','#e9b10f'],[1600,'Anilha azul','#2862f2'],[3000,'Anilha vermelha','#d93a2b'],[5000,'Monstro da academia','var(--ink)']];
+const RANKS=[['Recruta','#9aa2b1'],['Escudeiro','#2e9e5b'],['Guerreiro','#e9b10f'],['Berserker','#2862f2'],['Jarl','#d93a2b'],['Einherjar','#b07cff'],['Lenda de Valhalla','#f2c230']];
+const ROMAN=['I','II','III'];
+const WEEK_BONUS=150,WEEK_PENALTY=150;
 function xpOf(s){if(s.checkin)return 30;if(s.activity)return 40+Math.min(s.minutes||0,90);return 100+Math.min(s.ex.reduce((n,e)=>n+e.sets.length,0)*2,60)}
-function weeksMet(){const g=goals().week;const wk=new Map();S.sessions.forEach(s=>{const k=weekStart(s.date).getTime();if(!wk.has(k))wk.set(k,new Set());wk.get(k).add(dayKey(s.date))});let n=0;wk.forEach(v=>{if(v.size>=g)n++});return n}
-function totalXP(){return S.sessions.reduce((a,s)=>a+xpOf(s),0)+weeksMet()*150}
-function levelOf(xp){let i=0;LEVELS.forEach((l,j)=>{if(xp>=l[0])i=j});const L=LEVELS[i],N=LEVELS[i+1];return {i,name:L[1],color:L[2],min:L[0],next:N?N[0]:null,nextName:N?N[1]:null}}
-function daySet(){return visitSet()}
-function dayStreak(){const ds=daySet();const d=new Date();if(!ds.has(dayKey(d)))d.setDate(d.getDate()-1);let n=0;while(ds.has(dayKey(d))){n++;d.setDate(d.getDate()-1)}return n}
+function weekMap(){const wk=new Map();S.sessions.forEach(s=>{const k=weekStart(s.date).getTime();if(!wk.has(k))wk.set(k,new Set());wk.get(k).add(dayKey(s.date))});return wk}
+function weekHistory(){const g=goals().week,wk=weekMap();if(!S.sessions.length)return [];const first=weekStart(S.sessions[S.sessions.length-1].date),cur=weekStart(new Date());const out=[];
+  for(let d=new Date(first);d<cur;d.setDate(d.getDate()+7)){const n=(wk.get(d.getTime())||new Set()).size;out.push({start:new Date(d),n,met:n>=g})}return out}
+function weeksMet(){return weekHistory().filter(w=>w.met).length}
+function weeksMissed(){return weekHistory().filter(w=>!w.met).length}
+function earnedXP(){return S.sessions.reduce((a,s)=>a+xpOf(s),0)+weeksMet()*WEEK_BONUS}
+function totalXP(){return Math.max(0,earnedXP()-weeksMissed()*WEEK_PENALTY)}
+function xpForLevel(L){return L<=1?0:Math.round(150*Math.pow(L-1,1.5)/10)*10}
+function levelOf(xp){let L=1;while(xpForLevel(L+1)<=xp)L++;const ri=Math.min(RANKS.length-1,Math.floor((L-1)/3));const R=RANKS[ri];
+  const name=ri<RANKS.length-1?`${R[0]} ${ROMAN[(L-1)%3]}`:`${R[0]}${L-1-(RANKS.length-1)*3>0?' ★'+(L-1-(RANKS.length-1)*3):''}`;
+  return {L,ri,name,rank:R[0],color:R[1],min:xpForLevel(L),next:xpForLevel(L+1)}}
+function rankStart(ri){return xpForLevel(ri*3+1)}
+function dayStreak(){const ds=visitSet();const d=new Date();if(!ds.has(dayKey(d)))d.setDate(d.getDate()-1);let n=0;while(ds.has(dayKey(d))){n++;d.setDate(d.getDate()-1)}return n}
 function maxStreak(){const days=[...new Set(S.sessions.map(s=>{const d=new Date(s.date);d.setHours(0,0,0,0);return d.getTime()}))].sort((a,b)=>a-b);let best=0,cur=0,prev=null;
   days.forEach(t=>{cur=prev!==null&&Math.round((t-prev)/864e5)===1?cur+1:1;best=Math.max(best,cur);prev=t});return best}
+function metStreakWeeks(){const h=weekHistory();let n=0;for(let i=h.length-1;i>=0&&h[i].met;i--)n++;return n}
 function stats(){const tr=S.sessions.filter(s=>!s.checkin&&!s.activity);return {treinos:tr.length,ativ:S.sessions.filter(s=>s.activity).length,kcal:S.sessions.reduce((a,s)=>a+sessionKcal(s),0),
-  streak:maxStreak(),weeks:weeksMet(),cedo:tr.some(s=>new Date(s.date).getHours()<7),noite:tr.some(s=>new Date(s.date).getHours()>=21),longo:tr.some(s=>s.durationSec>=90*60)}}
-const BADGES=[['primeiro','Primeiro treino','Concluiu o primeiro treino',s=>s.treinos>=1],['dez','10 treinos','Dez treinos concluídos',s=>s.treinos>=10],['trinta','30 treinos','Trinta treinos concluídos',s=>s.treinos>=30],['cem','100 treinos','Cem treinos. Respeito.',s=>s.treinos>=100],
- ['seq3','3 dias seguidos','Exercício 3 dias em sequência',s=>s.streak>=3],['seq7','7 dias seguidos','Uma semana inteira sem parar',s=>s.streak>=7],
- ['meta1','Meta batida','Bateu a meta de uma semana',s=>s.weeks>=1],['meta4','4 semanas na meta','Quatro semanas cumprindo a meta',s=>s.weeks>=4],['meta12','12 semanas na meta','Três meses de constância',s=>s.weeks>=12],
- ['fora','Ativo fora da academia','Registrou uma atividade extra',s=>s.ativ>=1],['fora10','10 atividades extras','Dez atividades fora da academia',s=>s.ativ>=10],
- ['k1','1.000 kcal','Gastou mil calorias no total',s=>s.kcal>=1000],['k10','10.000 kcal','Dez mil calorias no total',s=>s.kcal>=10000],
- ['cedo','Madrugador','Treinou antes das 7h',s=>s.cedo],['noite','Coruja','Treinou depois das 21h',s=>s.noite],['longo','Maratonista do ferro','Treino de 1h30 ou mais',s=>s.longo]];
-function earned(){const st=stats();return BADGES.filter(b=>b[3](st)).map(b=>b[0])}
-(function(){if(LS.get('ct.badges',null)===null){LS.set('ct.badges',earned());LS.set('ct.lvl',levelOf(totalXP()).i)}})();
-function celebrate(msg){const seen=new Set(LS.get('ct.badges',[]));const now=earned();const fresh=now.filter(id=>!seen.has(id));LS.set('ct.badges',now);
-  const lv=levelOf(totalXP());const oldL=LS.get('ct.lvl',0);LS.set('ct.lvl',lv.i);
-  let extra='';if(lv.i>oldL)extra=` · Subiu de nível: ${lv.name}!`;else if(fresh.length){const b=BADGES.find(x=>x[0]===fresh[0]);extra=` · Conquista: ${b[1]}!`}
-  if(fresh.length)S.newBadges=fresh;toast(msg+extra)}
+  streak:maxStreak(),weeks:weeksMet(),cedo:tr.filter(s=>new Date(s.date).getHours()<7).length,noite:tr.filter(s=>new Date(s.date).getHours()>=21).length,longo:tr.filter(s=>s.durationSec>=90*60).length}}
+/* conquistas infinitas: cada família tem degraus que continuam crescendo */
+function tiersFrom(list,grow){return t=>t<list.length?list[t]:grow(list[list.length-1],t-list.length+1)}
+const FAMILIES=[
+ ['forja','Forja','Treinos concluídos','treinos',tiersFrom([1,10,25,50,100,250,500,1000],(l,k)=>l*Math.pow(2,k)),n=>`${n} ${n===1?'treino':'treinos'}`],
+ ['chama','Chama de Muspel','Dias seguidos de exercício (seu recorde)','streak',tiersFrom([3,7,14,30,60,100,180,365],(l,k)=>l+100*k),n=>`${n} dias seguidos`],
+ ['juramento','Juramento','Semanas com a meta batida','weeks',tiersFrom([1,4,8,12,26,52],(l,k)=>l+26*k),n=>`${n} ${n===1?'semana':'semanas'} na meta`],
+ ['andarilho','Andarilho','Atividades fora da academia','ativ',tiersFrom([1,5,10,25,50,100],(l,k)=>l*Math.pow(2,k)),n=>`${n} ${n===1?'atividade':'atividades'}`],
+ ['fornalha','Fornalha','Calorias gastas no total','kcal',tiersFrom([1000,5000,10000,25000,50000,100000],(l,k)=>l*Math.pow(2,k)),n=>`${n.toLocaleString('pt-BR')} kcal`],
+ ['aurora','Filho da Aurora','Treinos antes das 7h','cedo',tiersFrom([1,5,10,25,50],(l,k)=>l*Math.pow(2,k)),n=>`${n} ${n===1?'treino':'treinos'} antes das 7h`],
+ ['vigia','Vigia da Noite','Treinos depois das 21h','noite',tiersFrom([1,5,10,25,50],(l,k)=>l*Math.pow(2,k)),n=>`${n} ${n===1?'treino':'treinos'} depois das 21h`],
+ ['folego','Fôlego de Gigante','Treinos de 1h30 ou mais','longo',tiersFrom([1,5,10,25,50],(l,k)=>l*Math.pow(2,k)),n=>`${n} ${n===1?'treino longo':'treinos longos'}`]];
+function famState(f,st){const v=st[f[3]],T=f[4];let t=0;while(v>=T(t))t++;return {tier:t,value:v,next:T(t),prev:t?T(t-1):0}}
+function allTiers(){const st=stats(),o={};FAMILIES.forEach(f=>o[f[0]]=famState(f,st).tier);return o}
+/* status: podem ser perdidos */
+function statusList(){const st=dayStreak(),ws=metStreakWeeks(),ds=daysSinceLast();return [
+ {id:'chamas',name:'Em chamas',desc:'7 dias seguidos ou mais agora',on:st>=7,hint:st>=7?`${st} dias e contando`:`sequência atual: ${st} ${st===1?'dia':'dias'}`},
+ {id:'inabalavel',name:'Inabalável',desc:'4 semanas seguidas batendo a meta',on:ws>=4,hint:`${ws} de 4 semanas seguidas`},
+ {id:'ferrugem',name:'Ferrugem',desc:'7 dias ou mais sem exercício',bad:true,on:ds!==null&&ds>=7,hint:ds!==null&&ds>=7?`${ds} dias parado. Volte para tirar a ferrugem.`:'você está em dia'}]}
+function weekRisk(){const g=goals().week,wk=weekStrip().n;if(wk>=g)return {ok:true,msg:'Meta da semana garantida: +'+WEEK_BONUS+' XP no domingo.'};
+  const now=new Date(),left=7-now.getDay();const need=g-wk;
+  return {ok:false,lost:need>left,msg:need>left?`Não dá mais para bater a meta desta semana. Você vai perder ${WEEK_PENALTY} XP no domingo.`:`Faltam ${need} ${need===1?'dia':'dias'} de exercício até domingo. Se não bater a meta, você perde ${WEEK_PENALTY} XP.`}}
+function snapshot(){return {L:levelOf(totalXP()).L,tiers:allTiers(),status:statusList().filter(x=>x.on&&!x.bad).map(x=>x.id)}}
+(function(){if(LS.get('ct.g2',null)===null)LS.set('ct.g2',snapshot())})();
+function celebrate(msg){const old=LS.get('ct.g2',snapshot()),now=snapshot();LS.set('ct.g2',now);let extra='';
+  const lv=levelOf(totalXP());
+  if(now.L>old.L)extra=` · Subiu para ${lv.name}!`;
+  else{const f=FAMILIES.find(f=>(now.tiers[f[0]]||0)>(old.tiers[f[0]]||0));if(f)extra=` · Conquista: ${f[1]} ${ROMAN[now.tiers[f[0]]-1]||now.tiers[f[0]]}!`;
+    else{const st=now.status.find(x=>!old.status.includes(x));if(st)extra=` · Status: ${statusList().find(x=>x.id===st).name}!`}}
+  toast(msg+extra)}
+function checkDecline(){const old=LS.get('ct.g2',null);if(!old)return;const now=snapshot();LS.set('ct.g2',now);
+  if(now.L<old.L){setTimeout(()=>toast(`Você caiu para ${levelOf(totalXP()).name}. Bata a meta desta semana para recuperar.`),900);return}
+  const lost=old.status.filter(x=>!now.status.includes(x));if(lost.length){const n=statusList().find(x=>x.id===lost[0]);setTimeout(()=>toast(`Você perdeu o status "${n.name}". Dá para reconquistar!`),900)}}
 function plateIcon(color,size){return `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="${color}"/><circle cx="20" cy="20" r="13" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/><circle cx="20" cy="20" r="4.5" fill="var(--surface)"/></svg>`}
-function gameCard(){const xp=totalXP(),lv=levelOf(xp),st=dayStreak();const pct=lv.next?Math.round((xp-lv.min)/(lv.next-lv.min)*100):100;const got=earned().length;
+function gameCard(){const xp=totalXP(),lv=levelOf(xp),st=dayStreak();const pct=Math.round((xp-lv.min)/(lv.next-lv.min)*100);const risk=weekRisk();const rust=statusList().find(x=>x.id==='ferrugem').on;
   return `<div class="card stack game">
-    <div class="row">${plateIcon(lv.color,48)}<div style="flex:1;min-width:0"><div class="eyebrow">Nível ${lv.i+1}</div><div class="lvname">${lv.name}</div></div>
+    <div class="row">${plateIcon(lv.color,48)}<div style="flex:1;min-width:0"><div class="eyebrow">Nível ${lv.L}</div><div class="lvname">${lv.name}</div></div>
       <div class="streak"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 2c1 4 5 5.5 5 11a5 5 0 0 1-10 0c0-3 1.5-4.5 2.5-6 .5 2 1.5 3 2.5 3-1-3 0-6 0-8Z" fill="${st?'var(--hot)':'var(--line)'}"/></svg><b class="num">${st}</b><span>${st===1?'dia':'dias'}<br>seguidos</span></div></div>
     <div><div class="progress"><i style="width:${pct}%;background:${lv.color}"></i></div>
-      <div class="row muted num" style="justify-content:space-between;font-size:13px;margin-top:5px"><span>${xp.toLocaleString('pt-BR')} XP</span><span>${lv.next?`faltam ${(lv.next-xp).toLocaleString('pt-BR')} para ${lv.nextName}`:'nível máximo'}</span></div></div>
-    <div class="row" style="flex-wrap:wrap"><button class="btn ghost sm" data-act="conq" style="flex:1">Conquistas ${got}/${BADGES.length}</button><button class="btn ghost sm" data-act="ativ" style="flex:1">+ Atividade fora</button></div>
+      <div class="row muted num" style="justify-content:space-between;font-size:13px;margin-top:5px"><span>${xp.toLocaleString('pt-BR')} XP</span><span>faltam ${(lv.next-xp).toLocaleString('pt-BR')} para o nível ${lv.L+1}</span></div></div>
+    <div class="risk ${risk.ok?'ok':risk.lost?'bad':''}">${rust?'Ferrugem: 7+ dias parado. Cada semana sem meta tira XP e pode derrubar sua patente.':risk.msg}</div>
+    <div class="row" style="flex-wrap:wrap"><button class="btn ghost sm" data-act="conq" style="flex:1">Conquistas</button><button class="btn ghost sm" data-act="ativ" style="flex:1">+ Atividade fora</button></div>
   </div>`}
-function viewConq(){const xp=totalXP(),lv=levelOf(xp),have=new Set(earned()),st=stats(),fresh=new Set(S.newBadges||[]);S.newBadges=null;
+function viewConq(){const xp=totalXP(),lv=levelOf(xp),st=stats();const risk=weekRisk();
   return `<div class="stack"><div class="row"><button class="ic" data-act="go" data-v="hoje" aria-label="Voltar">←</button><div class="eyebrow">Conquistas</div></div>
-  <div class="card stack"><div class="row">${plateIcon(lv.color,56)}<div><div class="eyebrow">Nível ${lv.i+1} · ${xp.toLocaleString('pt-BR')} XP</div><div class="lvname">${lv.name}</div></div></div>
-    <div class="levels">${LEVELS.map((l,i)=>`<div class="lv ${i<=lv.i?'on':''}">${plateIcon(i<=lv.i?l[2]:'var(--line)',28)}<span>${l[1]}</span><small class="num">${l[0].toLocaleString('pt-BR')} XP</small></div>`).join('')}</div></div>
-  <div class="card"><div class="eyebrow" style="margin-bottom:8px">Como ganhar XP</div><ul class="xplist"><li><span>Treino concluído</span><b>100 a 160 XP</b></li><li><span>Atividade fora da academia</span><b>40 + 1 por minuto</b></li><li><span>Check-in</span><b>30 XP</b></li><li><span>Semana com a meta batida</span><b>150 XP</b></li></ul></div>
-  <div class="badges">${BADGES.map(b=>`<div class="badge2 ${have.has(b[0])?'on':''} ${fresh.has(b[0])?'new':''}"><div class="medal">${have.has(b[0])?'★':'?'}</div><b>${b[1]}</b><span>${b[2]}</span></div>`).join('')}</div>
-  <p class="muted" style="font-size:13px;margin:0">${st.treinos} treinos · ${st.ativ} atividades · ${st.kcal.toLocaleString('pt-BR')} kcal no total · melhor sequência: ${st.streak} ${st.streak===1?'dia':'dias'}</p></div>`}
+  <div class="card stack"><div class="row">${plateIcon(lv.color,56)}<div><div class="eyebrow">Nível ${lv.L} · ${xp.toLocaleString('pt-BR')} XP</div><div class="lvname">${lv.name}</div></div></div>
+    <div class="progress"><i style="width:${Math.round((xp-lv.min)/(lv.next-lv.min)*100)}%;background:${lv.color}"></i></div>
+    <div class="levels">${RANKS.map((r,i)=>`<div class="lv ${i<=lv.ri?'on':''}">${plateIcon(i<=lv.ri?r[1]:'var(--line)',28)}<span>${r[0]}</span><small class="num">${rankStart(i).toLocaleString('pt-BR')} XP</small></div>`).join('')}</div>
+    <p class="muted" style="font-size:13px;margin:0">Cada patente tem 3 graus (I, II e III). Depois da Lenda de Valhalla, você continua ganhando estrelas para sempre.</p></div>
+  <div class="risk ${risk.ok?'ok':risk.lost?'bad':''}">${risk.msg}</div>
+  <div class="card"><div class="eyebrow" style="margin-bottom:8px">Como ganhar e perder XP</div><ul class="xplist">
+    <li><span>Treino concluído</span><b>+100 a 160</b></li><li><span>Atividade fora da academia</span><b>+40 e 1 por minuto</b></li><li><span>Check-in</span><b>+30</b></li>
+    <li><span>Semana com a meta batida</span><b>+${WEEK_BONUS}</b></li><li class="lose"><span>Semana sem bater a meta</span><b>−${WEEK_PENALTY}</b></li></ul>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">Se o XP cair, você pode descer de nível e de patente. Nesta conta: ${weeksMet()} ${weeksMet()===1?'semana batida':'semanas batidas'} e ${weeksMissed()} ${weeksMissed()===1?'perdida':'perdidas'}.</p></div>
+  <div class="eyebrow">Status (só vale enquanto você mantém)</div>
+  <div class="badges">${statusList().map(x=>`<div class="badge2 ${x.on?'on':''} ${x.bad&&x.on?'bad':''}"><div class="medal">${x.bad?(x.on?'!':'✓'):x.on?'★':'·'}</div><b>${x.name}</b><span>${x.bad&&!x.on?'Ferrugem: '+x.hint:x.hint}</span></div>`).join('')}</div>
+  <div class="eyebrow">Conquistas sem fim</div>
+  <div class="badges">${FAMILIES.map(f=>{const s=famState(f,st);const pct=Math.min(100,Math.round((s.value-s.prev)/(s.next-s.prev)*100));
+    return `<div class="badge2 ${s.tier?'on':''}"><div class="medal">${s.tier?s.tier:'?'}</div><b>${f[1]}${s.tier?' '+(ROMAN[s.tier-1]||s.tier):''}</b><span>${f[2]}</span><div class="progress mini"><i style="width:${pct}%"></i></div><span class="num">Próximo: ${f[5](s.next)}</span></div>`}).join('')}</div>
+  </div>`}
 
 function backupCard(){return `<div class="card stack"><div class="eyebrow">Backup</div><p class="muted" style="margin:0;font-size:14px">Seus dados ficam só neste celular. Baixe um backup de vez em quando para não perder nada se trocar de aparelho.</p>
   <div class="row"><button class="btn ghost" data-act="backup">Baixar backup</button><label class="btn ghost" for="restoreIn" style="display:inline-flex;align-items:center">Restaurar backup</label><input type="file" id="restoreIn" accept="application/json,.json" hidden></div></div>`}
@@ -1052,6 +1099,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active)
 
 if(apiKey())sampleApi=makeSample();
 render();
+checkDecline();
 if(apiKey())sampleApi=makeSample();
 if('serviceWorker' in navigator&&location.protocol==='https:'){const had=!!navigator.serviceWorker.controller;let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded&&!S.active){reloaded=true;location.reload()}});navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})})}).catch(()=>{})}
 })();
