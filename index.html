@@ -289,7 +289,7 @@ a.btn .coachav{margin-right:8px}
 .presets{flex-wrap:wrap;gap:6px;margin-top:6px}
 .week .wd.plan{border-style:dashed;border-color:var(--accent)}
 .week .wd.off:not(.done){opacity:.4}
-.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);background:#141a2e;color:#f4f1ea;border:1px solid #f2c23066;padding:10px 16px 10px 10px;border-radius:16px;font-weight:600;z-index:40;font-size:14px;line-height:1.35;width:max-content;max-width:min(440px,calc(100% - 32px));box-shadow:0 10px 30px rgb(0 0 0 / .35)}
 @media (max-width:380px){.sets{grid-template-columns:28px 1fr 1fr 48px}.chk{width:48px}.ed-grid{grid-template-columns:56px 1fr 1fr}.ed-grid .tog{grid-column:1/-1;padding:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -350,12 +350,12 @@ const main=document.getElementById('main');
 function goals(){if(!S.plan.goals)S.plan.goals={week:4,month:16};return S.plan.goals}
 
 function W(id){return S.plan.workouts.find(w=>w.id===id)||S.plan.workouts[0]}
-function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';if(String(msg).includes(COACH)){t.classList.add('dt');t.innerHTML=coachAv(26)+'<span>'+esc(msg)+'</span>'}else t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),msg.length>50?4200:2400)}
+function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast dt';t.innerHTML=coachAv(28)+'<span>'+esc(msg)+'</span>';document.body.appendChild(t);setTimeout(()=>t.remove(),msg.length>60?4800:msg.length>35?3400:2400)}
 
 /* ---------- persistence ---------- */
-function savePlan(){LS.set('ct.plan',S.plan);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(planRef)planRef.set(JSON.parse(JSON.stringify(S.plan))).catch(()=>toast('Não consegui salvar a rotina na nuvem'))},500)}
+function savePlan(){LS.set('ct.plan',S.plan);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(planRef)planRef.set(JSON.parse(JSON.stringify(S.plan))).catch(()=>toast('A nuvem falhou. Sua rotina ficou guardada aqui no celular.'))},500)}
 function saveActive(){LS.set('ct.active',S.active)}
-function addSession(s){S.sessions=[s,...S.sessions.filter(x=>x.id!==s.id)].sort((a,b)=>a.date<b.date?1:-1);LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(s.id).set(s).catch(()=>toast('Treino salvo só neste aparelho'))}
+function addSession(s){S.sessions=[s,...S.sessions.filter(x=>x.id!==s.id)].sort((a,b)=>a.date<b.date?1:-1);LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(s.id).set(s).catch(()=>toast('Treino guardado aqui no celular. A nuvem fica para depois.'))}
 function delSession(id){S.sessions=S.sessions.filter(x=>x.id!==id);LS.set('ct.sessions',S.sessions);if(sessCol)sessCol.doc(id).delete().catch(()=>{})}
 function setSync(on,txt){const el=document.getElementById('sync');el.classList.toggle('on',on);el.querySelector('span').textContent=txt}
 
@@ -602,7 +602,7 @@ function ctx(){return persona()+'\n\n'+ctxData()}
 const TOOLS=[
  {name:'atualizar_rotina',description:'Substitui a rotina inteira do aluno (todos os treinos A, B, C...). Mande todos os treinos, inclusive os que não mudaram.',
   inputSchema:{type:'object',properties:{workouts:{type:'array',items:{type:'object',properties:{name:{type:'string',description:'Ex.: Peito e tríceps'},ex:{type:'array',items:{type:'object',properties:{name:{type:'string'},sets:{type:'integer'},reps:{type:'string',description:'Ex.: 8-10'},rest:{type:'integer',description:'Descanso em segundos'},bar:{type:'boolean',description:'true só para exercício com barra olímpica livre'}},required:['name','sets','reps','rest']}}},required:['name','ex']}}},required:['workouts']},
-  execute(inp){const ws=normWorkouts(inp.workouts);if(!ws.length)throw new Error('Rotina vazia');ws.forEach(w=>w.ex.forEach(adaptEx));archivePlan('Ajustada pela '+COACH);S.plan.workouts=ws;S.plan.since=new Date().toISOString();S.plan.label=planLabel()+' · ajustada pela '+COACH;if(!ws.some(w=>w.id===S.plan.next))S.plan.next=ws[0].id;S.edit=null;savePlan();toast('Rotina atualizada pela '+COACH);return 'Rotina atualizada: '+ws.map(w=>w.id+' · '+w.name+' (~'+estMin(w)+' min)').join(', ')+'. Confira na aba Rotina.'}},
+  execute(inp){const ws=normWorkouts(inp.workouts);if(!ws.length)throw new Error('Rotina vazia');ws.forEach(w=>w.ex.forEach(adaptEx));archivePlan('Ajustada pela '+COACH);S.plan.workouts=ws;S.plan.since=new Date().toISOString();S.plan.label=planLabel()+' · ajustada pela '+COACH;if(!ws.some(w=>w.id===S.plan.next))S.plan.next=ws[0].id;S.edit=null;savePlan();toast('Mexi na sua rotina. Confere na aba Rotina e me obedece.');return 'Rotina atualizada: '+ws.map(w=>w.id+' · '+w.name+' (~'+estMin(w)+' min)').join(', ')+'.'}},
  {name:'atualizar_metas',description:'Muda as metas de frequência do aluno.',inputSchema:{type:'object',properties:{semana:{type:'integer',description:'Idas por semana, 1 a 7'},mes:{type:'integer',description:'Idas por mês, 1 a 31'}}},
   execute(inp){const g=goals();if(inp.semana)g.week=Math.max(1,Math.min(7,+inp.semana));if(inp.mes)g.month=Math.max(1,Math.min(31,+inp.mes));savePlan();return `Metas atualizadas: ${g.week} dias por semana e ${g.month} por mês.`}}];
 const MODELS={'claude-sonnet-5-5':{name:'Inteligente',desc:'Respostas mais completas',in:2,out:10},'claude-haiku-5-5':{name:'Econômica',desc:'Cerca de 20 vezes mais barata',in:0.1,out:0.5}};
@@ -613,8 +613,8 @@ function trackUsage(model,u){if(!u)return;const P=MODELS[model]||MODELS['claude-
 function aiLeft(){const a=aiState();return a.credit>0?Math.max(0,a.credit-a.spent):null}
 function msgCost(){const a=aiState();return a.avg||((MODELS[apiModel()].in*4500+MODELS[apiModel()].out*350)/1e6)}
 function creditWarn(){const a=aiState(),left=aiLeft();if(left===null||!a.credit)return;const pct=left/a.credit;
-  if(pct<=0.05&&a.warned<2){a.warned=2;LS.set('ct.ai',a);toast(`Crédito da IA quase no fim: ~US$ ${left.toFixed(2)}. A ${COACH} vai parar de responder quando acabar.`)}
-  else if(pct<=0.2&&a.warned<1){a.warned=1;LS.set('ct.ai',a);toast(`Crédito da IA abaixo de 20%: ~US$ ${left.toFixed(2)} restantes.`)}}
+  if(pct<=0.05&&a.warned<2){a.warned=2;LS.set('ct.ai',a);toast(`Minha voz está acabando: ~US$ ${left.toFixed(2)} de crédito. Quando zerar, eu fico muda.`)}
+  else if(pct<=0.2&&a.warned<1){a.warned=1;LS.set('ct.ai',a);toast(`Crédito baixo, guerreiro: ~US$ ${left.toFixed(2)}. Reabasteça antes que eu me cale.`)}}
 function usd(n){return 'US$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function creditCard(){const a=aiState(),left=aiLeft(),m=MODELS[apiModel()];
   if(left===null)return `<div class="credit"><div class="row" style="justify-content:space-between"><b>Crédito da IA</b><span class="muted" style="font-size:13px">gasto: ${usd(a.spent)}</span></div>
@@ -636,18 +636,18 @@ function makeSample(){
   const f=async(messages,opts={})=>{let turnCost=0;const done=[];const msgs=messages.map(m=>({role:m.role,content:m.content}));const tools=(opts.tools||[]).map(t=>({name:t.name,description:t.description,input_schema:t.inputSchema||{type:'object'}}));
     for(let i=0;i<5;i++){let mt=4096;let j;const model=apiModel();for(let tries=0;tries<2;tries++){j=await callApi({model,max_tokens:mt,messages:msgs,...(opts.system?{system:opts.system}:{}),...(tools.length?{tools}:{})});turnCost+=trackUsage(model,j.usage)||0;if(j.stop_reason==='max_tokens'&&(j.content||[]).some(c=>c.type==='tool_use')){mt=12000;continue}break}
       const text=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n').trim();
-      if(j.stop_reason!=='tool_use'){const finalText=text||(done.length?'Feito. A mudança já está no seu treino. Agora é com você.':'');opts.onText&&opts.onText({text:finalText,delta:finalText});const a=aiState();a.msgs++;a.avg=a.avg?a.avg*0.7+turnCost*0.3:turnCost;LS.set('ct.ai',a);creditWarn();return {text:finalText,done}}
+      if(j.stop_reason!=='tool_use'){const finalText=text||(done.length?'Feito. Sua rotina mudou. Agora é você e a barra.':'');opts.onText&&opts.onText({text:finalText,delta:finalText});const a=aiState();a.msgs++;a.avg=a.avg?a.avg*0.7+turnCost*0.3:turnCost;LS.set('ct.ai',a);creditWarn();return {text:finalText,done}}
       msgs.push({role:'assistant',content:j.content});const results=[];
       for(const c of j.content.filter(c=>c.type==='tool_use')){const tool=opts.tools.find(t=>t.name===c.name);let out,err=false;try{out=String(await tool.execute(c.input||{},{}));done.push(out)}catch(e){out=String((e&&e.message)||e);err=true}results.push({type:'tool_result',tool_use_id:c.id,content:out,is_error:err})}
       msgs.push({role:'user',content:results})}
     return {text:done.length?done.join('\n'):'Pronto.',done}};
   f.json=async prompt=>{const model=apiModel();const j=await callApi({model,max_tokens:4000,system:persona(),messages:[{role:'user',content:prompt}]});trackUsage(model,j.usage);creditWarn();const t=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');const m=t.match(/\{[\s\S]*\}/);if(!m)throw {code:'empty'};return JSON.parse(m[0])};
   return f}
-function errMsg(e){const c=e&&e.code;if(c==='no_credit'){const a=aiState();if(a.credit){a.spent=Math.max(a.spent,a.credit);LS.set('ct.ai',a)}}return c==='bad_key'?'Chave da API inválida. Confira na aba '+COACH+'.':c==='no_credit'?'Sua conta da API está sem créditos. Adicione em console.anthropic.com.':c==='offline'?'Sem internet agora. A '+COACH+' precisa de conexão.':c==='not_granted'?'Você precisa permitir o personal nesta página.':c==='rate_limited'?'Muitos pedidos seguidos. Espere um minuto e tente de novo.':'Não consegui falar com o personal agora. Tente de novo.'}
+function errMsg(e){const c=e&&e.code;if(c==='no_credit'){const a=aiState();if(a.credit){a.spent=Math.max(a.spent,a.credit);LS.set('ct.ai',a)}}return c==='bad_key'?'Essa chave não abre minha porta. Confere a chave na aba '+COACH+'.':c==='no_credit'?'Fiquei sem crédito. Reabasteça em console.anthropic.com e me chame de novo.':c==='offline'?'Sem internet, sem conversa. O treino offline continua valendo.':c==='not_granted'?'Preciso de permissão para falar com você.':c==='rate_limited'?'Calma. Muitas mensagens seguidas. Respira um minuto.':'Algo falhou do meu lado. Tenta de novo.'}
 function saveChat(){S.chat=S.chat.slice(-40);LS.set('ct.chat',S.chat);if(chatRef)chatRef.set({msgs:S.chat}).catch(()=>{})}
 function fmtMsg(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n/g,'<br>')}
 function chatHtml(){const intro=aiRow(`Sou a ${COACH}. Já li sua saga: sua rotina, suas metas e cada carga que você levantou. Quer trocar um exercício, encaixar o treino no seu tempo ou acertar a execução? Fala. Só não me venha com corpo mole.`);
-  return intro+S.chat.map(m=>(m.role==='assistant'&&!m.note&&m.content==='…')?`<div class="cnote warnnote">${coachAv(20)}<span>Essa mudança não foi aplicada (erro antigo, já corrigido). Peça de novo.</span></div>`:m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
+  return intro+S.chat.map(m=>(m.role==='assistant'&&!m.note&&m.content==='…')?`<div class="cnote warnnote">${coachAv(20)}<span>Essa mudança não entrou. Erro antigo, já corrigido. Me pede de novo.</span></div>`:m.note?`<div class="cnote">${coachAv(20)}<span>${fmtMsg(m.content)}</span></div>`:m.role==='user'?meRow(fmtMsg(m.content)):aiRow(fmtMsg(m.content))).join('')+(S.busy==='chat'?aiRow(S.streaming?fmtMsg(S.streaming):`<span class="dots">${COACH} está pensando…</span>`):'')}
 function aiRow(h){return `<div class="crow ai">${coachAv(30)}<div class="msg ai">${h}</div></div>`}
 function meRow(h){return `<div class="crow me"><div class="msg me">${h}</div><span class="uav">${avatarInner()}</span></div>`}
 function updateChatLog(){document.querySelectorAll('.chatlog').forEach(el=>{el.innerHTML=chatHtml();if(el.id==='fabLog')el.scrollTop=el.scrollHeight;else{const l=el.lastElementChild;if(l&&S.busy)l.scrollIntoView({block:'nearest'})}})}
@@ -689,7 +689,7 @@ Formato: {"workouts":[{"name":"Peito e tríceps","ex":[{"name":"Supino reto","se
   try{const r=await sampleApi.json(prompt,{modelTier:'default'});const ws=normWorkouts(r&&r.workouts);if(!ws.length)throw {code:'empty'};ws.forEach(w=>w.ex.forEach(adaptEx));
     archivePlan('Substituída por treino da '+COACH);S.plan.workouts=ws;S.plan.since=new Date().toISOString();S.plan.label=ws.map(w=>w.id).join('')+' · '+lbl('goal',p.goal)+' · '+p.minutes+' min · '+COACH;S.plan.next=ws[0].id;S.sel=null;S.edit=null;const g=goals();g.week=+p.days;g.month=Math.round(p.days*4.3);savePlan();
     S.chat.push({role:'assistant',content:`Montei sua rotina ${ws.map(w=>w.id).join('/')} para ${p.days} dias por semana, com ${ws.map(w=>`${w.id} (~${estMin(w)} min)`).join(', ')}. ${r.resumo||''}\nSua meta virou ${g.week} idas por semana. Veja tudo na aba Rotina ou me peça ajustes aqui.`});saveChat();
-    toast('Treino criado!')}
+    toast('Seu treino está forjado. Agora é suor.')}
   catch(e){toast(errMsg(e))}
   S.busy=null;render()}
 const SUGS=['Monte um aquecimento para o treino de hoje','Só tenho 40 min hoje, o que eu corto?','Como aumentar as cargas sem me machucar?','Troque um exercício que incomoda meu ombro'];
@@ -839,9 +839,9 @@ function viewPerfil(){const u=S.user;
   <p class="muted" style="margin:0;font-size:14px">Seu perfil, sua foto e seus treinos ficam salvos só neste celular. Não tem senha nem conta: ninguém mais vê esses dados.</p>
   ${backupCard()}
   <button class="btn primary" data-act="go" data-v="hoje">Voltar ao treino</button></div>`}
-function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Escolha uma imagem');return}const r=new FileReader();
+function processPhoto(f){if(!f||!/^image\//.test(f.type)){toast('Isso não é uma imagem. Escolhe uma foto.');return}const r=new FileReader();
   r.onload=()=>{const img=new Image();img.onload=()=>{const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');const m=Math.min(img.width,img.height);
-    x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva');render()};img.onerror=()=>toast('Não consegui abrir essa imagem');img.src=r.result};r.readAsDataURL(f)}
+    x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,N,N);S.user.photo=c.toDataURL('image/jpeg',.82);saveUser();toast('Foto salva. Agora eu sei com quem estou falando.');render()};img.onerror=()=>toast('Não consegui abrir essa foto. Tenta outra.');img.src=r.result};r.readAsDataURL(f)}
 
 /* ---------- Driffa ---------- */
 const COACH='Driffa';const AV='?v=15';
@@ -982,16 +982,16 @@ function wzAct(act,b){const z=S.wz;const v=b.dataset.v;
    case 'wzdays':z.days=+v;z.split=RECO[z.days];S.wzPlan=null;return;case 'wzav':z.avail=toggleDays(z.avail,v);if(z.days>z.avail.length){z.days=z.avail.length;z.split=RECO[z.days]}S.wzPlan=null;return;case 'wzsplit':z.split=v;S.wzPlan=null;return;
    case 'wzlevel':z.level=v;S.wzPlan=null;return;case 'wzplace':z.place=v;S.wzPlan=null;return;
    case 'wzgo':z.step=+v;window.scrollTo(0,0);return;
-   case 'wzregen':z.seed=(z.seed||1)+7919;S.wzPlan=null;toast('Nova opção gerada');return;
+   case 'wzregen':z.seed=(z.seed||1)+7919;S.wzPlan=null;toast('Outra opção, mesma exigência.');return;
    case 'wzrm':{const w=S.wzPlan[+b.dataset.w];w.ex.splice(+b.dataset.x,1);return}
    case 'wzswap':{const w=S.wzPlan[+b.dataset.w],e=w.ex[+b.dataset.x];const inWk=new Set(w.ex.map(x=>x.name));const pool=wzPool(e.g,z,inWk);
-     if(!pool.length){toast('Não há outra opção segura para esse grupo');return}const x=pool[Math.floor(Math.random()*pool.length)];w.ex[+b.dataset.x]=wzMake(x,z);return}
+     if(!pool.length){toast('Não tem outra opção segura para esse músculo. Fica essa.');return}const x=pool[Math.floor(Math.random()*pool.length)];w.ex[+b.dataset.x]=wzMake(x,z);return}
    case 'wzask':{const txt=S.wzPlan.map(w=>`Treino ${w.id} (${w.name}): `+w.ex.map(e=>`${e.name} ${e.sets}x${e.reps}`).join('; ')).join('\n');S.view='personal';sendChat(`Montei este treino ${z.split} para ${z.minutes} min, objetivo ${lbl('goal',z.goal)}. O que você ajustaria antes de eu usar?\n${txt}`);return}
    case 'wzuse':{if(S.armed!=='wzuse'){arm('wzuse');return}S.armed=null;
      archivePlan('Substituída pelo Montar treino');S.plan.since=new Date().toISOString();S.plan.label=z.split+' · '+lbl('goal',z.goal)+' · '+z.minutes+' min';
      S.plan.workouts=S.wzPlan.map(w=>({id:w.id,name:w.name,day:null,ex:w.ex.filter(Boolean).map(e=>({id:e.id,name:e.name,sets:e.sets,reps:e.reps,rest:e.rest,bar:e.bar}))})).filter(w=>w.ex.length);
      S.plan.next=S.plan.workouts[0].id;S.sel=null;S.edit=null;const p=profile();p.avail=[...z.avail];p.sched=spreadDays(z.avail,z.days);Object.assign(p,{minutes:z.minutes,goal:z.goal,days:z.days,level:z.level,place:z.place,notes:z.notes});p.restr=[...z.restr];
-     const g=goals();g.week=z.days;g.month=Math.round(z.days*4.3);savePlan();S.wz=null;S.wzPlan=null;S.view='hoje';window.scrollTo(0,0);toast('Treino salvo! Meta: '+z.days+' idas por semana');return}}}
+     const g=goals();g.week=z.days;g.month=Math.round(z.days*4.3);savePlan();S.wz=null;S.wzPlan=null;S.view='hoje';window.scrollTo(0,0);toast('Treino escolhido. São '+z.days+' dias por semana. Não me decepcione.');return}}}
 
 /* ---------- calorias ---------- */
 function body(){if(!S.user.body)S.user.body={};return S.user.body}
@@ -1075,13 +1075,13 @@ function snapshot(){return {L:levelOf(totalXP()).L,tiers:allTiers(),status:statu
 (function(){if(LS.get('ct.g2',null)===null)LS.set('ct.g2',snapshot())})();
 function celebrate(msg){const old=LS.get('ct.g2',snapshot()),now=snapshot();LS.set('ct.g2',now);let extra='';
   const lv=levelOf(totalXP());
-  if(now.L>old.L)extra=` · Subiu para ${lv.name}!`;
-  else{const f=FAMILIES.find(f=>(now.tiers[f[0]]||0)>(old.tiers[f[0]]||0));if(f)extra=` · Conquista: ${f[1]} ${ROMAN[now.tiers[f[0]]-1]||now.tiers[f[0]]}!`;
-    else{const st=now.status.find(x=>!old.status.includes(x));if(st)extra=` · Status: ${statusList().find(x=>x.id===st).name}!`}}
+  if(now.L>old.L)extra=` Agora você é ${lv.name}. Skål!`;
+  else{const f=FAMILIES.find(f=>(now.tiers[f[0]]||0)>(old.tiers[f[0]]||0));if(f)extra=` Conquista: ${f[1]} ${ROMAN[now.tiers[f[0]]-1]||now.tiers[f[0]]}. Mereceu.`;
+    else{const st=now.status.find(x=>!old.status.includes(x));if(st)extra=` Status: ${statusList().find(x=>x.id===st).name}. Não perca.`}}
   toast(msg+extra)}
 function checkDecline(){const old=LS.get('ct.g2',null);if(!old)return;const now=snapshot();LS.set('ct.g2',now);
-  if(now.L<old.L){setTimeout(()=>toast(`Você caiu para ${levelOf(totalXP()).name}. Bata a meta desta semana para recuperar.`),900);return}
-  const lost=old.status.filter(x=>!now.status.includes(x));if(lost.length){const n=statusList().find(x=>x.id===lost[0]);setTimeout(()=>toast(`Você perdeu o status "${n.name}". Dá para reconquistar!`),900)}}
+  if(now.L<old.L){setTimeout(()=>toast(`Você caiu para ${levelOf(totalXP()).name}. Guerreiro que cai, levanta. Bata a meta desta semana.`),900);return}
+  const lost=old.status.filter(x=>!now.status.includes(x));if(lost.length){const n=statusList().find(x=>x.id===lost[0]);setTimeout(()=>toast(`Você perdeu "${n.name}". O que se perde na preguiça, se reconquista no ferro.`),900)}}
 function plateIcon(color,size){return `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="${color}"/><circle cx="20" cy="20" r="13" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/><circle cx="20" cy="20" r="4.5" fill="var(--surface)"/></svg>`}
 function gameCard(){const xp=totalXP(),lv=levelOf(xp),st=dayStreak();const pct=Math.round((xp-lv.min)/(lv.next-lv.min)*100);const risk=weekRisk();const rust=statusList().find(x=>x.id==='ferrugem').on;
   return `<div class="card stack game">
@@ -1153,7 +1153,7 @@ function startSession(id){S.picking=false;
 }
 function finishSession(){
   const a=S.active;const ex=a.ex.map(e=>({exId:e.exId,name:e.name,sets:e.sets.filter(s=>s.done).map(s=>({kg:+String(s.kg).replace(',','.')||0,reps:+s.reps||0}))})).filter(e=>e.sets.length);
-  if(!ex.length){toast('Marque ao menos uma série como feita');return}
+  if(!ex.length){toast('Nenhuma série marcada? Não salvo treino que não aconteceu.');return}
   const durS=Math.round((Date.now()-a.start)/1000);const sess={id:a.id,date:new Date(a.start).toISOString(),workoutId:a.workoutId,name:a.name,durationSec:durS,ex};sess.kcal=sessionKcal(sess);addSession(sess);
   const ws=S.plan.workouts,i=ws.findIndex(w=>w.id===a.workoutId);S.plan.next=ws[(i+1)%ws.length].id;S.sel=null;savePlan();
   S.active=null;saveActive();S.rest=null;try{wake&&wake.release()}catch(e){}
@@ -1189,50 +1189,50 @@ main.addEventListener('click',e=>{
   if(act.startsWith('wz')){if(act==='wzuse'&&S.armed!=='wzuse'){wzAct(act,b);render();return}wzAct(act,b);if(act!=='wzuse')S.armed=null;render();return}
   switch(act){
     case 'pick':S.sel=b.dataset.id;break;
-    case 'avday':{const p=profile();p.avail=toggleDays(avail(),b.dataset.v);const g=goals();if(g.week>p.avail.length){g.week=p.avail.length;toast('Meta ajustada para '+g.week+' dias, o máximo que cabe')}p.sched=spreadDays(p.avail,Math.min(g.week,p.avail.length));S.goalsOpen=false;savePlan();break}
-    case 'model':LS.set('ct.model',b.dataset.v);{const a=aiState();a.avg=0;LS.set('ct.ai',a)}toast('Modo '+MODELS[b.dataset.v].name.toLowerCase()+' ativado');break;
-    case 'credset':case 'credadd':case 'credfix':{const v=parseFloat(String(document.getElementById('credIn').value||'').replace(',','.'));if(!(v>0)){toast('Digite um valor em dólares');return}const a=aiState();
-      if(act==='credset'){a.credit=v+a.spent}else if(act==='credadd'){a.credit=(a.credit||a.spent)+v}else{a.credit=a.spent+v}a.warned=0;LS.set('ct.ai',a);toast('Crédito atualizado');break}
+    case 'avday':{const p=profile();p.avail=toggleDays(avail(),b.dataset.v);const g=goals();if(g.week>p.avail.length){g.week=p.avail.length;toast('Ajustei sua meta para '+g.week+' dias. É o que cabe na sua semana.')}p.sched=spreadDays(p.avail,Math.min(g.week,p.avail.length));S.goalsOpen=false;savePlan();break}
+    case 'model':LS.set('ct.model',b.dataset.v);{const a=aiState();a.avg=0;LS.set('ct.ai',a)}toast(b.dataset.v==='claude-haiku-5-5'?'Modo econômico. Falo menos, gasto menos.':'Modo inteligente. Agora eu penso com calma.');break;
+    case 'credset':case 'credadd':case 'credfix':{const v=parseFloat(String(document.getElementById('credIn').value||'').replace(',','.'));if(!(v>0)){toast('Me diz o valor em dólares.');return}const a=aiState();
+      if(act==='credset'){a.credit=v+a.spent}else if(act==='credadd'){a.credit=(a.credit||a.spent)+v}else{a.credit=a.spent+v}a.warned=0;LS.set('ct.ai',a);toast('Crédito anotado. Estou de volta.');break}
     case 'goactive':S.view='hoje';window.scrollTo(0,0);break;
     case 'phopen':S.openPlan=S.openPlan===b.dataset.id?null:b.dataset.id;break;
     case 'prestore':{if(!twoStep('pr'+b.dataset.id))return;const p=plans().find(x=>x.id===b.dataset.id);if(!p)break;archivePlan('Trocada por uma rotina antiga');
-      LS.set('ct.plans',plans().filter(x=>x.id!==p.id));S.plan.workouts=p.workouts;S.plan.label=p.label;S.plan.since=new Date().toISOString();S.plan.next=p.workouts[0].id;S.edit=null;S.sel=null;S.openPlan=null;savePlan();toast('Rotina restaurada: '+p.label);break}
+      LS.set('ct.plans',plans().filter(x=>x.id!==p.id));S.plan.workouts=p.workouts;S.plan.label=p.label;S.plan.since=new Date().toISOString();S.plan.next=p.workouts[0].id;S.edit=null;S.sel=null;S.openPlan=null;savePlan();toast('A rotina antiga voltou: '+p.label+'. Sem saudade, só treino.');break}
     case 'pdel':{if(!twoStep('pd'+b.dataset.id))return;LS.set('ct.plans',plans().filter(x=>x.id!==b.dataset.id));break}
-    case 'pastday':case 'pastdate':{const iso=act==='pastday'?b.dataset.d:(document.getElementById('pastDate').value||'');if(!iso){toast('Escolha a data');return}
-      if(iso>todayISO()){toast('Não dá para registrar o futuro');return}
+    case 'pastday':case 'pastdate':{const iso=act==='pastday'?b.dataset.d:(document.getElementById('pastDate').value||'');if(!iso){toast('Escolhe a data primeiro.');return}
+      if(iso>todayISO()){toast('Treino do futuro? Primeiro você treina, depois registra.');return}
       const d=new Date(iso+'T12:00:00');const k=dayKey(d);const same=S.sessions.filter(x=>dayKey(x.date)===k);const label=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'short'});
-      if(same.some(x=>!x.checkin)){toast('Já tem treino ou atividade registrada em '+label);return}
-      if(same.length){if(S.armed!=='pd'+iso){arm('pd'+iso);render();toast('Toque de novo para apagar o check-in de '+label);return}S.armed=null;same.forEach(x=>delSession(x.id));toast('Check-in de '+label+' removido');render();return}
+      if(same.some(x=>!x.checkin)){toast(label+' já está registrado. Não conto o mesmo dia duas vezes.');return}
+      if(same.length){if(S.armed!=='pd'+iso){arm('pd'+iso);render();toast('Toca de novo se quer mesmo apagar '+label+'.');return}S.armed=null;same.forEach(x=>delSession(x.id));toast('Check-in de '+label+' apagado.');render();return}
       const isToday=iso===todayISO();addSession({id:uid(),date:(isToday?new Date():d).toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[],late:!isToday});
-      render();celebrate((isToday?'Check-in feito':'Check-in de '+label+' registrado')+' · +30 XP');return}
+      render();celebrate((isToday?'Check-in feito.':'Anotei '+label+'. Esquecer de registrar, tudo bem. Esquecer de treinar, não.')+' +30 XP');return}
     case 'look':LS.set('ct.look',+b.dataset.v);break;
     case 'ativ':S.act={type:'bike',min:30,int:1,date:todayISO(),note:''};S.view='ativ';window.scrollTo(0,0);break;
     case 'atype':S.act.type=b.dataset.v;break;
     case 'amin':S.act.min=+b.dataset.v;break;
     case 'aint':S.act.int=+b.dataset.v;break;
-    case 'asave':{const a=S.act;if(!a.min){toast('Informe a duração');return}const today=a.date===todayISO();const d=today?new Date():new Date(a.date+'T12:00:00');
+    case 'asave':{const a=S.act;if(!a.min){toast('Quanto tempo? Sem isso eu não calculo nada.');return}const today=a.date===todayISO();const d=today?new Date():new Date(a.date+'T12:00:00');
       const m=MET[a.type];const sess={id:uid(),date:d.toISOString(),activity:a.type,workoutId:'+',name:m[0],minutes:a.min,intensity:a.int,durationSec:a.min*60,note:a.note,ex:[]};sess.kcal=sessionKcal(sess);
-      addSession(sess);S.act=null;S.view='hoje';window.scrollTo(0,0);render();celebrate(`${m[0]} salva · ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);return}
+      addSession(sess);S.act=null;S.view='hoje';window.scrollTo(0,0);render();celebrate(`${m[0]} anotada. Guerreiro se move até fora da arena. ≈ ${sess.kcal} kcal · +${xpOf(sess)} XP`);return}
     case 'conq':S.view='conq';window.scrollTo(0,0);break;
     case 'train':S.picking=true;window.scrollTo(0,0);break;
     case 'untrain':S.picking=false;window.scrollTo(0,0);break;
     case 'how':openGuide(b.dataset.name);return;
     case 'howk':openGuide('',b.dataset.k);return;
     case 'gg':S.gg=b.dataset.g;document.querySelectorAll('.gchips .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.g===S.gg));document.getElementById('guideList').innerHTML=guideList();return;
-    case 'welcome':{const v=(document.getElementById('welName').value||'').trim();if(!v){toast('Digite seu nome');return}S.user.name=v;saveUser();toast('Bem-vindo, '+firstName()+'!');break}
+    case 'welcome':{const v=(document.getElementById('welName').value||'').trim();if(!v){toast('Primeiro me diz seu nome.');return}S.user.name=v;saveUser();toast(firstName()+'. Sou a Driffa. A partir de hoje, você treina comigo.');break}
     case 'skipwel':S.user.skip=true;saveUser();break;
     case 'rmphoto':S.user.photo='';saveUser();break;
-    case 'swap':{const ex=S.plan.workouts[wi].ex[xi];if(!ex.orig)ex.orig={name:ex.name,bar:!!ex.bar,reps:ex.reps};ex.name=b.dataset.to;ex.bar=false;adaptEx(ex);savePlan();toast('Exercício trocado');break}
-    case 'adaptall':{const n=adaptPlan();savePlan();toast(n+(n===1?' exercício adaptado':' exercícios adaptados'));break}
+    case 'swap':{const ex=S.plan.workouts[wi].ex[xi];if(!ex.orig)ex.orig={name:ex.name,bar:!!ex.bar,reps:ex.reps};ex.name=b.dataset.to;ex.bar=false;adaptEx(ex);savePlan();toast('Trocado. Esse aí sua coluna aguenta.');break}
+    case 'adaptall':{const n=adaptPlan();savePlan();toast(n?`Adaptei ${n} ${n===1?'exercício':'exercícios'}. Força sem lesão.`:'Nada para adaptar. Sua rotina já está segura.');break}
     case 'swapA':{const ae=a.ex[ei];ae.name=b.dataset.to;ae.target.bar=false;adaptEx({name:ae.name,set bar(v){}});const fx=issues(ae.name);if(fx.length)ae.name=fx[0].to;
-      S.plan.workouts.forEach(w=>w.ex.forEach(e=>{if(e.id===ae.exId){e.name=ae.name;e.bar=false}}));ae.sets.forEach(t=>{if(!t.done)t.kg=''});saveActive();savePlan();toast('Trocado também na sua rotina');break}
+      S.plan.workouts.forEach(w=>w.ex.forEach(e=>{if(e.id===ae.exId){e.name=ae.name;e.bar=false}}));ae.sets.forEach(t=>{if(!t.done)t.kg=''});saveActive();savePlan();toast('Troquei aqui e na sua rotina. Segue o treino.');break}
     case 'gen':if(!twoStep('gen'))return;S.armed=null;generate();return;
     case 'sug':sendChat(b.dataset.t);return;
-    case 'savekey':{const v=(document.getElementById('keyIn').value||'').trim();if(!/^sk-/.test(v)){toast('A chave começa com sk-ant-');return}LS.set('ct.key',v);{const c=parseFloat(String((document.getElementById('credIn')||{}).value||'').replace(',','.'));if(c>0){const a=aiState();a.credit=c;a.spent=0;a.warned=0;LS.set('ct.ai',a)}}sampleApi=makeSample();toast(COACH+' ativada');break}
+    case 'savekey':{const v=(document.getElementById('keyIn').value||'').trim();if(!/^sk-/.test(v)){toast('Essa chave está errada. Ela começa com sk-ant-.');return}LS.set('ct.key',v);{const c=parseFloat(String((document.getElementById('credIn')||{}).value||'').replace(',','.'));if(c>0){const a=aiState();a.credit=c;a.spent=0;a.warned=0;LS.set('ct.ai',a)}}sampleApi=makeSample();toast('Agora eu falo de verdade. Prepare-se.');break}
     case 'rmkey':if(!twoStep('rmkey'))return;try{localStorage.removeItem('ct.key')}catch(_){}sampleApi=null;break;
     case 'backup':{const blob=new Blob([JSON.stringify({app:'up-anilha',v:3,user:S.user,plan:S.plan,plans:plans(),sessions:S.sessions,chat:S.chat},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='up-anilha-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return}
     case 'clearchat':if(!twoStep('clearchat'))return;S.chat=[];saveChat();break;
-    case 'checkin':addSession({id:uid(),date:new Date().toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[]});celebrate('Check-in feito · +30 XP');break;
+    case 'checkin':addSession({id:uid(),date:new Date().toISOString(),checkin:true,workoutId:'✓',name:'Check-in',durationSec:0,ex:[]});celebrate(pick(['Presença registrada. Aparecer já é metade da batalha.','Check-in feito. Agora vai lá e honra ele.'])+' +30 XP');break;
     case 'uncheck':delSession(b.dataset.id);break;
     case 'goal':{const g=goals(),k=b.dataset.g,max=k==='week'?7:31;g[k]=Math.max(1,Math.min(max,g[k]+(+b.dataset.d)));S.goalsOpen=true;savePlan();break}
     case 'go':S.view=b.dataset.v;break;
@@ -1252,7 +1252,7 @@ main.addEventListener('click',e=>{
     case 'addex':S.plan.workouts[wi].ex.push(E('Novo exercício',3,'10',60));savePlan();setTimeout(()=>{const ins=main.querySelectorAll('.ed-ex input[data-f=name]');const l=ins[ins.length-1];l&&(l.focus(),l.select())},0);break;
     case 'up':case 'down':{const ex=S.plan.workouts[wi].ex,j=act==='up'?xi-1:xi+1;[ex[xi],ex[j]]=[ex[j],ex[xi]];savePlan();break}
     case 'rmex':if(!twoStep(b.dataset.k))return;S.plan.workouts[wi].ex.splice(xi,1);savePlan();break;
-    case 'reset':if(!twoStep('reset'))return;{archivePlan('Substituída pela rotina padrão');const pf=S.plan.profile;S.plan=JSON.parse(JSON.stringify(DEFAULT_PLAN));S.plan.profile=pf}S.plan.workouts.forEach(w=>w.ex.forEach(x=>x.id=uid()));S.edit=null;savePlan();toast('Rotina padrão restaurada');break;
+    case 'reset':if(!twoStep('reset'))return;{archivePlan('Substituída pela rotina padrão');const pf=S.plan.profile;S.plan=JSON.parse(JSON.stringify(DEFAULT_PLAN));S.plan.profile=pf}S.plan.workouts.forEach(w=>w.ex.forEach(x=>x.id=uid()));S.edit=null;savePlan();toast('Voltamos à rotina padrão.');break;
     case 'delsess':if(!twoStep('ds'+b.dataset.id))return;delSession(b.dataset.id);break;
   }
   S.armed=null;render();
@@ -1268,7 +1268,7 @@ main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chat
   if(t.id==='actDate'&&S.act){S.act.date=t.value;return}
   if(t.id==='actNote'&&S.act){S.act.note=t.value;return}if(!f)return;
   if(f==='restr'){const r=restr(),k=t.dataset.k;if(t.checked&&!r.includes(k))r.push(k);if(!t.checked)r.splice(r.indexOf(k),1);const n=adaptPlan();savePlan();render();
-    toast(n?(t.checked?`Rotina adaptada: ${n} ${n===1?'exercício trocado':'exercícios ajustados'} para ${RESTR[k].short.toLowerCase()}`:`Rotina atualizada: ${n} ${n===1?'exercício voltou':'exercícios voltaram'} ao original`):(t.checked?'Sua rotina já é segura para '+RESTR[k].short.toLowerCase():'Restrição removida'));return}
+    toast(n?(t.checked?`Adaptei ${n} ${n===1?'exercício':'exercícios'} por causa da ${RESTR[k].short.toLowerCase()}. Força sem lesão.`:`${n} ${n===1?'exercício voltou':'exercícios voltaram'} ao original. Vai com calma.`):(t.checked?`Sua rotina já respeita sua ${RESTR[k].short.toLowerCase()}.`:'Restrição removida. Mas me avisa se doer.'));return}
   if(f==='pf'){const k=t.dataset.k;profile()[k]=['minutes','days'].includes(k)?+t.value:t.value;savePlan();return}
   if(t.dataset.e!=null&&S.active){const s=S.active.ex[+t.dataset.e].sets[+t.dataset.s];s[f]=t.value;saveActive();
     if(f==='kg'){const pc=document.getElementById('pc-'+t.dataset.e+'-'+t.dataset.s);if(pc)pc.textContent=plates(+String(t.value).replace(',','.'))}return}
@@ -1281,7 +1281,7 @@ main.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(t.id==='chat
 main.addEventListener('submit',e=>{if(e.target.id==='chatForm'){e.preventDefault();sendChat(S.draft)}});
 main.addEventListener('change',e=>{if(e.target.id==='photoIn'){if(S.view==='hoje'){const w=document.getElementById('welName');if(w)S.draftName=w.value}processPhoto(e.target.files&&e.target.files[0]);return}
   if(e.target.id==='restoreIn'){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.plan||!Array.isArray(d.plan.workouts)||!Array.isArray(d.sessions))throw 0;
-    S.plan=d.plan;S.sessions=d.sessions;S.chat=Array.isArray(d.chat)?d.chat:[];if(d.user&&typeof d.user==='object'){S.user=d.user;LS.set('ct.user',S.user)}if(Array.isArray(d.plans))LS.set('ct.plans',d.plans);LS.set('ct.plan',S.plan);LS.set('ct.sessions',S.sessions);LS.set('ct.chat',S.chat);toast('Backup restaurado');render()}catch(_){toast('Esse arquivo não é um backup do Up Anilha')}};r.readAsText(f);return}if(e.target.dataset.f==='histEx'){S.histEx=e.target.value;render()}});
+    S.plan=d.plan;S.sessions=d.sessions;S.chat=Array.isArray(d.chat)?d.chat:[];if(d.user&&typeof d.user==='object'){S.user=d.user;LS.set('ct.user',S.user)}if(Array.isArray(d.plans))LS.set('ct.plans',d.plans);LS.set('ct.plan',S.plan);LS.set('ct.sessions',S.sessions);LS.set('ct.chat',S.chat);toast('Backup restaurado. Sua saga está de volta.');render()}catch(_){toast('Esse arquivo não é um backup meu.')}};r.readAsText(f);return}if(e.target.dataset.f==='histEx'){S.histEx=e.target.value;render()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.active){try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>wake=l).catch(()=>{})}catch(e){}}});
 
 if(apiKey())sampleApi=makeSample();
