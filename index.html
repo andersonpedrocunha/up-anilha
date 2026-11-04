@@ -93,6 +93,7 @@ h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.1;mar
 .tin{display:flex;gap:4px;align-items:center}.tin input{flex:1 1 0;min-width:44px;width:auto}.tin select{flex:0 0 62px;width:62px;padding-left:8px;padding-right:4px}.ed-grid .wide input{max-width:120px}.tin span{font-size:14px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}
 .ed-grid .wide{grid-column:span 2}
 .dayclose{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;padding:8px 10px;border:1px dashed var(--line);border-radius:12px}.dayclose span{min-width:0;flex:1}.dayclose.on{border-style:solid;color:var(--good)}.dayclose.on .linkbtn{font-size:12px}
+.varrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:12px}.vchip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--muted)}.vchip[aria-pressed=true]{border-color:var(--accent);color:var(--fg);background:var(--sunk)}.varkeep{font-size:12px;margin-top:4px}.varkeep .linkbtn{font-size:12px}
 .sets .h{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .sets .i{font-family:var(--display);font-weight:700;font-size:18px;color:var(--muted);text-align:center}
 .sets input{width:100%;min-width:0;border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:10px;font-size:18px;font-weight:600;text-align:center;font-variant-numeric:tabular-nums}
@@ -660,7 +661,7 @@ function dayKey(d){const x=new Date(d);return x.getFullYear()+'-'+x.getMonth()+'
 function kgKind(name,bar){const n=norm(name||'');
   if(/halter|dumbbell/.test(n))return {k:'halter',h:'kg por halter',tip:'Peso de cada halter (um lado).',mul:/unilateral|serrote|um braco|alternad/.test(n)&&!/alternad/.test(n)?1:2};
   if(/leg press|hack|articulad|panturrilha sentada/.test(n))return {k:'anilha',h:'kg de anilhas',tip:'Some as anilhas dos dois lados (sem o carrinho).',mul:1};
-  if(bar||/barra|smith|terra|stiff|agachamento livre/.test(n))return {k:'barra',h:'kg total',tip:'Barra + anilhas dos dois lados. Embaixo eu mostro quanto vai em cada lado.',mul:1};
+  if(bar||/barra(?! fixa)|smith|terra|stiff|agachamento livre/.test(n))return {k:'barra',h:'kg total',tip:'Barra + anilhas dos dois lados. Embaixo eu mostro quanto vai em cada lado.',mul:1};
   if(/prancha|dead bug|perdigueiro|abdominal|elevacao de pernas|barra fixa|mergulho|flexao/.test(n))return {k:'corpo',h:'kg extra',tip:'Só se usar peso extra. Sem peso, deixe vazio.',mul:1};
   return {k:'maquina',h:'kg na máquina',tip:'O número da placa/pino da máquina ou da polia.',mul:1}}
 function vol(s){return s.ex.reduce((a,e)=>{const m=kgKind(e.name).mul;return a+e.sets.reduce((b,t)=>b+(+t.kg||0)*m*(+t.reps||0),0)},0)}
@@ -1191,13 +1192,14 @@ function viewSession(){
     ${audioBar(W(a.workoutId)||{id:a.workoutId,name:a.name})}
     ${careCard()}
     <div class="row"><div class="progress" style="flex:1"><i style="width:${total?done/total*100:0}%"></i></div><span class="muted num" style="font-size:13px">${done}/${total} séries</span></div>
-    ${a.ex.map((e,ei)=>{const l=lastFor(e.exId,e.name);
+    ${a.ex.map((e,ei)=>{const l=e.varFrom||e.swappedFrom?lastFor(null,e.name):lastFor(e.exId,e.name);
       {const all=e.sets.length&&e.sets.every(t=>t.done);if(e.closed===true||(all&&e.closed!==false)){const best=e.sets.filter(t=>t.done).reduce((m,t)=>(+String(t.kg).replace(',','.')||0)>(+String(m.kg||0).replace(',','.')||0)?t:m,{});
         return `<div class="card ex closed"><button class="exrow" data-act="exopen" data-e="${ei}"><span class="exok">${all?'✓':'•'}</span><span class="exn">${esc(e.name)}</span><span class="muted num">${e.sets.filter(t=>t.done).length}/${e.sets.length}${best.kg?' · '+esc(String(best.kg))+' kg':''}</span><span class="exre">Reabrir</span></button></div>`}}
       if(e.skip)return `<div class="card ex skipped"><div class="row" style="justify-content:space-between;gap:8px"><div style="min-width:0"><b>${esc(e.name)}</b><div class="muted" style="font-size:13px">Pulado · ${esc(e.skip)}</div></div><button class="btn ghost sm" data-act="unskip" data-e="${ei}">Desfazer</button></div></div>`;
       return `<div class="card ex">
         <div class="ex-head"><div><h3>${esc(e.name)}</h3>${e.swappedFrom?`<div class="muted" style="font-size:12px">no lugar de ${esc(e.swappedFrom)}</div>`:''}<div class="exbtns"><button class="howbtn" data-act="how" data-name="${esc(e.name)}">${guideFor(e.name)?'Como fazer':'Buscar execução'}</button>${e.target.reps&&!/min/i.test(e.target.reps)?`<button class="howbtn alt" data-act="busy" data-e="${ei}">Aparelho ocupado</button>`:''}${sampleApi?`<label class="howbtn alt" for="ph-${ei}">📷 Corrigir</label><input type="file" id="ph-${ei}" accept="image/*" capture="environment" hidden data-photo="${ei}">`:''}</div>
         ${e.sugg?`<div class="sugg ${e.sugg.kind}">${coachAv(22)}<span>${esc(e.sugg.msg)}</span></div>`:''}<div class="ex-meta">${(()=>{const T=timedOf(e.name,e.target.reps);const tt=T?T.v+(T.u==='min'?' min':' s'):esc(e.target.reps);if(T&&isCardioEx(e.name)&&e.target.sets<=1)return tt+' contínuos';return `${e.target.sets} × ${tt} · ${e.target.rest?'descanso '+mmss(e.target.rest):'sem descanso, emende o próximo'}`})()}</div>
+        ${(()=>{const F=varFam(e.name);if(!F||F.o.length<2)return '';return `<div class="varrow"><span class="muted">Com</span>${F.o.map((o,oi)=>`<button class="vchip" data-act="var" data-e="${ei}" data-o="${oi}" aria-pressed="${oi===F.cur}">${o[0]}</button>`).join('')}</div>${e.varFrom?`<div class="varkeep muted">Trocado de ${esc(e.varFrom)} só neste treino · <button class="linkbtn" data-act="varkeep" data-e="${ei}">Deixar assim na rotina</button></div>`:''}`})()}
         ${(()=>{const g=guideFor(e.name);const er=g&&g.e&&g.e.length?g.e[(ei+new Date().getDate())%g.e.length]:'';return er?`<div class="watch">${coachAv(20)}<span><b>De olho:</b> ${esc(er.replace(/\.$/,'').replace(/^./,c=>c.toLowerCase()))}. Se pegar isso, corrige na hora.</span></div>`:''})()}
         ${warnHtml(e.name,'swapA',`data-e="${ei}"`)}
         ${l?`<div class="last num">Última vez: ${(()=>{const T=timedOf(e.name,e.target.reps);return l.sets.map(t=>T?`${t.reps||'–'} ${T.u==='min'?'min':'s'}`:`${fmtKg(+t.kg||0)}×${t.reps}`).join(' · ')})()}</div>`:'<div class="last">Primeira vez neste exercício</div>'}</div></div>
@@ -1526,6 +1528,29 @@ function absCard(live){const lv=S.absLvl||'medium',L=absList(lv),min=absMins(L),
     ${live?`<button class="btn ghost" data-act="absadd">Adicionar ${ABS[lv].label} ao treino</button>`:`<button class="btn ${S.absWith?'ghost':'primary'}" data-act="abswith">${S.absWith?'✓ Incluído no treino · tirar':'+ Incluir no treino '+esc(S.pickId||'')}</button><button class="linkbtn" data-act="absgo" style="align-self:center">ou fazer só o abdômen agora</button>`}</div>`}
 function exFromDef(e){const l=lastFor(e.id,e.name);const sg=suggestFor(e.id,e.name,{reps:e.reps});
   return{exId:e.id,name:e.name,sugg:sg,target:{sets:e.sets,reps:e.reps,rest:e.rest,bar:e.bar},sets:Array.from({length:e.sets},(_,i)=>{const p=l&&(l.sets[i]||l.sets[l.sets.length-1]);return{kg:sg&&sg.kind==='up'?String(sg.kg):p&&p.kg?String(p.kg):'',reps:'',done:false}})}}
+
+/* ---------- variações de equipamento (barra, halteres, máquina…) ---------- */
+const VARS=[
+ {rx:/^supino (reto|na maquina|com barra|com halteres|no smith)|chest press/,p:1,o:[['Barra','Supino reto com barra'],['Halteres','Supino reto com halteres'],['Máquina','Supino na máquina (chest press)'],['Smith','Supino reto no smith']]},
+ {rx:/^supino inclinado/,p:1,o:[['Barra','Supino inclinado com barra'],['Halteres','Supino inclinado com halteres'],['Máquina','Supino inclinado na máquina'],['Smith','Supino inclinado no smith']]},
+ {rx:/^supino declinado/,p:1,o:[['Barra','Supino declinado com barra'],['Halteres','Supino declinado com halteres'],['Máquina','Supino declinado na máquina']]},
+ {rx:/^desenvolvimento/,p:1,o:[['Barra','Desenvolvimento com barra'],['Halteres','Desenvolvimento com halteres'],['Máquina','Desenvolvimento na máquina'],['Smith','Desenvolvimento no smith']]},
+ {rx:/^crucifixo(?! inverso)|voador|peck deck/,o:[['Halteres','Crucifixo com halteres'],['Polia','Crucifixo no crossover'],['Máquina','Voador (peck deck)']]},
+ {rx:/^crucifixo inverso|voador inverso/,o:[['Halteres','Crucifixo inverso'],['Polia','Crucifixo inverso na polia'],['Máquina','Voador inverso (máquina)']]},
+ {rx:/^remada curvada/,p:1,o:[['Barra','Remada curvada com barra'],['Halteres','Remada curvada com halteres'],['Smith','Remada curvada no smith']]},
+ {rx:/^rosca (direta|alternada|com halteres|na polia|scott)/,o:[['Barra','Rosca direta'],['Halteres','Rosca alternada com halteres'],['Polia','Rosca na polia']]},
+ {rx:/^triceps testa/,o:[['Barra','Tríceps testa'],['Halteres','Tríceps testa com halteres'],['Polia','Tríceps testa na polia']]},
+ {rx:/^triceps frances/,o:[['Halter','Tríceps francês'],['Polia','Tríceps francês na polia (corda)']]},
+ {rx:/^agachamento( livre| no smith| goblet| com halteres|$)/,p:1,o:[['Barra','Agachamento livre'],['Smith','Agachamento no smith'],['Halter','Agachamento goblet (halter)']]},
+ {rx:/^stiff/,p:1,o:[['Barra','Stiff'],['Halteres','Stiff com halteres']]},
+ {rx:/^afundo|^passada|^avanco/,p:1,o:[['Halteres','Afundo (passada)'],['Barra','Afundo com barra'],['Smith','Afundo no smith']]},
+ {rx:/^elevacao lateral/,o:[['Halteres','Elevação lateral'],['Polia','Elevação lateral na polia'],['Máquina','Elevação lateral na máquina']]},
+ {rx:/^elevacao frontal/,o:[['Halteres','Elevação frontal'],['Barra','Elevação frontal com barra'],['Polia','Elevação frontal na polia']]},
+ {rx:/^elevacao pelvica/,p:1,o:[['Barra','Elevação pélvica'],['Máquina','Elevação pélvica na máquina'],['Smith','Elevação pélvica no smith']]},
+ {rx:/^encolhimento/,o:[['Barra','Encolhimento com barra'],['Halteres','Encolhimento com halteres']]},
+ {rx:/^levantamento terra/,p:1,o:[['Barra','Levantamento terra'],['Halteres','Levantamento terra com halteres']]}];
+function varFam(name){const n=norm(name);const f=VARS.find(v=>v.rx.test(n));if(!f)return null;let cur=f.o.findIndex(o=>norm(o[1])===n);
+  if(cur<0){const k=/halter/.test(n)?['Halteres','Halter']:/smith/.test(n)?['Smith']:/maquina|chest press|peck|articulad/.test(n)?['Máquina']:/polia|crossover|cabo|corda/.test(n)?['Polia']:/barra|livre/.test(n)?['Barra']:[];cur=f.o.findIndex(o=>k.includes(o[0]))}return {...f,cur}}
 
 /* ---------- aparelho ocupado: opções e preferência ---------- */
 function swapPrefs(){return LS.get('ct.swaps',{})}
@@ -2370,6 +2395,10 @@ main.addEventListener('click',e=>{
     case 'pick':S.sel=b.dataset.id;break;
     case 'voice':LS.set('ct.voice',!voiceOn());if(voiceOn()){try{speechSynthesis.getVoices()}catch(_){}speak('Voz ligada. Eu aviso quando o descanso acabar.')}else toast('Fico quieta. Mas continuo de olho.');break;
     case 'busy':busyPick(ei);return;
+    case 'var':{const ae=a.ex[ei],F=varFam(ae.name),o=F&&F.o[+b.dataset.o];if(!o||norm(o[1])===norm(ae.name))return;const plan=ae.varFrom||ae.name;ae.name=o[1];ae.varFrom=norm(plan)===norm(o[1])?null:plan;ae.target.bar=!!(F.p&&o[0]==='Barra');ae.sugg=null;
+      const l=lastFor(null,o[1]);ae.sets.forEach(s2=>{if(!s2.done)s2.kg=l&&l.sets[0]?String(l.sets[0].kg||''):''});saveActive();render();toast(o[0]==='Halteres'||o[0]==='Halter'?'Com halteres. O peso agora é de cada halter.':`${o[1]}. Mesmo movimento, outro ferro.`);return}
+    case 'varkeep':{const ae=a.ex[ei];const w=S.plan.workouts.find(x=>x.id===a.workoutId);const pe=w&&w.ex.find(x=>norm(x.name)===norm(ae.varFrom));if(!pe){toast('Não achei esse exercício na rotina.');return}
+      pe.name=ae.name;pe.bar=!!ae.target.bar;delete pe.orig;ae.varFrom=null;savePlan();saveActive();render();toast('Rotina atualizada: '+ae.name+'.');return}
     case 'saga':openSaga();return;
     case 'nday':S.nDay=Math.min(0,Math.max(-90,(S.nDay||0)+(+b.dataset.d)));break;
     case 'nday0':S.nDay=0;break;
