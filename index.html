@@ -383,30 +383,40 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 .week .wd::after{display:none!important}
 .week .wd:active{transform:scale(.92)}
 .shield{width:44px;height:44px;display:block;overflow:visible}
-.shield .sh-p1{fill:var(--sh-face)}.shield .sh-p2{fill:var(--sh-face2)}
-.shield .sh-gr{fill:none;stroke:#000;stroke-opacity:.16;stroke-width:.5}
-.shield .sh-rim{fill:none;stroke:var(--sh-rim);stroke-width:3.2}
-.shield .sh-rimhl{fill:none;stroke:url(#shRimG);stroke-width:3.2}
-.shield .sh-rv{fill:var(--sh-rv)}
-.shield .sh-boss{fill:var(--sh-boss);stroke:#000;stroke-opacity:.35;stroke-width:.7}
-.shield .sh-qa{fill:var(--sh-qa)}.shield .sh-qb{fill:var(--sh-qb)}
-.shield .sh-gap{display:none}.shield .sh-edge{fill:none;stroke:#e8c896;stroke-width:1.3;stroke-linejoin:round;opacity:.9}.shield .sh-shard{fill:#d9b37c;opacity:.85}
-.shield .sh-spl{fill:none;stroke:var(--sh-face2);stroke-width:1.1;stroke-linecap:round}
-:root{--wood:#c49a64;--wood2:#ae8550;--iron:#8a929e;--bronze:#c9962c}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--wood:#6b5034;--wood2:#5a4229;--iron:#8a929e;--bronze:#d4a72c}}
-:root[data-theme="dark"]{--wood:#6b5034;--wood2:#5a4229;--iron:#8a929e;--bronze:#d4a72c}
-.wd .shield{--sh-rim:var(--line);--sh-face:transparent;--sh-face2:transparent;--sh-rv:var(--line);--sh-boss:var(--line)}
-.wd .shield .sh-gr{stroke-opacity:0}
+:root{--wood:#b98d58;--wood2:#a87c48;--wood3:#c79c66;--iron:#7d8590;--bronze:#b8862a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--wood:#7a5a38;--wood2:#6a4d2f;--wood3:#86643f;--iron:#8d95a0;--bronze:#c99a2e}}
+:root[data-theme="dark"]{--wood:#7a5a38;--wood2:#6a4d2f;--wood3:#86643f;--iron:#8d95a0;--bronze:#c99a2e}
+.shield .sh-p0{fill:var(--sh-face)}.shield .sh-p1{fill:var(--sh-face2)}.shield .sh-p2{fill:var(--sh-face3,var(--sh-face))}
+.shield .sh-gr{fill:none;stroke:#2a1608;stroke-opacity:.22;stroke-width:.45;stroke-linecap:round}.shield .sh-gr2{stroke-opacity:.13}
+.shield .sh-seam{stroke:#1f1006;stroke-opacity:.45;stroke-width:.5}
+.shield .sh-knot{fill:none;stroke:#2a1608;stroke-opacity:.3;stroke-width:.45}
+.shield .sh-qa{fill:var(--sh-qa)}.shield .sh-qb{fill:var(--sh-qb)}.shield .sh-paint{opacity:.93}
+.shield .sh-thru line{stroke:#000;stroke-opacity:.22;stroke-width:.5}
+.shield .sh-wear{fill:none;stroke:var(--wood);stroke-width:.9;stroke-linecap:round;opacity:.7}
+.shield .sh-rim{fill:none;stroke:var(--sh-rim);stroke-width:2.9}
+.shield .sh-rimo{fill:none;stroke:#000;stroke-opacity:.45;stroke-width:.5}
+.shield .sh-rimi{fill:none;stroke:#000;stroke-opacity:.5;stroke-width:.5}
+.shield .sh-rimhl{fill:none;stroke:#fff;stroke-opacity:.42;stroke-width:1;stroke-linecap:round}
+.shield .sh-rv{fill:var(--sh-rv);stroke:#000;stroke-opacity:.35;stroke-width:.3}.shield .sh-rvh{fill:#fff;opacity:.6}
+.shield .sh-fl{fill:var(--sh-boss);stroke:#000;stroke-opacity:.4;stroke-width:.5}
+.shield .sh-bshadow{fill:#000;opacity:.35}
+.shield .sh-boss{fill:var(--sh-boss);stroke:#000;stroke-opacity:.45;stroke-width:.5}
+.shield .sh-spec{fill:#fff;opacity:.75}
+.shield .sh-edge{fill:none;stroke:#d7b583;stroke-width:1.1;stroke-linejoin:round;opacity:.9}.shield .sh-shard{fill:#c9a271;opacity:.85}
+.wd .shield{--sh-rim:var(--line);--sh-face:transparent;--sh-face2:transparent;--sh-rv:transparent;--sh-boss:transparent}
+.wd .shield .sh-gr,.wd .shield .sh-seam,.wd .shield .sh-knot,.wd .shield .sh-rimhl,.wd .shield .sh-rimo,.wd .shield .sh-rimi,.wd .shield .sh-spec,.wd .shield .sh-rvh,.wd .shield .sh-bshadow{display:none}
+.wd .shield .sh-fl,.wd .shield .sh-boss{stroke:var(--line);stroke-opacity:1}.wd:not(.plan):not(.comp):not(.done):not(.miss) .shield .sh-rv{display:none}
+.wd .shield [fill^="url"]{display:none}
+.wd:is(.plan,.comp,.done,.miss) .shield{--sh-face:var(--wood);--sh-face2:var(--wood2);--sh-face3:var(--wood3);filter:drop-shadow(0 1.5px 1.2px rgb(0 0 0 / .4))}
+.wd:is(.plan,.comp,.done,.miss) .shield :is(.sh-gr,.sh-seam,.sh-knot,.sh-rimhl,.sh-rimo,.sh-rimi,.sh-spec,.sh-rvh,.sh-bshadow){display:inline}
+.wd:is(.plan,.comp,.done,.miss) .shield [fill^="url"]{display:inline}
+.wd:is(.plan,.comp,.done,.miss) .shield :is(.sh-fl,.sh-boss){stroke:#000;stroke-opacity:.45}
+.wd.plan .shield{--sh-rim:var(--iron);--sh-rv:#c9ced6;--sh-boss:var(--iron)}
+.wd.comp .shield{--sh-rim:var(--bronze);--sh-rv:#f0d58a;--sh-boss:var(--bronze)}
+.wd.done .shield{--sh-rim:var(--bronze);--sh-rv:#f6e2a4;--sh-boss:var(--bronze);--sh-qa:#244aa0;--sh-qb:#e9e1cc}
+.wd.miss .shield{--sh-rim:#5e5853;--sh-rv:#8a827b;--sh-boss:#5e5853;--sh-face:#4b3a2a;--sh-face2:#41321f;--sh-face3:#54412e}
+.week span.td{color:var(--ink);font-weight:800;box-shadow:inset 0 -2px 0 var(--gold);padding-bottom:1px}
 .wd:not(.plan):not(.comp):not(.done):not(.miss) .shield{opacity:.5}
-.wd:not(.plan):not(.comp):not(.done):not(.miss) .shield .sh-rimhl{stroke:none}
-.wd.plan .shield,.wd.comp .shield,.wd.done .shield,.wd.miss .shield{--sh-face:var(--wood);--sh-face2:var(--wood2)}
-.wd.plan .shield .sh-gr,.wd.comp .shield .sh-gr,.wd.done .shield .sh-gr,.wd.miss .shield .sh-gr{stroke-opacity:.18}
-.wd.plan .shield{--sh-rim:var(--iron);--sh-rv:#d9dde3;--sh-boss:var(--iron)}
-.wd.comp .shield{--sh-rim:var(--bronze);--sh-rv:#ffe9a8;--sh-boss:var(--bronze)}
-.wd.done .shield{--sh-rim:var(--bronze);--sh-rv:#fff3c4;--sh-boss:var(--bronze);--sh-qa:#2c56b8;--sh-qb:#efe9da;filter:drop-shadow(0 3px 6px rgb(0 0 0 / .35))}
-.wd.miss .shield{--sh-rim:#6d6560;--sh-rv:#9a918a;--sh-boss:#6d6560;--sh-face:color-mix(in srgb,var(--wood) 62%,#4a120c);--sh-face2:color-mix(in srgb,var(--wood2) 62%,#4a120c);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--danger) 55%,transparent))}
-.wd.today .shield{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ink) 35%,transparent))}
-.wd.today.done .shield{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--bronze) 75%,transparent))}
 .wd.paused .shield{opacity:.4}
 .wd.armed .shield{--sh-rim:var(--danger)}
 .actdot.under{display:block;margin:3px auto 0;width:6px;height:6px}
@@ -824,16 +834,22 @@ function arm(key){S.armed=key;clearTimeout(armTimer);armTimer=setTimeout(()=>{S.
 /* ---------- views ---------- */
 function nextId(){const ws=S.plan.workouts.filter(w=>w.ex.length);if(!ws.length)return (S.plan.workouts[0]||{}).id;const ids=ws.map(w=>w.id);const since=S.plan.since||'';
   const last=S.sessions.find(x=>!x.custom&&ids.includes(x.workoutId)&&(!since||x.date>=since));return last?ids[(ids.indexOf(last.workoutId)+1)%ids.length]:ids[0]}
-function shieldSvg(st){const C=22,R=18;
-  const rv=Array.from({length:10},(_,k)=>{const a=k*36*Math.PI/180;return `<circle cx="${(C+19.6*Math.cos(a)).toFixed(2)}" cy="${(C+19.6*Math.sin(a)).toFixed(2)}" r="1.05" class="sh-rv"/>`}).join('');
-  const planks=[0,1,2,3,4,5].map(k=>`<rect x="${4+k*6.2}" y="2" width="6.2" height="40" class="${k%2?'sh-p2':'sh-p1'}"/><path d="M${4+k*6.2+2.2} 4 q1.2 9 -.4 18 t.6 18" class="sh-gr"/>`).join('');
-  const face=`<g clip-path="url(#shC)">${planks}${st==='done'?`<path d="M${C} ${C-R}A${R} ${R} 0 0 1 ${C+R} ${C}H${C}z M${C} ${C+R}A${R} ${R} 0 0 1 ${C-R} ${C}H${C}z" class="sh-qa"/><path d="M${C+R} ${C}A${R} ${R} 0 0 1 ${C} ${C+R}V${C}z M${C-R} ${C}A${R} ${R} 0 0 1 ${C} ${C-R}V${C}z" class="sh-qb"/>`:''}<circle cx="${C}" cy="${C}" r="${R}" fill="url(#shShade)"/></g>`;
-  const rim=`<circle cx="${C}" cy="${C}" r="19.6" class="sh-rim"/><circle cx="${C}" cy="${C}" r="19.6" class="sh-rimhl"/>${rv}`;
-  const boss=`<circle cx="${C}" cy="${C}" r="${st==='done'?5.8:5}" class="sh-boss"/><circle cx="${C}" cy="${C}" r="${st==='done'?5.8:5}" fill="url(#shDome)"/>`;
+function shieldSvg(st){const C=22,R=18.3,P=(r,a)=>[(C+r*Math.cos(a)).toFixed(2),(C+r*Math.sin(a)).toFixed(2)];
+  const W=[3.2,6.4,5.6,6.6,5.8,6.2,6.4,3.8];let x=C-R-.5;const planks=W.map((w,k)=>{const r=`<rect x="${x.toFixed(2)}" y="2" width="${(w+.05).toFixed(2)}" height="40" class="sh-p${k%3}"/><path d="M${(x+w*.35).toFixed(2)} 3c.9 6-.7 11 .3 17s-.6 12 .4 20" class="sh-gr"/><path d="M${(x+w*.72).toFixed(2)} 3c-.6 7 .8 12-.2 18s.5 11-.3 19" class="sh-gr sh-gr2"/>${k?`<line x1="${x.toFixed(2)}" y1="2" x2="${x.toFixed(2)}" y2="42" class="sh-seam"/>`:''}`;x+=w;return r}).join('');
+  const knots=`<ellipse cx="15.2" cy="29" rx="1.1" ry="1.6" class="sh-knot"/><ellipse cx="28.4" cy="13.6" rx=".8" ry="1.2" class="sh-knot"/>`;
+  const paint=st==='done'?`<g class="sh-paint"><path d="M${C} ${C}V${C-R-1}A${R+1} ${R+1} 0 0 1 ${C+R+1} ${C}z M${C} ${C}V${C+R+1}A${R+1} ${R+1} 0 0 1 ${C-R-1} ${C}z" class="sh-qa"/><path d="M${C} ${C}H${C+R+1}A${R+1} ${R+1} 0 0 1 ${C} ${C+R+1}z M${C} ${C}H${C-R-1}A${R+1} ${R+1} 0 0 1 ${C} ${C-R-1}z" class="sh-qb"/></g><g class="sh-thru">${W.map((w,k,a)=>{const xx=C-R-.5+a.slice(0,k).reduce((t,v)=>t+v,0);return k?`<line x1="${xx.toFixed(2)}" y1="2" x2="${xx.toFixed(2)}" y2="42"/>`:''}).join('')}</g><path d="M9.5 15.5l2.2-.6 M31 30.8l2.4.9 M27.6 8.6l1.6 1.1 M12.4 32.4l1.3-1.6" class="sh-wear"/>`:'';
+  const face=`<g clip-path="url(#shC)">${planks}${paint}<circle cx="${C}" cy="${C}" r="${R}" fill="url(#shShade)"/><circle cx="${C}" cy="${C}" r="${R}" fill="url(#shIn)"/></g>`;
+  const rv=Array.from({length:12},(_,k)=>{const [a,b]=P(19.75,(k*30+15)*Math.PI/180);return `<circle cx="${a}" cy="${b}" r=".95" class="sh-rv"/><circle cx="${(+a-.28).toFixed(2)}" cy="${(+b-.3).toFixed(2)}" r=".35" class="sh-rvh"/>`}).join('');
+  const [h1x,h1y]=P(19.75,200*Math.PI/180),[h2x,h2y]=P(19.75,290*Math.PI/180);
+  const rim=`<circle cx="${C}" cy="${C}" r="19.75" class="sh-rim"/><circle cx="${C}" cy="${C}" r="21.25" class="sh-rimo"/><circle cx="${C}" cy="${C}" r="18.25" class="sh-rimi"/><path d="M${h1x} ${h1y}A19.75 19.75 0 0 1 ${h2x} ${h2y}" class="sh-rimhl"/>${rv}`;
+  const fr=st==='done'?7.6:7,dr=st==='done'?5.2:4.7;
+  const flange=`<circle cx="${C}" cy="${C}" r="${fr}" class="sh-fl"/><circle cx="${C}" cy="${C}" r="${fr}" fill="url(#shFl)"/>${[45,135,225,315].map(d=>{const [a,b]=P(fr-1.25,d*Math.PI/180);return `<circle cx="${a}" cy="${b}" r=".7" class="sh-rv"/>`}).join('')}`;
+  const boss=`${flange}<circle cx="${C}" cy="${C+.5}" r="${dr}" class="sh-bshadow"/><circle cx="${C}" cy="${C}" r="${dr}" class="sh-boss"/><circle cx="${C}" cy="${C}" r="${dr}" fill="url(#shDome)"/><ellipse cx="${C-1.6}" cy="${C-1.8}" rx="1.5" ry=".9" transform="rotate(-35 ${C-1.6} ${C-1.8})" class="sh-spec"/>`;
   const defs=`<defs><clipPath id="shC"><circle cx="${C}" cy="${C}" r="${R}"/></clipPath>
-    <radialGradient id="shShade" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
-    <radialGradient id="shDome" cx="36%" cy="32%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".35" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
-    <linearGradient id="shRimG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+    <radialGradient id="shShade" cx="34%" cy="26%" r="85%"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient>
+    <radialGradient id="shIn" cx="50%" cy="50%" r="50%"><stop offset=".82" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+    <radialGradient id="shFl" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>
+    <radialGradient id="shDome" cx="34%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".3" stop-color="#fff" stop-opacity=".12"/><stop offset=".75" stop-color="#000" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
     <clipPath id="shL"><path d="M0 0H23.5L21 7.5 24.8 13 20.2 19.5 23.6 25.5 19.4 32 22.4 37.5 20 44H0z"/></clipPath>
     <clipPath id="shR"><path d="M44 0H23.5L21 7.5 24.8 13 20.2 19.5 23.6 25.5 19.4 32 22.4 37.5 20 44H44z"/></clipPath></defs>`;
   const whole=`${face}${rim}${boss}`;
@@ -841,12 +857,12 @@ function shieldSvg(st){const C=22,R=18;
   const body=st==='miss'?`<g transform="translate(1.3 1.2) scale(.94)"><g transform="rotate(-4 21 43) translate(-.9 .3)"><g clip-path="url(#shL)">${whole}<path d="${J}" class="sh-edge"/></g></g>
     <g transform="rotate(3.5 23 43) translate(.9 .3)"><g clip-path="url(#shR)">${whole}<path d="${J}" class="sh-edge"/></g></g>
     <path d="M20.6 40.5l1.6 2.6-2.4.4z M24.4 41.2l1.9 1.6-2.1 1z M22.2 38.6l1 1.5-1.4.2z" class="sh-shard"/></g>`:whole;
-  return `<svg class="shield" viewBox="0 0 44 44" aria-hidden="true">${defs}${body}</svg>`}
+  return `<svg class="shield s-${st}" viewBox="0 0 44 44" aria-hidden="true">${defs}${body}</svg>`}
 function weekStrip(){const now=new Date();const start=weekStart(now);
   const days=visitSet(),acts=actSet();const L=['S','T','Q','Q','S','S','D'];const sc=sched()||[];let h='',n=0;
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const done=days.has(dayKey(d));if(done)n++;
     const fut=d>now&&dayKey(d)!==dayKey(now);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    h+=`<div><span>${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${fut?'fut':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="${fut?'planday':'pastday'}" data-d="${iso}" data-v="${d.getDay()}" aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':fut?(sc.includes(d.getDay())?', planejado. Toque para tirar':'. Toque para planejar'):''}">${shieldSvg(done?'done':(!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d))?'miss':(((wkEntry()||{}).comp||[]).includes(d.getDay())&&!done)?'comp':(sc.includes(d.getDay())&&!done)?'plan':'free')}</button>${acts.has(dayKey(d))&&!done?'<i class="actdot under" title="Atividade fora"></i>':''}</div>`}
+    h+=`<div><span class="${dayKey(d)===dayKey(now)?'td':''}">${L[i]}</span><button class="wd ${done?'done':''} ${dayKey(d)===dayKey(now)?'today':''} ${!done&&sc.includes(d.getDay())?'plan':''} ${!done&&((wkEntry()||{}).comp||[]).includes(d.getDay())?'comp':''} ${!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d)?'miss':''} ${fut?'fut':''} ${pauseOn(d)&&!done?'paused':''} ${S.armed==='pd'+iso?'armed':''}" data-act="${fut?'planday':'pastday'}" data-d="${iso}" data-v="${d.getDay()}" aria-label="${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric'})}${done?', com exercício':fut?(sc.includes(d.getDay())?', planejado. Toque para tirar':'. Toque para planejar'):''}">${shieldSvg(done?'done':(!done&&!fut&&dayKey(d)!==dayKey(now)&&sc.includes(d.getDay())&&!pauseOn(d))?'miss':(((wkEntry()||{}).comp||[]).includes(d.getDay())&&!done)?'comp':(sc.includes(d.getDay())&&!done)?'plan':'free')}</button>${acts.has(dayKey(d))&&!done?'<i class="actdot under" title="Atividade fora"></i>':''}</div>`}
   return {html:`<div class="week">${h}</div>`,n}}
 
 function viewHoje(){
