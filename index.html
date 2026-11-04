@@ -666,9 +666,9 @@ function plates(kg){if(!(kg>20))return '';let side=(kg-20)/2;const out=[];for(co
   return 'Barra 20 + 2×('+out.map(fmtKg).join(' + ')+')'+(side>0.01?' ≈':'')}
 function tUnit(r){const m=String(r||'').match(/(\d+)(?:\s*-\s*(\d+))?\s*(min|seg|s)\b/i);return m?{v:+(m[2]||m[1]),u:/^min/i.test(m[3])?'min':'s'}:null}
 const BW_RX=/prancha|dead bug|perdigueiro|bird dog|abdominal|crunch|canivete|v-up|roda abdominal|elevacao de pernas|hollow|superman|mountain|escalador|burpee|polichinelo|barra fixa|mergulho|flexao|isometri|wall sit|bicicleta no solo|tesoura|infra|remador no solo|russian twist|toque no calcanhar/;
-const HOLD_RX=/^(prancha( frontal| lateral)?( \(joelhos apoiados\))?|prancha (alta|baixa|isometrica)|hollow( hold)?|superman (hold|isometrico)|isometria.*|.*isometric[oa].*|wall sit|cadeira na parede|l-sit|dead hang|suspensao na barra)$/;
+const HOLD_RX=/^(prancha.*|hollow( hold)?|superman (hold|isometrico)|isometria.*|.*isometric[oa].*|wall sit|cadeira na parede|l-sit|dead hang|suspensao na barra)$/;
 function isCardioEx(n){return CARDIO_RX.test(n||'')}
-function timedOf(name,reps){const t=tUnit(reps);if(t)return t;if(HOLD_RX.test(norm(name))){const m=String(reps||'').match(/\d+/);return {v:m&&+m[0]>=10?+m[0]:30,u:'s'}}if(isCardioEx(name)){const m=String(reps||'').match(/\d+/);return {v:m?+m[0]:10,u:'min'}}return null}
+function timedOf(name,reps){const t=tUnit(reps);if(t)return t;if(HOLD_RX.test(norm(name))){const m=String(reps||'').match(/\d+/);return {v:m&&+m[0]>=30?+m[0]:30,u:'s'}}if(isCardioEx(name)){const m=String(reps||'').match(/\d+/);return {v:m?+m[0]:10,u:'min'}}return null}
 function repsLow(r){const m=String(r).match(/\d+/);return m?m[0]:''}
 function dayKey(d){const x=new Date(d);return x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate()}
 function kgKind(name,bar){const n=norm(name||'');
@@ -1535,8 +1535,8 @@ const ABS={
    safe:[ABSX('Prancha',3,'20-30 s',30),ABSX('Dead bug',3,'8 cada lado',30),ABSX('Perdigueiro (bird dog)',3,'8 cada lado',30),ABSX('Prancha lateral (joelhos apoiados)',2,'20 s cada lado',30)]},
  medium:{label:'Medium',sub:'Mais tempo sob tensão e oblíquos',std:[ABSX('Prancha',3,'40-60 s',30),ABSX('Prancha lateral',3,'30 s cada lado',30),ABSX('Abdominal bicicleta',3,'20',30),ABSX('Elevação de pernas',3,'12',40),ABSX('Dead bug',3,'12 cada lado',30)],
    safe:[ABSX('Prancha',3,'40-60 s',30),ABSX('Prancha lateral',3,'30 s cada lado',30),ABSX('Dead bug',3,'12 cada lado',30),ABSX('Pallof press',3,'10 cada lado',30),ABSX('Perdigueiro (bird dog)',3,'12 cada lado',30)]},
- hard:{label:'Hard',sub:'Para quem já domina a prancha',std:[ABSX('Elevação de pernas na barra',4,'10-12',45),ABSX('Roda abdominal',3,'8-10',60),ABSX('Canivete (V-up)',3,'12-15',40),ABSX('Prancha lateral com elevação de quadril',3,'12 cada lado',30),ABSX('Hollow hold',3,'30-40 s',30),ABSX('Prancha com toque no ombro',3,'20',30)],
-   safe:[ABSX('Prancha com toque no ombro',3,'20',30),ABSX('Prancha lateral com elevação de quadril',3,'12 cada lado',30),ABSX('Pallof press com pausa',3,'12 cada lado',30),ABSX('Dead bug com halter',3,'10 cada lado',30),ABSX('Perdigueiro com pausa',3,'10 cada lado',30)]}};
+ hard:{label:'Hard',sub:'Para quem já domina a prancha',std:[ABSX('Elevação de pernas na barra',4,'10-12',45),ABSX('Roda abdominal',3,'8-10',60),ABSX('Canivete (V-up)',3,'12-15',40),ABSX('Prancha lateral com elevação de quadril',3,'30 s cada lado',30),ABSX('Hollow hold',3,'30-40 s',30),ABSX('Prancha com toque no ombro',3,'30-40 s',30)],
+   safe:[ABSX('Prancha com toque no ombro',3,'30-40 s',30),ABSX('Prancha lateral com elevação de quadril',3,'30 s cada lado',30),ABSX('Pallof press com pausa',3,'12 cada lado',30),ABSX('Dead bug com halter',3,'10 cada lado',30),ABSX('Perdigueiro com pausa',3,'10 cada lado',30)]}};
 S.absLvl=LS.get('ct.absLvl','medium');S.absMin=LS.get('ct.absMin',0);S.absWith=LS.get('ct.absWith',false);
 function cardioTail(list,getReps){let i=list.length;while(i>0&&/min/i.test(String(getReps(list[i-1]))))i--;return i}
 function absSafe(){const r=restr(),p=(S.active&&S.active.body&&S.active.body.pains)||[];return ['lombar','cervical'].some(k=>r.includes(k)||p.includes(k))}
