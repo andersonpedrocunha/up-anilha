@@ -105,7 +105,8 @@ h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.1;mar
 .rest{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:25;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:0 8px}
 .rest-in{max-width:560px;margin:0 auto;background:var(--hot);color:var(--hot-ink);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgb(0 0 0 / .18)}
 .rest-in .clock{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;font-variant-numeric:tabular-nums;min-width:96px}
-.rest-in .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;flex:1;min-width:0}
+.rest-in .lbl{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.2}.rest-in .lbl b{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.rest-in .lbl span{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rest-in .clock{min-width:0!important;font-size:34px!important}.rest-in button{padding:0 10px!important;flex:none}
 .rest-in button{border:0;background:rgb(0 0 0 / .12);color:inherit;border-radius:10px;min-height:42px;padding:0 12px;font-weight:700}
 .rest.done .rest-in{background:var(--good);color:#fff}
 /* nav */
@@ -274,6 +275,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:cent
 .fab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
 .fab>*{pointer-events:auto}.fab.up{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 .fabbtn{position:relative;width:52px;height:52px;border-radius:50%;padding:2px;border:2px solid #f2c230;background:#141a2e;box-shadow:0 4px 14px rgb(0 0 0 / .3);transition:transform .25s ease,opacity .25s ease}
+.fab.mini .fabbtn{width:44px;height:44px}.fab.up{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 .fab.peek .fabbtn{transform:translateX(calc(50% + 14px));opacity:.55}.fab.peek .fabtip{display:none}
 .fabbtn:active{transform:scale(.94)}.fabbtn .coachav{width:100%;height:100%}
 .fabdot{position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:50%;background:var(--danger);border:2px solid var(--bg)}
@@ -405,6 +407,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 .actdot.under{display:block;margin:3px auto 0;width:6px;height:6px}
 .wtitle{display:flex;align-items:center;gap:10px}.wletter{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:22px;line-height:1}
 .exlist.clean li{padding:9px 0}.exlist.clean .linkbtn{text-decoration:none;border-bottom:0;font-weight:600}.exlist.clean .t{font-size:13px;color:var(--muted);white-space:nowrap}.exlist .absli .n{color:var(--muted)}.exlist .absli .n::before{content:"＋ ";color:var(--gold)}
+.ex.closed{padding:0;overflow:hidden}.exrow{display:flex;align-items:center;gap:10px;width:100%;padding:14px 16px;background:none;border:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer}.exok{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--good);color:#fff;font-weight:800;font-size:14px}.exn{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.exre{font-size:12px;color:var(--accent);font-weight:700;flex:none}
 .ex.skipped{opacity:.65;padding-block:12px}.skipbtn{margin-left:auto}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .kpil{font-size:12px;color:var(--muted);font-weight:600}.kpi b{font-family:var(--display);font-size:26px;line-height:1.1}.kpif{display:flex;justify-content:space-between;align-items:flex-end;gap:6px}
@@ -1096,7 +1099,7 @@ function loadOlder(el){const h0=el.scrollHeight,t0=el.scrollTop;S.chatShow=(S.ch
 document.addEventListener('click',e=>{const b=e.target.closest('[data-more]');if(!b)return;const el=b.closest('.chatlog');if(el)loadOlder(el)});
 document.addEventListener('scroll',e=>{const el=e.target;if(el.classList&&el.classList.contains('chatlog')&&el.scrollTop<30&&el.querySelector('[data-more]'))loadOlder(el)},true);
 /* ---------- Driffa flutuante ---------- */
-function renderFab(){const f=document.getElementById('fab');if(!f)return;if(typeof syncNav==='function')setTimeout(syncNav,0);const hide=S.view==='personal'||S.view==='montar'||S.view==='conta';f.hidden=hide;document.body.classList.toggle('accmode',S.view==='conta');f.classList.toggle('up',!!S.rest);f.classList.toggle('peek',!S.fabOpen&&(S.fabTuck||!!S.active)&&!S.chatUnread);
+function renderFab(){const f=document.getElementById('fab');if(!f)return;if(typeof syncNav==='function')setTimeout(syncNav,0);const hide=S.view==='personal'||S.view==='montar'||S.view==='conta';f.hidden=hide;document.body.classList.toggle('accmode',S.view==='conta');f.classList.toggle('up',!!S.rest);f.classList.toggle('peek',!S.fabOpen&&!!S.fabTuck&&!S.chatUnread);f.classList.toggle('mini',!!S.active&&!S.fabOpen);
   const panel=document.getElementById('fabPanel'),btn=document.getElementById('fabBtn');btn.innerHTML=`<img class="coachav" src="${dImg('bust')}" alt="" width="56" height="56">`+(S.chatUnread?'<span class="fabdot"></span>':'');
   panel.hidden=!S.fabOpen||hide;btn.setAttribute('aria-expanded',!!S.fabOpen);document.body.classList.toggle('fabopen',!!S.fabOpen&&!hide);
   if(panel.hidden)return;
@@ -1180,6 +1183,8 @@ function viewSession(){
     ${careCard()}
     <div class="row"><div class="progress" style="flex:1"><i style="width:${total?done/total*100:0}%"></i></div><span class="muted num" style="font-size:13px">${done}/${total} séries</span></div>
     ${a.ex.map((e,ei)=>{const l=lastFor(e.exId,e.name);
+      {const all=e.sets.length&&e.sets.every(t=>t.done);if(e.closed===true||(all&&e.closed!==false)){const best=e.sets.filter(t=>t.done).reduce((m,t)=>(+String(t.kg).replace(',','.')||0)>(+String(m.kg||0).replace(',','.')||0)?t:m,{});
+        return `<div class="card ex closed"><button class="exrow" data-act="exopen" data-e="${ei}"><span class="exok">${all?'✓':'•'}</span><span class="exn">${esc(e.name)}</span><span class="muted num">${e.sets.filter(t=>t.done).length}/${e.sets.length}${best.kg?' · '+esc(String(best.kg))+' kg':''}</span><span class="exre">Reabrir</span></button></div>`}}
       if(e.skip)return `<div class="card ex skipped"><div class="row" style="justify-content:space-between;gap:8px"><div style="min-width:0"><b>${esc(e.name)}</b><div class="muted" style="font-size:13px">Pulado · ${esc(e.skip)}</div></div><button class="btn ghost sm" data-act="unskip" data-e="${ei}">Desfazer</button></div></div>`;
       return `<div class="card ex">
         <div class="ex-head"><div><h3>${esc(e.name)}</h3>${e.swappedFrom?`<div class="muted" style="font-size:12px">no lugar de ${esc(e.swappedFrom)}</div>`:''}<div class="exbtns"><button class="howbtn" data-act="how" data-name="${esc(e.name)}">${guideFor(e.name)?'Como fazer':'Buscar execução'}</button>${e.target.reps&&!/min/i.test(e.target.reps)?`<button class="howbtn alt" data-act="busy" data-e="${ei}">Aparelho ocupado</button>`:''}${sampleApi?`<label class="howbtn alt" for="ph-${ei}">📷 Corrigir</label><input type="file" id="ph-${ei}" accept="image/*" capture="environment" hidden data-photo="${ei}">`:''}</div>
@@ -1194,7 +1199,7 @@ function viewSession(){
           <button class="chk ${s.done?'on':''}" data-act="done" data-e="${ei}" data-s="${si}" aria-label="Concluir série ${si+1}" aria-pressed="${!!s.done}">✓</button>
           ${e.target.bar?`<span></span><span class="platecalc" id="pc-${ei}-${si}">${plates(+s.kg)}</span><span></span>`:''}`).join('')}
         </div>
-        <div class="ex-foot"><button class="btn ghost sm" data-act="addset" data-e="${ei}">+ Série</button>${e.sets.length>1?`<button class="btn ghost sm" data-act="rmset" data-e="${ei}">− Série</button>`:''}<button class="btn ghost sm skipbtn" data-act="skip" data-e="${ei}">Não vou fazer</button></div>
+        <div class="ex-foot"><button class="btn ghost sm" data-act="addset" data-e="${ei}">+ Série</button>${e.sets.length>1?`<button class="btn ghost sm" data-act="rmset" data-e="${ei}">− Série</button>`:''}${e.sets.length&&e.sets.every(t=>t.done)?`<button class="btn primary sm skipbtn" data-act="exclose" data-e="${ei}">Fechar ✓</button>`:`<button class="btn ghost sm skipbtn" data-act="skip" data-e="${ei}">Não vou fazer</button>`}</div>
       </div>`}).join('')}
     ${a.abs||a.absLvl?'':absCard(true)}${stretchCard(a.ex,true)}
     <button class="btn primary big ${S.armed==='finish'?'armed':''}" data-act="finish">${S.armed==='finish'?'Toque de novo para salvar':'Concluir treino'}</button>
@@ -2289,7 +2294,7 @@ function tick(){
     if(left<=0&&!S.rest.fired){S.rest.fired=true;beep();speak(S.rest.kind==='stretch'?'Pode trocar.':'Descanso acabou. Próxima série.')}
     restEl.classList.toggle('done',left<=0);
     document.getElementById('restClock').textContent=left>0?mmss(left):'0:00';
-    document.getElementById('restLbl').textContent=left>0?(S.rest.kind==='stretch'?'Alongando · ':'Descanso · ')+S.rest.label:'Hora da próxima série';
+    {const L=document.getElementById('restLbl');const top=left>0?(S.rest.kind==='stretch'?'Alongando':'Descanso'):'Hora da próxima série';const sub=left>0?S.rest.label:'';if(L.dataset.k!==top+sub){L.dataset.k=top+sub;L.innerHTML=`<b>${esc(top)}</b>${sub?`<span>${esc(sub)}</span>`:''}`}}
     if(left<-20)S.rest=null;
   }else restEl.hidden=true;
 }
@@ -2369,6 +2374,8 @@ main.addEventListener('click',e=>{
         if(r==='Aparelho ocupado'){busyPick(ei);return}
         ae.skip=r;saveActive();render();toast(r==='Dor ou incômodo'?'Pulado. Dor não se enfrenta, se respeita. Se continuar, conta pra mim no chat.':r==='Sem tempo'?'Pulado. Feito é melhor que perfeito: o que você fez hoje conta.':'Pulado. Guarda energia para o que falta, e capricha nele.')});
       document.body.appendChild(o);return}
+    case 'exopen':a.ex[ei].closed=false;saveActive();break;
+    case 'exclose':a.ex[ei].closed=true;saveActive();break;
     case 'unskip':delete a.ex[ei].skip;saveActive();break;
     case 'abswith':S.absWith=!S.absWith;LS.set('ct.absWith',S.absWith);break;
     case 'abslvl':S.absLvl=b.dataset.lv;LS.set('ct.absLvl',S.absLvl);break;
@@ -2554,7 +2561,7 @@ if(cloudOn()){try{const h=location.hash||'';if(/access_token=/.test(h)){const q=
   window.addEventListener('online',()=>{if(sbSess()){cloudPull();cloudPush()}})}
 if(apiKey()||(cloudOn()&&sbSess()))sampleApi=makeSample();
 document.getElementById('fab').addEventListener('click',e=>{const t=e.target;
-  if(t.closest('#fabBtn')&&document.getElementById('fab').classList.contains('peek')&&!S.active){S.fabTuck=false;renderFab();return}
+  if(t.closest('#fabBtn')&&document.getElementById('fab').classList.contains('peek')){S.fabTuck=false;renderFab();return}
   if(t.closest('#fabBtn')||t.closest('#fabTip')){S.fabOpen=!S.fabOpen;S.chatUnread=false;document.getElementById('fabTip').hidden=true;renderFab();if(S.fabOpen){const i=document.getElementById('fabIn');i&&i.focus()}return}
   const a=t.closest('[data-fab]');if(!a)return;const k=a.dataset.fab;
   if(k==='min'){S.fabOpen=false;renderFab()}else if(k==='full'){S.fabOpen=false;S.view='personal';window.scrollTo(0,0);render()}
